@@ -284,6 +284,12 @@ def processImages(conn, scriptParams):
     if not images:
         return None, message
 
+    # Check for line and polyline ROIs and filter images list
+    images = [image for image in images if image.getROICount(["Polyline","Line"])>0]
+    if not images:
+        message += "No ROI containing line or polyline was found."
+        return None, message
+
     for image in images:
 
         cNames = []
