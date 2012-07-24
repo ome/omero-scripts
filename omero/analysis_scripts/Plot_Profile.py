@@ -365,14 +365,14 @@ def processImages(conn, scriptParams):
 
         fileAnn, faMessage = scriptUtil.createLinkFileAnnotation(conn, fileName, image, 
         output="Line Plot csv (Excel) file", mimetype="text/csv", desc=None)
-        fileAnns.append(fileAnn)
+        if fileAnn:
+            fileAnns.append(fileAnn)
 
-    if len(fileAnns) == 1:
-        message += faMessage
+    if not fileAnns:
+        faMessage = "No Analysis files created. See 'Info' or 'Error' for more details"
     elif len(fileAnns) > 1:
-        message += "Created %s csv (Excel) files" % len(fileAnns)
-    else:
-        message += "No Analysis files created. See 'Info' or 'Error' for more details"
+        faMessage = "Created %s csv (Excel) files" % len(fileAnns)
+    message += faMessage
     
     return fileAnns, message
 
