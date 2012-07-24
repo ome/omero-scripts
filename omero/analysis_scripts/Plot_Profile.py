@@ -370,7 +370,7 @@ def processImages(conn, scriptParams):
     if len(fileAnns) == 1:
         message += faMessage
     elif len(fileAnns) > 1:
-        message += "Created %s csv (Excel) files attached to images" % len(fileAnns)))
+        message += "Created %s csv (Excel) files" % len(fileAnns)
     else:
         message += "No Analysis files created. See 'Info' or 'Error' for more details"
     
