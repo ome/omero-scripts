@@ -37,6 +37,7 @@ Kymographs are created in the form of new OMERO Images, single Z and T, same siz
 
 from omero.gateway import BlitzGateway
 import omero
+import omero.util.script_utils as scriptUtil
 from omero.rtypes import *
 import omero.scripts as scripts
 from cStringIO import StringIO
@@ -303,9 +304,16 @@ def linesKymograph(conn, scriptParams, image, lines, lineWidth, dataset):
 def processImages(conn, scriptParams):
     
     lineWidth = scriptParams['Line_Width']
-    imageIds = scriptParams['IDs']
     newKymographs = []
-    for image in conn.getObjects("Image", imageIds):
+    message =""
+    
+    # Get the images
+    images, logMessage = scriptUtil.getObjects(conn, scriptParams)
+    message += logMessage
+    if not images:
+        return None, message
+    
+    for image in images:
         
         newImages = []      # kymographs derived from the current image.
         cNames = []
@@ -322,7 +330,9 @@ def processImages(conn, scriptParams):
         pixels = image.getPrimaryPixels()
 
         dataset = image.getDataset()
-
+        if not dataset.canLink():
+            dataset = None
+            
         roiService = conn.getRoiService()
         result = roiService.findByImage(image.getId(), None)
         
@@ -411,7 +421,20 @@ def processImages(conn, scriptParams):
                 conn.getUpdateService().saveObject(px)
         newKymographs.extend(newImages)
     
-    return newKymographs
+    if not newKymographs:
+        message += "No kymograph created. See 'Error' or 'Info' for details."
+    else:        
+        if not dataset:
+            linkMessage = " but could not be attached"
+        else:
+            linkMessage = ""
+        
+        if len(newImages) == 1:        
+            message += "New kymograph created%s: %s." % (linkMessage, newImages[0].getName())
+        elif len(newImages) > 1:
+            message += "%s new kymographs created%s." % (len(newImages), linkMessage)
+
+    return newKymographs, message
 
 if __name__ == "__main__":
 
@@ -456,15 +479,13 @@ Kymographs are created in the form of new OMERO Images, with single Z and T, sam
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
 
-        newImages = processImages(conn, scriptParams)
+        newImages, message = processImages(conn, scriptParams)
 
         if len(newImages) == 1:
-            client.setOutput("Message", rstring("Script Ran OK. Created a Kymograph Image"))
             client.setOutput("New_Image",robject(newImages[0]._obj))
         elif len(newImages) > 1:
-            client.setOutput("Message", rstring("Script Ran OK. %d Kymographs created" % len(newImages) ))
             client.setOutput("First_Image",robject(newImages[0]._obj))  # return the first one
-        else:
-            client.setOutput("Message", rstring("No kymographs created. See 'Error' or 'Info' for details"))
+        client.setOutput("Message", rstring(message))            
+
     finally:
         client.closeSession()
