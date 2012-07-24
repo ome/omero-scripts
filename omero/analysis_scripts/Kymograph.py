@@ -487,10 +487,11 @@ Kymographs are created in the form of new OMERO Images, with single Z and T, sam
 
         newImages, message = processImages(conn, scriptParams)
 
-        if len(newImages) == 1:
-            client.setOutput("New_Image",robject(newImages[0]._obj))
-        elif len(newImages) > 1:
-            client.setOutput("First_Image",robject(newImages[0]._obj))  # return the first one
+        if newImages:
+            if len(newImages) == 1:
+                client.setOutput("New_Image",robject(newImages[0]._obj))
+            elif len(newImages) > 1:
+                client.setOutput("First_Image",robject(newImages[0]._obj))  # return the first one
         client.setOutput("Message", rstring(message))            
 
     finally:
