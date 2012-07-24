@@ -419,8 +419,9 @@ the data as csv files, for plotting in E.g. exell.""",
 
         fileAnns, message = processImages(conn, scriptParams)
 
-        if len(fileAnns) == 1:
-            client.setOutput("Line_Data", robject(fileAnns[0]._obj))
+        if fileAnns:
+            if len(fileAnns) == 1:
+                client.setOutput("Line_Data", robject(fileAnns[0]._obj))
         client.setOutput("Message", rstring(message))
         
     finally:
