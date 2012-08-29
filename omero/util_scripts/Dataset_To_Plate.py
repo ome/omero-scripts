@@ -155,7 +155,10 @@ def datasets_to_plates(conn, scriptParams):
     message += logMessage
     if not datasets:
         return None, message
-    IDs = [ds.getId() for ds in datasets]
+    IDs = [ds.getId() for ds in datasets if ds.canLink()]
+    if not IDs:
+        message += "No linkable dataset found."
+        return None, message
 
     # find or create Screen if specified
     screen = None
