@@ -155,9 +155,13 @@ def datasets_to_plates(conn, scriptParams):
     message += logMessage
     if not datasets:
         return None, message
+
+    # Filter dataset IDs by permissions
     IDs = [ds.getId() for ds in datasets if ds.canLink()]
+    if len(IDs) != len(datasets):
+        permIDs = [str(ds.getId()) for ds in datasets if not ds.canLink()]
+        message += "You don't have permission to re-link images within dataset: %s." % ",".join(permIDs)
     if not IDs:
-        message += "No linkable dataset found."
         return None, message
 
     # find or create Screen if specified
