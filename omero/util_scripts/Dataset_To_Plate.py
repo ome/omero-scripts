@@ -155,7 +155,14 @@ def datasets_to_plates(conn, scriptParams):
     message += logMessage
     if not datasets:
         return None, message
-    IDs = [ds.getId() for ds in datasets]
+
+    # Filter dataset IDs by permissions
+    IDs = [ds.getId() for ds in datasets if ds.canLink()]
+    if len(IDs) != len(datasets):
+        permIDs = [str(ds.getId()) for ds in datasets if not ds.canLink()]
+        message += "You do not have the permissions to add the images from the dataset(s): %s." % ",".join(permIDs)
+    if not IDs:
+        return None, message
 
     # find or create Screen if specified
     screen = None
