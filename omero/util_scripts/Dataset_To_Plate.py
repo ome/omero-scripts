@@ -160,7 +160,7 @@ def datasets_to_plates(conn, scriptParams):
     IDs = [ds.getId() for ds in datasets if ds.canLink()]
     if len(IDs) != len(datasets):
         permIDs = [str(ds.getId()) for ds in datasets if not ds.canLink()]
-        message += "You don't have permission to re-link images within dataset: %s." % ",".join(permIDs)
+        message += "You do not have the permissions to add the images from the dataset(s): %s." % ",".join(permIDs)
     if not IDs:
         return None, message
 
