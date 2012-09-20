@@ -673,7 +673,7 @@ def runAsScript():
     oColours = wrap(OVERLAY_COLOURS.keys())
     
     client = scripts.client('Movie_ROI_Figure.py', """Create a figure of movie frames from ROI region of image.
-See http://www.openmicroscopy.org/site/support/omero4/getting-started/tutorial/exporting-figures""",
+See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/insight/insight-export-figures.html""",
 
     scripts.String("Data_Type", optional=False, grouping="01",
         description="The data you want to work with.", values=dataTypes, default="Image"),

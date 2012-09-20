@@ -738,7 +738,7 @@ def runAsScript():
     
     client = scripts.client('ROI_Split_Figure.py', """Create a figure of an ROI region as separate zoomed split-channel panels.
 NB: OMERO.insight client provides a nicer UI for this script under 'Publishing Options'
-See https://www.openmicroscopy.org/site/support/omero4/getting-started/tutorial/exporting-figures""",
+See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/insight/insight-export-figures.html""",
 
     # provide 'Data_Type' and 'IDs' parameters so that Insight auto-populates with currently selected images.
     scripts.String("Data_Type", optional=False, grouping="01",
