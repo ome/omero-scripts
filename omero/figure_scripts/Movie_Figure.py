@@ -509,7 +509,7 @@ def runAsScript():
     
     client = scripts.client('Movie_Figure.py', """Export a figure of a movie, showing a row of frames for each chosen image. 
 NB: OMERO.insight client provides a nicer UI for this script under 'Publishing Options'
-See https://www.openmicroscopy.org/site/support/omero4/getting-started/tutorial/exporting-figures""",
+See https://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/insight/insight-export-figures.html""",
 
     # provide 'Data_Type' and 'IDs' parameters so that Insight auto-populates with currently selected images.
     scripts.String("Data_Type", optional=False, grouping="01",

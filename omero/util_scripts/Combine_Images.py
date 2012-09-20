@@ -487,7 +487,7 @@ def runAsScript():
     
     client = scripts.client('Combine_Images.py', """Combine several single-plane images (or Z-stacks) into one with 
 greater Z, C, T dimensions.
-See http://www.openmicroscopy.org/site/support/omero4/getting-started/tutorial/running-util-scripts""", 
+See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/insight/insight-util-scripts.html""",
     
     scripts.String("Data_Type", optional=False, grouping="1",
         description="Use all the images in specified 'Datasets' or choose individual 'Images'.", values=dataTypes, default="Image"),
