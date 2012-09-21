@@ -241,7 +241,7 @@ def runAsScript():
     client = scripts.client('Dataset_To_Plate.py', """Take a Dataset of Images and put them in a new Plate,
 arranging them into rows or columns as desired.
 Optionally add the Plate to a new or existing Screen.
-See http://www.openmicroscopy.org/site/support/omero4/getting-started/tutorial/running-util-scripts""",
+See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/insight/insight-util-scripts.html""",
 
     scripts.String("Data_Type", optional=False, grouping="1",
         description="Choose source of images (only Dataset supported)", values=dataTypes, default="Dataset"),
