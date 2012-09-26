@@ -309,25 +309,38 @@ def batchImageExport(conn, scriptParams):
                     tRange = (tStart, tEnd+1)
         return tRange
 
-    # Get the images or datasets
+    # Get the objects
     message = ""
     objects, logMessage = script_utils.getObjects(conn, scriptParams)
     message += logMessage
     if not objects:
         return None, message
     
-    # Attach figure to the first image
+    # Attach figure to the first object
     parent = objects[0]
     
-    if dataType == 'Dataset':
-        images = []
-        for ds in objects:
-            images.extend( list(ds.listChildren()) )
-        if not images:
-            message += "No image found in dataset(s)"
-            return None, message
-    else:
+    if dataType == 'Image':
         images = objects
+    else:
+        # Create list of images
+        images = []
+        if dataType == 'Dataset':
+            for ds in objects:
+                images.extend( list(ds.listChildren()) )
+        elif dataType == 'Plate':
+            images = []
+            for plate in objects:
+                for well in list(plate.listChildren()):
+                    for wellsample in list(well.listChildren()):
+                        images.append(wellsample.getImage())
+        else:
+            message += "Unsupported data type"
+            return None, message
+
+        # Test if image list is empty
+        if not images:
+            message += "No image found in %s%s(s)" % (dataType[0].lower(), dataType[1:])
+            return None, message
         
     log("Processing %s images" % len(images))
     
@@ -401,7 +414,9 @@ def runScript():
     The main entry point of the script, as called by the client via the scripting service, passing the required parameters. 
     """
        
-    dataTypes = [rstring('Dataset'),rstring('Image')]
+    dataTypes = [rstring('Dataset'),
+        rstring('Image'),
+        rstring('Plate')]
     formats = [rstring('JPEG'),
         rstring('PNG'),
         rstring('OME-TIFF')]
