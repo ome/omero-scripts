@@ -541,6 +541,7 @@ def writeMovie(commandArgs, conn):
     if not movieName.endswith(".%s" % ext):
         movieName = "%s.%s" % (movieName, ext)
         
+    movieName = movieName.replace(" ", "_")     # spaces in file name cause problems
     framesPerSec = 2
     if "FPS" in commandArgs:
         framesPerSec = commandArgs["FPS"]
