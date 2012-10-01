@@ -39,6 +39,7 @@ import omero
 from omero.rtypes import *
 import omero.scripts as scripts
 from cStringIO import StringIO
+import omero.util.script_utils as scriptUtil
 from numpy import *
 try:
     from PIL import Image
@@ -274,9 +275,22 @@ def processLines(conn, scriptParams, image, lines, lineWidth, fout):
 def processImages(conn, scriptParams):
     
     lineWidth = scriptParams['Line_Width']
-    imageIds = scriptParams['IDs']
     fileAnns = []
-    for image in conn.getObjects("Image", imageIds):
+    message =""
+    
+    # Get the images
+    images, logMessage = scriptUtil.getObjects(conn, scriptParams)
+    message += logMessage
+    if not images:
+        return None, message
+
+    # Check for line and polyline ROIs and filter images list
+    images = [image for image in images if image.getROICount(["Polyline","Line"])>0]
+    if not images:
+        message += "No ROI containing line or polyline was found."
+        return None, message
+
+    for image in images:
 
         cNames = []
         colors = []
@@ -349,11 +363,18 @@ def processImages(conn, scriptParams):
         finally:
             f.close()
 
-        fileAnn = conn.createFileAnnfromLocalFile(fileName, mimetype="text/csv", desc=None)
-        fileAnns.append(fileAnn)
-        image.linkAnnotation(fileAnn)
+        fileAnn, faMessage = scriptUtil.createLinkFileAnnotation(conn, fileName, image, 
+        output="Line Plot csv (Excel) file", mimetype="text/csv", desc=None)
+        if fileAnn:
+            fileAnns.append(fileAnn)
 
-    return fileAnns
+    if not fileAnns:
+        faMessage = "No Analysis files created. See 'Info' or 'Error' for more details"
+    elif len(fileAnns) > 1:
+        faMessage = "Created %s csv (Excel) files" % len(fileAnns)
+    message += faMessage
+    
+    return fileAnns, message
 
 if __name__ == "__main__":
 
@@ -396,15 +417,12 @@ the data as csv files, for plotting in E.g. exell.""",
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
 
-        fileAnns = processImages(conn, scriptParams)
+        fileAnns, message = processImages(conn, scriptParams)
 
-        if len(fileAnns) == 1:
-            client.setOutput("Message", rstring("Created Line Plot csv (Excel) file attached to image"))
-            client.setOutput("Line_Data", robject(fileAnns[0]._obj))
-        elif len(fileAnns) > 1:
-            client.setOutput("Message", rstring("Created %s csv (Excel) files attached to images" % len(fileAnns)))
-        else:
-            client.setOutput("Message", rstring("No Analysis files created. See 'Info' or 'Errror' for more details"))
+        if fileAnns:
+            if len(fileAnns) == 1:
+                client.setOutput("Line_Data", robject(fileAnns[0]._obj))
+        client.setOutput("Message", rstring(message))
         
     finally:
         client.closeSession()
