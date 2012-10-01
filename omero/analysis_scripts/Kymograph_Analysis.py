@@ -39,6 +39,7 @@ from omero.gateway import BlitzGateway
 import omero
 from omero.rtypes import *
 import omero.scripts as scripts
+import omero.util.script_utils as scriptUtil
 import math
 import os
 
@@ -64,13 +65,23 @@ def pointsStringToXYlist(string):
 def processImages(conn, scriptParams):
 
     fileAnns = []
-    imageIds = scriptParams['IDs']
-    for image in conn.getObjects("Image", imageIds):
+    message =""
+    # Get the images
+    images, logMessage = scriptUtil.getObjects(conn, scriptParams)
+    message += logMessage
+    if not images:
+        return None, message
+    # Check for line and polyline ROIs and filter images list
+    images = [image for image in images if image.getROICount(["Polyline","Line"])>0]
+    if not images:
+        message += "No ROI containing line or polyline was found."
+        return None, message
 
+    for image in images:
         print "\nAnalysing Image: %s ID: %s" % (image.getName(), image.getId())
         
         if image.getSizeT() > 1:
-            print "  This appears to be a time-lapse Image, not a kymograph"
+            message += "%s ID: %s appears to be a time-lapse Image, not a kymograph." % (image.getName(), image.getId())
             continue
         
         roiService = conn.getRoiService()
@@ -135,21 +146,28 @@ def processImages(conn, scriptParams):
             finally:
                 csvFile.close()
 
-            fileAnn = conn.createFileAnnfromLocalFile(csvFileName, mimetype="text/csv", desc=None)
-            fileAnns.append(fileAnn)
-            image.linkAnnotation(fileAnn)
+            fileAnn, faMessage = scriptUtil.createLinkFileAnnotation(conn, csvFileName, image, 
+                output="Line Plot csv (Excel) file", mimetype="text/csv", desc=None)
+            print fileAnn, faMessage
+            if fileAnn:
+                fileAnns.append(fileAnn)
         else:
             print "Found NO lines or polylines to analyse for Image"
 
-    return fileAnns
+    if not fileAnns:
+        faMessage = "No Analysis files created. See 'Info' or 'Error' for more details"
+    elif len(fileAnns) > 1:
+        faMessage = "Created %s csv (Excel) files" % len(fileAnns)
+    message += faMessage
+    return fileAnns, message
                         
 
 if __name__ == "__main__":
 
     dataTypes = [rstring('Image')]
 
-    client = scripts.client('Kymograph.py', """This script processes Images, which have Line or PolyLine ROIs to create kymographs.
-Kymographs are created in the form of new OMERO Images, with single Z and T, same sizeC as input.""",
+    client = scripts.client('Kymograph_Analysis.py', """This script analyses Kymograph images, which have Line or PolyLine ROIs that
+track moving objects. It generates a table of the speed of movement, saved as an Excell / csv file.""",
 
     scripts.String("Data_Type", optional=False, grouping="1",
         description="Choose source of images (only Image supported)", values=dataTypes, default="Image"),
@@ -175,15 +193,12 @@ Kymographs are created in the form of new OMERO Images, with single Z and T, sam
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
 
-        fileAnns = processImages(conn, scriptParams)
+        fileAnns, message = processImages(conn, scriptParams)
         
-        if len(fileAnns) == 1:
-            client.setOutput("Message", rstring("Created analysis csv (Excel) file attached to kymograph"))
-            client.setOutput("Kymograph_Analysis", robject(fileAnns[0]._obj))
-        elif len(fileAnns) > 1:
-            client.setOutput("Message", rstring("Created %s csv (Excel) files attached to kymographs" % len(fileAnns)))
-        else:
-            client.setOutput("Message", rstring("No Analysis files created. See 'Info' or 'Errror' for more details"))
-        
+        if fileAnns:
+            if len(fileAnns) == 1:
+                client.setOutput("Line_Data", robject(fileAnns[0]._obj))
+        client.setOutput("Message", rstring(message))
+
     finally:
         client.closeSession()
