@@ -58,7 +58,7 @@ import omero.util.script_utils as scriptUtil
 import omero.util.figureUtil as figUtil
 import omero
 import omero.min # Constants etc.
-import getopt, sys, os, subprocess
+import getopt, sys, os, subprocess, re
 import numpy
 import omero.util.pixelstypetopython as pixelstypetopython
 from struct import *
@@ -541,7 +541,7 @@ def writeMovie(commandArgs, conn):
     if not movieName.endswith(".%s" % ext):
         movieName = "%s.%s" % (movieName, ext)
         
-    movieName = movieName.replace(" ", "_").replace("'", "")    # spaces etc in file name cause problems
+    movieName = re.sub("[$&\;|\(\)<>' ]","",movieName)    # spaces etc in file name cause problems
     framesPerSec = 2
     if "FPS" in commandArgs:
         framesPerSec = commandArgs["FPS"]
