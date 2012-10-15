@@ -418,6 +418,7 @@ def combineImages(conn, parameterMap):
     dataType = parameterMap["Data_Type"]
     if dataType == "Image":
         dataset = None
+        objects.sort(key=lambda x:(x.getName()))    # Sort images by name
         imageIds = [image.id for image in objects]
         # get dataset from first image
         query_string = "select i from Image i join fetch i.datasetLinks idl join fetch idl.parent where i.id in (%s)" % imageIds[0]
