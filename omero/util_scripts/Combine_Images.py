@@ -232,13 +232,13 @@ def assignImagesByRegex(parameterMap, imageIds, queryService, sourceZ, idNameMap
             print "Image ID: %s Name: %s is Z: %s C: %s T: %s channelName: %s" % (iId, name, theZ, theC, theT, cName)
             imageMap[(theZ,theC,theT)] = (iId, 0)   # every plane comes from z=0 
     
-    print "tStart:", tStart, "zStart:", zStart, "sizeT", sizeT, "sizeZ", sizeZ
+    print "assignImagesByRegex tStart:", tStart, "zStart:", zStart, "maxT+1:", sizeT, "maxZ+1:", sizeZ
     
     # if indexes were 1-based (or higher), need to shift indexes accordingly. 
     if tStart > 0 or zStart > 0:
         sizeT = sizeT-tStart
         sizeZ = sizeZ-zStart
-        print "sizeT", sizeT, "sizeZ", sizeZ
+        print "   sizeT:", sizeT, "sizeZ:", sizeZ
         iMap = {}
         for key, value in imageMap.items():
             z, c, t = key
@@ -281,7 +281,7 @@ def makeSingleImage(services, parameterMap, imageIds, dataset, colourMap):
     rawFileStore = services["rawFileStore"]
     containerService = services["containerService"]
     
-    print "imageIds", len(imageIds)
+    print "makeSingleImage: imageId count:", len(imageIds)
     
     # Filter images by name if user has specified filter. 
     idNameMap = None
@@ -292,7 +292,6 @@ def makeSingleImage(services, parameterMap, imageIds, dataset, colourMap):
             idNameMap = getImageNames(queryService, imageIds)
             imageIds = [i for i in imageIds if idNameMap[i].find(filterString) > -1]
             
-    print "imageIds", len(imageIds)
     imageId = imageIds[0]
     
     # get pixels, with pixelsType, from the first image
@@ -356,8 +355,6 @@ def makeSingleImage(services, parameterMap, imageIds, dataset, colourMap):
         if theC in colourMap:
             rgba = colourMap[theC]
             print "Setting the Channel colour:", rgba
-    
-    for theC in range(sizeC):
         scriptUtil.resetRenderingSettings(renderingEngine, pixelsId, theC, minValue, maxValue, rgba)
     
     # rename new channels
@@ -403,7 +400,8 @@ def combineImages(conn, parameterMap):
             colour = col.getValue()
             if colour in COLOURS:
                 colourMap[c] = COLOURS[colour]
-                
+    print "colourMap", colourMap
+
     # Get images or datasets
     message =""
     objects, logMessage = scriptUtil.getObjects(conn, parameterMap)
@@ -418,6 +416,7 @@ def combineImages(conn, parameterMap):
     dataType = parameterMap["Data_Type"]
     if dataType == "Image":
         dataset = None
+        objects.sort(key=lambda x:(x.getName()))    # Sort images by name
         imageIds = [image.id for image in objects]
         # get dataset from first image
         query_string = "select i from Image i join fetch i.datasetLinks idl join fetch idl.parent where i.id in (%s)" % imageIds[0]
