@@ -383,16 +383,22 @@ def batchImageExport(conn, scriptParams):
 
     # zip everything up (unless we've only got a single ome-tiff)
     if format == 'OME-TIFF' and len(os.listdir(exp_dir)) == 1:
+        ometiffIds = [t.id for t in parent.listAnnotations(ns=omero.constants.namespaces.NSOMETIFF)]
+        print "Deleting OLD ome-tiffs: %s" % ometiffIds
+        conn.deleteObjects("Annotation", ometiffIds)
         export_file = os.path.join(folder_name, os.listdir(exp_dir)[0])
+        namespace = omero.constants.namespaces.NSOMETIFF
+        outputDisplayName = "OME-TIFF"
         mimetype = 'image/tiff'
     else:
         export_file = "%s.zip" % folder_name
         compress(export_file, folder_name)
         mimetype='application/zip'
+        outputDisplayName = "Batch export zip"
+        namespace = omero.constants.namespaces.NSCREATED+"/omero/export_scripts/Batch_Image_Export"
 
-    namespace = omero.constants.namespaces.NSCREATED+"/omero/export_scripts/Batch_Image_Export"
     fileAnnotation, annMessage = script_utils.createLinkFileAnnotation(conn, export_file, parent, 
-        output="Batch export zip", ns=namespace, mimetype=mimetype)
+        output=outputDisplayName, ns=namespace, mimetype=mimetype)
     message += annMessage
     return fileAnnotation, message
 
