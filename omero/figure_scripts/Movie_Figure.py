@@ -332,8 +332,9 @@ def movieFigure(conn, commandArgs):
                 "MINS_SECS": "mins:secs",
                 "HOURS_MINS": "hours:mins"}
     timeUnits = "SECS"
-    if "timeUnits" in commandArgs:
-        timeUnits = commandArgs["timeUnits"]
+    if "Time_Units" in commandArgs:
+        timeUnits = commandArgs["Time_Units"]
+        timeUnits = timeUnits.replace(" ", "_")     # convert from UI name to timeLabels key
     if timeUnits not in timeLabels.keys():
         timeUnits = "SECS"
     log("Time units are in %s" % timeLabels[timeUnits])
