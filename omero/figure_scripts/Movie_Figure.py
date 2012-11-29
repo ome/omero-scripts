@@ -48,6 +48,7 @@ import getopt, sys, os, subprocess
 import StringIO
 from omero_sys_ParametersI import ParametersI
 from datetime import date
+import math
 
 try:
     from PIL import Image, ImageDraw # see ticket:2597
@@ -67,13 +68,12 @@ def log(text):
     logLines.append(text)
     
 
-def getImageFrames(conn, pixelIds, tIndexes, zStart, zEnd, width, height, spacer,
-            algorithm, stepping, scalebar, overlayColour, timeUnits):
-    
+def createMovieFigure(conn, pixelIds, tIndexes, zStart, zEnd, width, height, spacer,
+            algorithm, stepping, scalebar, overlayColour, timeUnits, imageLabels, maxColCount):
     """
-    Makes a canvas showing an image per row with multiple columns showing 
+    Makes the complete Movie figure: A canvas showing an image per row with multiple columns showing 
     frames from each image/movie. Labels obove each frame to show the time-stamp of that frame in the 
-    specified units. 
+    specified units and labels on the left name each image. 
     
     @param session        The OMERO session
     @param pixelIds        A list of the Pixel IDs for the images in the figure
@@ -88,6 +88,7 @@ def getImageFrames(conn, pixelIds, tIndexes, zStart, zEnd, width, height, spacer
     @param scalebar        A number of microns for scale-bar
     @param overlayColour     Colour of the scale-bar as tuple (255,255,255)
     @param timeUnits    A string such as "SECS"
+    @param imageLabels    A list of lists, corresponding to pixelIds, for labelling each image with one or more strings.
     """
     
     mode = "RGB"
@@ -179,10 +180,12 @@ def getImageFrames(conn, pixelIds, tIndexes, zStart, zEnd, width, height, spacer
 
         
         # make a canvas for the row of splitview images...(will add time labels above each row)
+        colCount = min(maxColCount, len(renderedImages))
+        rowCount = math.ceil(float(len(renderedImages)) / colCount)
         font = imgUtil.getFont(width/12)
         fontHeight = font.getsize("Textq")[1]
-        canvasWidth = ((width + spacer) * len(renderedImages)) + spacer
-        canvasHeight = spacer/2 + fontHeight + spacer + height
+        canvasWidth = ((width + spacer) * colCount) + spacer
+        canvasHeight = rowCount * (spacer/2 + fontHeight + spacer + height)
         size = (canvasWidth, canvasHeight)
         canvas = Image.new(mode, size, white)        # create a canvas of appropriate width, height
         
@@ -190,6 +193,7 @@ def getImageFrames(conn, pixelIds, tIndexes, zStart, zEnd, width, height, spacer
         queryService = conn.getQueryService()
         textX = spacer
         textY = spacer/4
+        colIndex = 0
         timeLabels = figUtil.getTimeLabels(queryService, pixelsId, tIndexes, sizeT, timeUnits)
         for t, tIndex in enumerate(tIndexes):
             if tIndex >= sizeT:
@@ -200,6 +204,11 @@ def getImageFrames(conn, pixelIds, tIndexes, zStart, zEnd, width, height, spacer
             textdraw = ImageDraw.Draw(canvas)
             textdraw.text((textX+inset, textY), time, font=font, fill=(0,0,0))
             textX += width + spacer
+            colIndex += 1
+            if colIndex >= maxColCount:
+                colIndex = 0
+                textX = spacer
+                textY += (spacer/2 + fontHeight + spacer + height)
     
         # add scale bar to last frame...
         if scalebar:
@@ -214,13 +223,23 @@ def getImageFrames(conn, pixelIds, tIndexes, zStart, zEnd, width, height, spacer
                 
         px = spacer
         py = spacer + fontHeight
+        colIndex = 0
         # paste the images in
-        for img in renderedImages:
+        for i, img in enumerate(renderedImages):
             imgUtil.pasteImage(img, canvas, px, py)
             px = px + width + spacer
+            colIndex += 1
+            if colIndex >= maxColCount:
+                colIndex = 0
+                px = spacer
+                py += (spacer/2 + fontHeight + spacer + height)
     
-        totalWidth = max(totalWidth, canvasWidth)    # most should be same width anyway
-        totalHeight = totalHeight + canvasHeight    # add together the heights of each row
+        # Add labels to the left of the panel
+        canvas = addLeftLabels(canvas, imageLabels, row, width, spacer)
+        
+        totalWidth = max(totalWidth, canvas.size[0])    # most should be same width anyway
+        totalHeight = totalHeight + canvas.size[1]    # add together the heights of each row
+        
         rowPanels.append(canvas)
         
     # make a figure to combine all split-view rows
@@ -236,70 +255,58 @@ def getImageFrames(conn, pixelIds, tIndexes, zStart, zEnd, width, height, spacer
     return figureCanvas
     
     
-def createMovieFigure(conn, pixelIds, tIndexes, zStart, zEnd, width, height, spacer,
-                            algorithm, stepping, scalebar, overlayColour, timeUnits, imageLabels):
+def addLeftLabels(panelCanvas, imageLabels, rowIndex, width, spacer):
     """
-    Makes the complete Movie figure: A canvas showing an image per row with multiple columns showing 
-    frames from each image/movie. Labels obove each frame to show the time-stamp of that frame in the 
-    specified units and labels on the left name each image. 
+    Takes a canvas of panels and adds one or more labels to the left,
+    with the text aligned vertically.
+    NB: We are passed the set of labels for ALL image panels (as well as the
+    index of the current image panel) so that we know what is the max label count
+    and can give all panels the same margin on the left.
     
-    @param session        The OMERO session
-    @param pixelIds        A list of the Pixel IDs for the images in the figure
-    @param tIndexes        A list of tIndexes to display frames from
-    @param zStart        Projection Z-start
-    @param zEnd            Projection Z-end
-    @param width        Maximum width of panels
-    @param height        Max height of panels
-    @param spacer        Space between panels
-    @param algorithm    Projection algorithm e.g. "MAXIMUMINTENSITY"
-    @param stepping        Projecttion z-step
-    @param scalebar        A number of microns for scale-bar
-    @param overlayColour     Colour of the scale-bar as tuple (255,255,255)
-    @param timeUnits    A string such as "SECS"
-    @param imageLabels    A list of lists, corresponding to pixelIds, for labelling each image with one or more strings.
+    @param panelCanvas:     PIL image - add labels to the left of this
+    @param imageLabels:     A series of label lists, one per image. We only add labels from one list
+    @param rowIndex:        The index of the label list we're going to use from imageLabels
+    @param width:           Simply used for finding a suitable font size
+    @param spacer:          Space between panels
     """
-
-    panelCanvas = getImageFrames(conn, pixelIds, tIndexes, zStart, zEnd, width, height, spacer,
-                            algorithm, stepping, scalebar, overlayColour, timeUnits)
-                    
+    
     # add lables to row...
     mode = "RGB"
     white = (255,255,255)
     font = imgUtil.getFont(width/12)
     textHeight = font.getsize("Sampleq")[1]
     textGap = spacer /2
-    rowSpacing = panelCanvas.size[1]/len(pixelIds)
+    #rowSpacing = panelCanvas.size[1]/len(pixelIds)
     
     # find max number of labels
     maxCount = 0 
     rowHeights = []
     for row in imageLabels:
         maxCount = max(maxCount, len(row))
-    leftTextWidth = (textHeight + textGap) * maxCount
-    size = (panelCanvas.size[1], leftTextWidth)    # make the canvas as wide as the panels height
+    leftTextHeight = (textHeight + textGap) * maxCount
+    leftTextWidth = panelCanvas.size[1]    # make the canvas as wide as the panels height
+    size = (leftTextWidth, leftTextHeight)
     textCanvas = Image.new(mode, size, white)
     textdraw = ImageDraw.Draw(textCanvas)
     px = spacer
-    imageLabels.reverse()
-    for row in imageLabels:
-        py = leftTextWidth - textGap # start at bottom
-        for l, label in enumerate(row):
-            py = py - textHeight    # find the top of this row
-            w = textdraw.textsize(label, font=font) [0]
-            inset = int((height - w) / 2)
-            textdraw.text((px+inset, py), label, font=font, fill=(0,0,0))
-            py = py - textGap    # add space between rows
-        px = px + rowSpacing         # 2 spacers between each row
-        
+
+    labels = imageLabels[rowIndex]
+    py = leftTextHeight - textGap # start at bottom
+    for l, label in enumerate(labels):
+        py = py - textHeight    # find the top of this row
+        w = textdraw.textsize(label, font=font) [0]
+        inset = int((leftTextWidth - w) / 2)
+        textdraw.text((inset, py), label, font=font, fill=(0,0,0))
+        py = py - textGap    # add space between rows
 
     # make a canvas big-enough to add text to the images. 
-    canvasWidth = leftTextWidth + panelCanvas.size[0]
+    canvasWidth = leftTextHeight + panelCanvas.size[0]      # TextHeight will be width once rotated
     canvasHeight = panelCanvas.size[1]
     size = (canvasWidth, canvasHeight)
     canvas = Image.new(mode, size, white)        # create a canvas of appropriate width, height
     
     # add the panels to the canvas 
-    pasteX = leftTextWidth
+    pasteX = leftTextHeight
     pasteY = 0
     imgUtil.pasteImage(panelCanvas, canvas, pasteX, pasteY)
     
@@ -310,8 +317,8 @@ def createMovieFigure(conn, pixelIds, tIndexes, zStart, zEnd, width, height, spa
         imgUtil.pasteImage(textV, canvas, spacer/2, 0)
             
     return canvas
-    
-    
+
+
 def movieFigure(conn, commandArgs):
     """
     Makes the figure using the parameters in @commandArgs, attaches the figure to the 
@@ -332,8 +339,9 @@ def movieFigure(conn, commandArgs):
                 "MINS_SECS": "mins:secs",
                 "HOURS_MINS": "hours:mins"}
     timeUnits = "SECS"
-    if "timeUnits" in commandArgs:
-        timeUnits = commandArgs["timeUnits"]
+    if "Time_Units" in commandArgs:
+        timeUnits = commandArgs["Time_Units"]
+        timeUnits = timeUnits.replace(" ", "_")     # convert from UI name to timeLabels key
     if timeUnits not in timeLabels.keys():
         timeUnits = "SECS"
     log("Time units are in %s" % timeLabels[timeUnits])
@@ -455,11 +463,13 @@ def movieFigure(conn, commandArgs):
     if "Scalebar_Colour" in commandArgs:
         r,g,b,a = OVERLAY_COLOURS[commandArgs["Scalebar_Colour"]]
         overlayColour = (r,g,b)
+
+    maxColCount = 10
+    if "Max_Columns" in commandArgs:
+        maxColCount = commandArgs["Max_Columns"]
                 
     figure = createMovieFigure(conn, pixelIds, tIndexes, zStart, zEnd, width, height, spacer,
-                            algorithm, stepping, scalebar, overlayColour, timeUnits, imageLabels)
-    
-    #figure.show()
+                            algorithm, stepping, scalebar, overlayColour, timeUnits, imageLabels, maxColCount)
     
     log("")
     figLegend = "\n".join(logLines)
@@ -546,6 +556,8 @@ See https://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/in
         description="File name of the figure to save."),
     scripts.String("Time_Units", grouping="13",
         description="The units to use for time display", values=tunits),
+    scripts.Int("Max_Columns", grouping="04.1", default=10,
+        description="The maximum number of columns in the figure, for movie frames.", min=1),
     
     version = "4.3.0",
     authors = ["William Moore", "OME Team"],
