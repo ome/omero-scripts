@@ -219,7 +219,7 @@ def makeThumbnailFigure(conn, scriptParams):
     # Get parent
     parent = None
     if "Parent_ID" in scriptParams and len(scriptParams["IDs"]) > 1:
-        if dataType == "Image":
+        if scriptParams["Data_Type"] == "Image":
             parent = conn.getObject("Dataset", scriptParams["Parent_ID"])
         else:
             parent = conn.getObject("Project", scriptParams["Parent_ID"])
