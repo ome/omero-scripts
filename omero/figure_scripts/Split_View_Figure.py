@@ -55,8 +55,6 @@ except ImportError:
 COLOURS = scriptUtil.COLOURS    # name:(rgba) map
 OVERLAY_COLOURS = dict(COLOURS, **scriptUtil.EXTRA_COLOURS)
 
-JPEG = "image/jpeg"
-PNG = "image/png"
 
 # keep track of log strings. 
 logStrings = []
@@ -587,15 +585,17 @@ def splitViewFigure(conn, scriptParams):
                         mergedIndexes, mergedColours, mergedNames, width, height, imageLabels, algorithm, stepping, scalebar, overlayColour)
 
     figLegend = "\n".join(logStrings)
-    format = JPEG
-    if scriptParams["Format"] == "PNG":
-        format = PNG
-    output = scriptParams["Figure_Name"]
 
-    if format == PNG:
+    output = scriptParams["Figure_Name"]
+    format = scriptParams["Format"]
+    if format == "PNG":
         output = output + ".png"
         fig.save(output, "PNG")
         mimetype = "image/png"
+    elif format == 'TIFF':
+        output = output + ".tiff"
+        fig.save(output, "TIFF")
+        mimetype = "image/tiff"
     else:
         output = output + ".jpg"
         fig.save(output)
@@ -619,7 +619,7 @@ def runAsScript():
     dataTypes = [rstring('Image')]
     labels = [rstring('Image Name'), rstring('Datasets'), rstring('Tags')]
     algorithums = [rstring('Maximum Intensity'),rstring('Mean Intensity')]
-    formats = [rstring('JPEG'),rstring('PNG')]
+    formats = [rstring('JPEG'),rstring('PNG'),rstring('TIFF')]
     ckeys = COLOURS.keys()
     ckeys.sort()
     cOptions = wrap(ckeys)
