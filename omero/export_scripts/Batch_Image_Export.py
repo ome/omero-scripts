@@ -476,7 +476,7 @@ See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/ins
         description="The max width of each image panel. Default is actual size", min=1),
 
     scripts.String("Format", grouping="8", 
-        description="Format to save image", values=formats, default='PNG'),
+        description="Format to save image", values=formats, default='JPEG'),
     
     scripts.String("Folder_Name", grouping="9",
         description="Name of folder (and zip file) to store images", default='Batch_Image_Export'),

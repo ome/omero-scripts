@@ -550,7 +550,7 @@ See https://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/in
     scripts.String("Scalebar_Colour", grouping="10.2",
         description="The colour of the scalebar.",default='White',values=oColours),
     scripts.String("Format", grouping="11",
-        description="Format to save image.", values=formats),
+        description="Format to save image.", values=formats, default='JPEG'),
     scripts.String("Figure_Name", grouping="12",
         description="File name of the figure to save."),
     scripts.String("Time_Units", grouping="13",
