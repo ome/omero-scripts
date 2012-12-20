@@ -59,8 +59,6 @@ WHITE = (255, 255, 255)
 COLOURS = scriptUtil.COLOURS    # name:(rgba) map
 OVERLAY_COLOURS = dict(COLOURS, **scriptUtil.EXTRA_COLOURS)
 
-JPEG = "image/jpeg"
-PNG = "image/png"
 
 logLines = []    # make a log / legend of the figure
 def log(text):
@@ -476,19 +474,20 @@ def movieFigure(conn, commandArgs):
     
     #print figLegend    # bug fixing only
     
-    format = JPEG
-    if "Format" in commandArgs:
-        if commandArgs["Format"] == "PNG":
-            format = PNG
+    format = commandArgs["Format"]
             
     output = "movieFigure"
     if "Figure_Name" in commandArgs:
         output = str(commandArgs["Figure_Name"])
         
-    if format == PNG:
+    if format == 'PNG':
         output = output + ".png"
         figure.save(output, "PNG")
         mimetype = "image/png"
+    elif format == 'TIFF':
+        output = output + ".tiff"
+        figure.save(output, "TIFF")
+        mimetype = "image/tiff"
     else:
         output = output + ".jpg"
         figure.save(output)
@@ -511,7 +510,7 @@ def runAsScript():
     labels = [rstring('Image Name'), rstring('Datasets'), rstring('Tags')]
     algorithums = [rstring('Maximum Intensity'),rstring('Mean Intensity')]
     tunits =  [rstring("SECS"), rstring("MINS"), rstring("HOURS"), rstring("MINS SECS"), rstring("HOURS MINS")]
-    formats = [rstring('JPEG'),rstring('PNG')]
+    formats = [rstring('JPEG'),rstring('PNG'),rstring('TIFF')]
     ckeys = COLOURS.keys()
     ckeys.sort()
     cOptions = wrap(ckeys)
@@ -551,7 +550,7 @@ See https://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/in
     scripts.String("Scalebar_Colour", grouping="10.2",
         description="The colour of the scalebar.",default='White',values=oColours),
     scripts.String("Format", grouping="11",
-        description="Format to save image.", values=formats),
+        description="Format to save image.", values=formats, default='JPEG'),
     scripts.String("Figure_Name", grouping="12",
         description="File name of the figure to save."),
     scripts.String("Time_Units", grouping="13",
