@@ -115,6 +115,10 @@ def savePlane(image, format, cName, zRange, projectZ, t=0, channel=None, greysca
         imgName = makeImageName(originalName, cName, zRange, t, "png", folder_name)
         log("Saving image: %s" % imgName)
         plane.save(imgName, "PNG")
+    elif format == 'TIFF':
+        imgName = makeImageName(originalName, cName, zRange, t, "tiff", folder_name)
+        log("Saving image: %s" % imgName)
+        plane.save(imgName, 'TIFF')
     else:
         imgName = makeImageName(originalName, cName, zRange, t, "jpg", folder_name)
         log("Saving image: %s" % imgName)
@@ -410,6 +414,7 @@ def runScript():
     dataTypes = [rstring('Dataset'),rstring('Image')]
     formats = [rstring('JPEG'),
         rstring('PNG'),
+        rstring('TIFF'),
         rstring('OME-TIFF')]
     defaultZoption = 'Default-Z (last-viewed)'
     zChoices = [rstring(defaultZoption),
@@ -471,7 +476,7 @@ See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/ins
         description="The max width of each image panel. Default is actual size", min=1),
 
     scripts.String("Format", grouping="8", 
-        description="Format to save image", values=formats, default='PNG'),
+        description="Format to save image", values=formats, default='JPEG'),
     
     scripts.String("Folder_Name", grouping="9",
         description="Name of folder (and zip file) to store images", default='Batch_Image_Export'),
