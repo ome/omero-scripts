@@ -172,7 +172,10 @@ def getSplitView(conn, pixelIds, zStart, zEnd, splitIndexes, channelNames, colou
         
 
 
-        # turn on channels in mergedIndexes.
+        # turn on channels in mergedIndexes
+        for i in range(sizeC): 
+            re.setActive(i, False)      # Turn all off first
+        log("Turning on mergedIndexes: %s ..." % mergedIndexes)
         for i in mergedIndexes:
             if i >= sizeC:
                 channelMismatch = True
