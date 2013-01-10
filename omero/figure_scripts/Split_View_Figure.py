@@ -553,9 +553,15 @@ def splitViewFigure(conn, scriptParams):
         cColourMap = scriptParams["Merged_Colours"]
         for c in cColourMap:
             rgb = cColourMap[c]
+            try:
+                rgb = int(rgb)
+                cIndex = int(c)
+            except ValueError:
+                print "Merged_Colours map should be index:rgbInt. Not %s:%s" % (c, rgb)
+                continue
             rgba = imgUtil.RGBIntToRGBA(rgb)
-            mergedColours[int(c)] = rgba
-            mergedIndexes.append(int(c))
+            mergedColours[cIndex] = rgba
+            mergedIndexes.append(cIndex)
         mergedIndexes.sort()
     else:
         mergedIndexes = range(sizeC)
