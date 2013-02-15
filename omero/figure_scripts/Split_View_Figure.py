@@ -172,7 +172,10 @@ def getSplitView(conn, pixelIds, zStart, zEnd, splitIndexes, channelNames, colou
         
 
 
-        # turn on channels in mergedIndexes.
+        # turn on channels in mergedIndexes
+        for i in range(sizeC): 
+            re.setActive(i, False)      # Turn all off first
+        log("Turning on mergedIndexes: %s ..." % mergedIndexes)
         for i in mergedIndexes:
             if i >= sizeC:
                 channelMismatch = True
@@ -550,9 +553,15 @@ def splitViewFigure(conn, scriptParams):
         cColourMap = scriptParams["Merged_Colours"]
         for c in cColourMap:
             rgb = cColourMap[c]
+            try:
+                rgb = int(rgb)
+                cIndex = int(c)
+            except ValueError:
+                print "Merged_Colours map should be index:rgbInt. Not %s:%s" % (c, rgb)
+                continue
             rgba = imgUtil.RGBIntToRGBA(rgb)
-            mergedColours[int(c)] = rgba
-            mergedIndexes.append(int(c))
+            mergedColours[cIndex] = rgba
+            mergedIndexes.append(cIndex)
         mergedIndexes.sort()
     else:
         mergedIndexes = range(sizeC)
