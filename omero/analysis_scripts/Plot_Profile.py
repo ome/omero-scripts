@@ -40,7 +40,11 @@ from omero.rtypes import *
 import omero.scripts as scripts
 from cStringIO import StringIO
 import omero.util.script_utils as scriptUtil
-from numpy import *
+try:
+    from numpy import *
+    numpyImported = True
+except ImportError:
+    numpyImported = False
 try:
     from PIL import Image
 except ImportError:
@@ -376,13 +380,20 @@ def processImages(conn, scriptParams):
     
     return fileAnns, message
 
-if __name__ == "__main__":
+def runScript():
+
+    if numpyImported == False:
+        client = scripts.client('Plot_Profile.py', """This script analyses pixel intensity along Line ROIs.
+                YOU DO NOT HAVE 'NUMPY' INSTALLED, SO THIS SCRIPT CANNOT BE RUN""")
+        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
+        client.closeSession()
+        return
 
     dataTypes = [rstring('Image')]
     sumAvgOptions = [rstring('Average'), rstring('Sum'), rstring('Average, with raw data')]
 
     client = scripts.client('Plot_Profile.py', """This script processes Images, which have Line or PolyLine ROIs and outputs 
-the data as csv files, for plotting in E.g. exell.""",
+the pixel intensity as csv files, for plotting in E.g. Excell.""",
 
     scripts.String("Data_Type", optional=False, grouping="1",
         description="Choose source of images (only Image supported)", values=dataTypes, default="Image"),
@@ -426,3 +437,6 @@ the data as csv files, for plotting in E.g. exell.""",
         
     finally:
         client.closeSession()
+
+if __name__ == "__main__":
+    runScript()
