@@ -40,7 +40,11 @@ from omero.rtypes import *
 import omero.util.script_utils as script_utils
 
 import os
-import numpy
+try:
+    import numpy
+    numpyImported = True
+except ImportError:
+    numpyImported = False
 
 import time
 startTime = 0
@@ -361,6 +365,13 @@ def runAsScript():
     """
     printDuration(False)    # start timer
     dataTypes = [rstring('Dataset'),rstring('Image')]
+
+    if numpyImported == False:
+        client = scripts.client('Images_From_ROIs.py', """Create new Images from the regions defined by Rectangle ROIs on other Images.
+                YOU DO NOT HAVE 'NUMPY' INSTALLED, SO THIS SCRIPT CANNOT BE RUN""")
+        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
+        client.closeSession()
+        return
     
     client = scripts.client('Images_From_ROIs.py', """Create new Images from the regions defined by Rectangle ROIs on other Images.
 Designed to work with single-plane images (Z=1 T=1) with multiple ROIs per image. 
