@@ -41,7 +41,11 @@ import omero.util.script_utils as scriptUtil
 from omero.rtypes import *
 import omero.scripts as scripts
 from cStringIO import StringIO
-from numpy import *
+try:
+    from numpy import *
+    numpyImported = True
+except ImportError:
+    numpyImported = False
 try:
     from PIL import Image
 except ImportError:
@@ -442,9 +446,16 @@ def processImages(conn, scriptParams):
 
     return newKymographs, message
 
-if __name__ == "__main__":
+def runScript():
 
     dataTypes = [rstring('Image')]
+
+    if numpyImported == False:
+        client = scripts.client('Kymograph.py', """This script processes Images, which have Line or PolyLine ROIs to create kymographs.
+                YOU DO NOT HAVE 'NUMPY' INSTALLED, SO THIS SCRIPT CANNOT BE RUN""")
+        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
+        client.closeSession()
+        return
 
     client = scripts.client('Kymograph.py', """This script processes Images, which have Line or PolyLine ROIs to create kymographs.
 Kymographs are created in the form of new OMERO Images, with single Z and T, same sizeC as input.""",
@@ -496,3 +507,7 @@ Kymographs are created in the form of new OMERO Images, with single Z and T, sam
 
     finally:
         client.closeSession()
+
+
+if __name__ == "__main__":
+    runScript()
