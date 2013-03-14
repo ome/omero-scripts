@@ -393,7 +393,7 @@ def runScript():
     sumAvgOptions = [rstring('Average'), rstring('Sum'), rstring('Average, with raw data')]
 
     client = scripts.client('Plot_Profile.py', """This script processes Images, which have Line or PolyLine ROIs and outputs 
-the pixel intensity as csv files, for plotting in E.g. Excell.""",
+the pixel intensity as csv files, for plotting in E.g. Excel.""",
 
     scripts.String("Data_Type", optional=False, grouping="1",
         description="Choose source of images (only Image supported)", values=dataTypes, default="Image"),
