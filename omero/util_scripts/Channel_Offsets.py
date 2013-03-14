@@ -40,7 +40,11 @@ from omero.rtypes import *
 import omero.util.script_utils as script_utils
 
 import os
-from numpy import zeros, hstack, vstack
+try:
+    from numpy import zeros, hstack, vstack
+    numpyImported = True
+except ImportError:
+    numpyImported = False
 
 import time
 
@@ -255,6 +259,13 @@ def processImages(conn, scriptParams):
 def runAsScript():
 
     dataTypes = [rstring('Image')]
+
+    if numpyImported == False:
+        client = scripts.client('Channel_Offsets.py', """Create new Images from existing images with x, y, z Offsets.
+                YOU DO NOT HAVE 'NUMPY' INSTALLED, SO THIS SCRIPT CANNOT BE RUN""")
+        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
+        client.closeSession()
+        return
 
     client = scripts.client('Channel_Offsets.py', """Create new Images from existing images,
 applying an x, y and z shift to each channel independently.
