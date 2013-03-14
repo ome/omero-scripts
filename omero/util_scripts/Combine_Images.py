@@ -32,9 +32,13 @@ This script takes a number of images (or Z-stacks) and merges them to create add
  
 """
 
-import numpy
+try:
+    import numpy
+    from numpy import zeros
+    numpyImported = True
+except ImportError:
+    numpyImported = False
 import re
-from numpy import zeros
 
 import omero
 import omero.scripts as scripts
@@ -483,6 +487,13 @@ def runAsScript():
     channelRegs = [rstring(r) for r in channelRegexes.keys()]
     zRegs = [rstring(r) for r in zRegexes.keys()]
     tRegs = [rstring(r) for r in timeRegexes.keys()]
+
+    if numpyImported == False:
+        client = scripts.client('Combine_Images.py', """Combine several single-plane images (or Z-stacks) into one.
+                YOU DO NOT HAVE 'NUMPY' INSTALLED, SO THIS SCRIPT CANNOT BE RUN""")
+        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
+        client.closeSession()
+        return
     
     client = scripts.client('Combine_Images.py', """Combine several single-plane images (or Z-stacks) into one with 
 greater Z, C, T dimensions.
