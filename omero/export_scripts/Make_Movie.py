@@ -59,7 +59,11 @@ import omero.util.figureUtil as figUtil
 import omero
 import omero.min # Constants etc.
 import getopt, sys, os, subprocess, re
-import numpy
+try:
+    import numpy
+    numpyImported = True
+except ImportError:
+    numpyImported = False
 import omero.util.pixelstypetopython as pixelstypetopython
 from struct import *
 from omero.rtypes import wrap, rstring, rlong, rint, robject
@@ -576,6 +580,13 @@ def runAsScript():
     cOptions = wrap(ckeys)
     dataTypes= [rstring("Image")]
     
+    if numpyImported == False:
+        client = scripts.client('Make_Movie.py', """MakeMovie creates a movie of the image.
+                YOU DO NOT HAVE 'NUMPY' INSTALLED, SO THIS SCRIPT CANNOT BE RUN""")
+        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
+        client.closeSession()
+        return
+
     client = scripts.client('Make_Movie','MakeMovie creates a movie of the image and attaches it to the originating image.',
     scripts.String("Data_Type", optional=False, grouping="1", description="Choose Images via their 'Image' IDs.", values=dataTypes, default="Image"),
     scripts.List("IDs", optional=False, grouping="1", description="List of Image IDs to process.").ofType(rlong(0)),
