@@ -579,13 +579,6 @@ def runAsScript():
     ckeys.sort()
     cOptions = wrap(ckeys)
     dataTypes= [rstring("Image")]
-    
-    if numpyImported == False:
-        client = scripts.client('Make_Movie.py', """MakeMovie creates a movie of the image.
-                YOU DO NOT HAVE 'NUMPY' INSTALLED, SO THIS SCRIPT CANNOT BE RUN""")
-        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
-        client.closeSession()
-        return
 
     client = scripts.client('Make_Movie','MakeMovie creates a movie of the image and attaches it to the originating image.',
     scripts.String("Data_Type", optional=False, grouping="1", description="Choose Images via their 'Image' IDs.", values=dataTypes, default="Image"),
@@ -622,6 +615,11 @@ def runAsScript():
     institutions = ["University of Dundee"],
     contact = "ome-users@lists.openmicroscopy.org.uk",
     )
+
+    if numpyImported == False:
+        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
+        client.closeSession()
+        return
 
     try:
         conn = BlitzGateway(client_obj=client)

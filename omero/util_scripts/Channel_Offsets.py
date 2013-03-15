@@ -260,13 +260,6 @@ def runAsScript():
 
     dataTypes = [rstring('Image')]
 
-    if numpyImported == False:
-        client = scripts.client('Channel_Offsets.py', """Create new Images from existing images with x, y, z Offsets.
-                YOU DO NOT HAVE 'NUMPY' INSTALLED, SO THIS SCRIPT CANNOT BE RUN""")
-        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
-        client.closeSession()
-        return
-
     client = scripts.client('Channel_Offsets.py', """Create new Images from existing images,
 applying an x, y and z shift to each channel independently.
 See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/insight/insight-util-scripts.html""",
@@ -333,6 +326,11 @@ See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/ins
     institutions = ["University of Dundee"],
     contact = "ome-users@lists.openmicroscopy.org.uk",
     )
+
+    if numpyImported == False:
+        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
+        client.closeSession()
+        return
     
     try:
         session = client.getSession();

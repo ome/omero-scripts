@@ -487,13 +487,6 @@ def runAsScript():
     channelRegs = [rstring(r) for r in channelRegexes.keys()]
     zRegs = [rstring(r) for r in zRegexes.keys()]
     tRegs = [rstring(r) for r in timeRegexes.keys()]
-
-    if numpyImported == False:
-        client = scripts.client('Combine_Images.py', """Combine several single-plane images (or Z-stacks) into one.
-                YOU DO NOT HAVE 'NUMPY' INSTALLED, SO THIS SCRIPT CANNOT BE RUN""")
-        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
-        client.closeSession()
-        return
     
     client = scripts.client('Combine_Images.py', """Combine several single-plane images (or Z-stacks) into one with 
 greater Z, C, T dimensions.
@@ -552,6 +545,11 @@ See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/ins
     institutions = ["University of Dundee"],
     contact = "ome-users@lists.openmicroscopy.org.uk",
     )
+
+    if numpyImported == False:
+        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
+        client.closeSession()
+        return
 
     try:
         session = client.getSession()

@@ -365,13 +365,6 @@ def runAsScript():
     """
     printDuration(False)    # start timer
     dataTypes = [rstring('Dataset'),rstring('Image')]
-
-    if numpyImported == False:
-        client = scripts.client('Images_From_ROIs.py', """Create new Images from the regions defined by Rectangle ROIs on other Images.
-                YOU DO NOT HAVE 'NUMPY' INSTALLED, SO THIS SCRIPT CANNOT BE RUN""")
-        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
-        client.closeSession()
-        return
     
     client = scripts.client('Images_From_ROIs.py', """Create new Images from the regions defined by Rectangle ROIs on other Images.
 Designed to work with single-plane images (Z=1 T=1) with multiple ROIs per image. 
@@ -395,6 +388,11 @@ assumes that all the ROIs on each Image are the same size.""",
     institutions = ["University of Dundee"],
     contact = "ome-users@lists.openmicroscopy.org.uk",
     )
+
+    if numpyImported == False:
+        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
+        client.closeSession()
+        return
 
     try:
 

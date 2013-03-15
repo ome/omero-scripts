@@ -382,13 +382,6 @@ def processImages(conn, scriptParams):
 
 def runScript():
 
-    if numpyImported == False:
-        client = scripts.client('Plot_Profile.py', """This script analyses pixel intensity along Line ROIs.
-                YOU DO NOT HAVE 'NUMPY' INSTALLED, SO THIS SCRIPT CANNOT BE RUN""")
-        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
-        client.closeSession()
-        return
-
     dataTypes = [rstring('Image')]
     sumAvgOptions = [rstring('Average'), rstring('Sum'), rstring('Average, with raw data')]
 
@@ -415,6 +408,11 @@ the pixel intensity as csv files, for plotting in E.g. Excel.""",
     institutions = ["University of Dundee"],
     contact = "ome-users@lists.openmicroscopy.org.uk",
     )
+
+    if numpyImported == False:
+        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
+        client.closeSession()
+        return
 
     try:
         # process the list of args above.

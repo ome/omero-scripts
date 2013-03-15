@@ -450,13 +450,6 @@ def runScript():
 
     dataTypes = [rstring('Image')]
 
-    if numpyImported == False:
-        client = scripts.client('Kymograph.py', """This script processes Images, which have Line or PolyLine ROIs to create kymographs.
-                YOU DO NOT HAVE 'NUMPY' INSTALLED, SO THIS SCRIPT CANNOT BE RUN""")
-        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
-        client.closeSession()
-        return
-
     client = scripts.client('Kymograph.py', """This script processes Images, which have Line or PolyLine ROIs to create kymographs.
 Kymographs are created in the form of new OMERO Images, with single Z and T, same sizeC as input.""",
 
@@ -483,6 +476,11 @@ Kymographs are created in the form of new OMERO Images, with single Z and T, sam
     institutions = ["University of Dundee"],
     contact = "ome-users@lists.openmicroscopy.org.uk",
     )
+
+    if numpyImported == False:
+        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
+        client.closeSession()
+        return
 
     try:
         # process the list of args above.
