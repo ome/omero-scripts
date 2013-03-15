@@ -55,7 +55,6 @@ params:
 
 import omero.scripts as scripts
 import omero.util.script_utils as scriptUtil
-import omero.util.figureUtil as figUtil
 import omero
 import omero.min # Constants etc.
 import getopt, sys, os, subprocess, re
@@ -73,8 +72,16 @@ from cStringIO import StringIO
 
 try:
     from PIL import Image, ImageDraw # see ticket:2597
+    pilImported = True
 except ImportError:
-    import Image, ImageDraw # see ticket:2597
+    try:
+        import Image, ImageDraw
+        pilImported = True
+    except ImportError:
+        pilImported = False
+
+if pilImported:
+    import omero.util.figureUtil as figUtil
 
 COLOURS = scriptUtil.COLOURS;
 COLOURS.update(scriptUtil.EXTRA_COLOURS)    # name:(rgba) map
@@ -615,6 +622,11 @@ def runAsScript():
     institutions = ["University of Dundee"],
     contact = "ome-users@lists.openmicroscopy.org.uk",
     )
+
+    if pilImported == False:
+        client.setOutput("Message", rstring("FAILED: 'PIL' (Python Image Library) NOT INSTALLED"))
+        client.closeSession()
+        return
 
     if numpyImported == False:
         client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))

@@ -38,8 +38,6 @@ Saves the figure as a jpg or png attached to the first image in the figure.
 """
 
 import omero.scripts as scripts
-import omero.util.imageUtil as imgUtil
-import omero.util.figureUtil as figUtil
 import omero.util.script_utils as scriptUtil
 from omero.gateway import BlitzGateway
 import omero
@@ -52,8 +50,17 @@ import math
 
 try:
     from PIL import Image, ImageDraw # see ticket:2597
+    pilImported = True
 except ImportError:
-    import Image, ImageDraw # see ticket:2597
+    try:
+        import Image, ImageDraw
+        pilImported = True
+    except ImportError:
+        pilImported = False
+
+if pilImported:
+    import omero.util.figureUtil as figUtil
+    import omero.util.imageUtil as imgUtil
 
 WHITE = (255, 255, 255)
 COLOURS = scriptUtil.COLOURS    # name:(rgba) map
@@ -564,6 +571,11 @@ See https://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/in
     contact = "ome-users@lists.openmicroscopy.org.uk",
     ) 
     
+    if pilImported == False:
+        client.setOutput("Message", rstring("FAILED: 'PIL' (Python Image Library) NOT INSTALLED"))
+        client.closeSession()
+        return
+
     try:
         session = client.getSession();
         commandArgs = {}

@@ -40,13 +40,20 @@ import omero.scripts as scripts
 from omero.gateway import BlitzGateway
 import omero.util.script_utils as scriptUtil
 from omero.rtypes import *
-import omero.util.imageUtil as imgUtil
 from datetime import date
 
 try:
     from PIL import Image, ImageDraw # see ticket:2597
+    pilImported = True
 except ImportError:
-    import Image, ImageDraw # see ticket:2597
+    try:
+        import Image, ImageDraw
+        pilImported = True
+    except ImportError:
+        pilImported = False
+
+if pilImported:
+    import omero.util.imageUtil as imgUtil
 
 WHITE = (255, 255, 255)
 
@@ -349,6 +356,11 @@ See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/ins
         institutions = ["University of Dundee"],
         contact = "ome-users@lists.openmicroscopy.org.uk",
         )
+
+    if pilImported == False:
+        client.setOutput("Message", rstring("FAILED: 'PIL' (Python Image Library) NOT INSTALLED"))
+        client.closeSession()
+        return
 
     try:
         session = client.getSession()

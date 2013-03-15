@@ -48,8 +48,13 @@ except ImportError:
     numpyImported = False
 try:
     from PIL import Image
+    pilImported = True
 except ImportError:
-    import Image
+    try:
+        import Image
+        pilImported = True
+    except ImportError:
+        pilImported = False
 
 
 def numpyToImage(plane):
@@ -476,6 +481,11 @@ Kymographs are created in the form of new OMERO Images, with single Z and T, sam
     institutions = ["University of Dundee"],
     contact = "ome-users@lists.openmicroscopy.org.uk",
     )
+
+    if pilImported == False:
+        client.setOutput("Message", rstring("FAILED: 'PIL' (Python Image Library) NOT INSTALLED"))
+        client.closeSession()
+        return
 
     if numpyImported == False:
         client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
