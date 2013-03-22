@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
  components/tools/OmeroPy/scripts/omero/figure_scripts/ROI_Split_Figure.py
 
