@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
  components/tools/OmeroPy/scripts/omero/export_scripts/Make_Movie.py
 
