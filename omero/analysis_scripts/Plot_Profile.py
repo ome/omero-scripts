@@ -40,11 +40,20 @@ from omero.rtypes import *
 import omero.scripts as scripts
 from cStringIO import StringIO
 import omero.util.script_utils as scriptUtil
-from numpy import *
+try:
+    from numpy import *
+    numpyImported = True
+except ImportError:
+    numpyImported = False
 try:
     from PIL import Image
+    pilImported = True
 except ImportError:
-    import Image
+    try:
+        import Image
+        pilImported = True
+    except ImportError:
+        pilImported = False
 
 
 def numpyToImage(plane):
@@ -376,13 +385,13 @@ def processImages(conn, scriptParams):
     
     return fileAnns, message
 
-if __name__ == "__main__":
+def runScript():
 
     dataTypes = [rstring('Image')]
     sumAvgOptions = [rstring('Average'), rstring('Sum'), rstring('Average, with raw data')]
 
     client = scripts.client('Plot_Profile.py', """This script processes Images, which have Line or PolyLine ROIs and outputs 
-the data as csv files, for plotting in E.g. exell.""",
+the pixel intensity as csv files, for plotting in E.g. Excel.""",
 
     scripts.String("Data_Type", optional=False, grouping="1",
         description="Choose source of images (only Image supported)", values=dataTypes, default="Image"),
@@ -405,6 +414,16 @@ the data as csv files, for plotting in E.g. exell.""",
     contact = "ome-users@lists.openmicroscopy.org.uk",
     )
 
+    if pilImported == False:
+        client.setOutput("Message", rstring("FAILED: 'PIL' (Python Image Library) NOT INSTALLED"))
+        client.closeSession()
+        return
+
+    if numpyImported == False:
+        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
+        client.closeSession()
+        return
+
     try:
         # process the list of args above.
         scriptParams = {}
@@ -426,3 +445,6 @@ the data as csv files, for plotting in E.g. exell.""",
         
     finally:
         client.closeSession()
+
+if __name__ == "__main__":
+    runScript()

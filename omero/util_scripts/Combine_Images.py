@@ -34,9 +34,13 @@ This script takes a number of images (or Z-stacks) and merges them to create add
  
 """
 
-import numpy
+try:
+    import numpy
+    from numpy import zeros
+    numpyImported = True
+except ImportError:
+    numpyImported = False
 import re
-from numpy import zeros
 
 import omero
 import omero.scripts as scripts
@@ -543,6 +547,11 @@ See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/ins
     institutions = ["University of Dundee"],
     contact = "ome-users@lists.openmicroscopy.org.uk",
     )
+
+    if numpyImported == False:
+        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
+        client.closeSession()
+        return
 
     try:
         session = client.getSession()

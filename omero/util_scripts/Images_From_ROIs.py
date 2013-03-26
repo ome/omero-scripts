@@ -42,7 +42,11 @@ from omero.rtypes import *
 import omero.util.script_utils as script_utils
 
 import os
-import numpy
+try:
+    import numpy
+    numpyImported = True
+except ImportError:
+    numpyImported = False
 
 import time
 startTime = 0
@@ -386,6 +390,11 @@ assumes that all the ROIs on each Image are the same size.""",
     institutions = ["University of Dundee"],
     contact = "ome-users@lists.openmicroscopy.org.uk",
     )
+
+    if numpyImported == False:
+        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
+        client.closeSession()
+        return
 
     try:
 

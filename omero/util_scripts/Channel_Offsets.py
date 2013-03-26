@@ -42,7 +42,11 @@ from omero.rtypes import *
 import omero.util.script_utils as script_utils
 
 import os
-from numpy import zeros, hstack, vstack
+try:
+    from numpy import zeros, hstack, vstack
+    numpyImported = True
+except ImportError:
+    numpyImported = False
 
 import time
 
@@ -324,6 +328,11 @@ See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/ins
     institutions = ["University of Dundee"],
     contact = "ome-users@lists.openmicroscopy.org.uk",
     )
+
+    if numpyImported == False:
+        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
+        client.closeSession()
+        return
     
     try:
         session = client.getSession();

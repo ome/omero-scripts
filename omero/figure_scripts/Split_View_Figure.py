@@ -38,8 +38,6 @@ image per row, displayed as a split view with merged image.
 """
 
 import omero.scripts as scripts
-import omero.util.figureUtil as figUtil
-import omero.util.imageUtil as imgUtil
 import omero.util.script_utils as scriptUtil
 import omero
 from omero.gateway import BlitzGateway
@@ -51,8 +49,17 @@ from datetime import date
 
 try:
     from PIL import Image, ImageDraw # see ticket:2597
+    pilImported = True
 except ImportError:
-    import Image, ImageDraw # see ticket:2597
+    try:
+        import Image, ImageDraw
+        pilImported = True
+    except ImportError:
+        pilImported = False
+
+if pilImported:
+    import omero.util.figureUtil as figUtil
+    import omero.util.imageUtil as imgUtil
 
 COLOURS = scriptUtil.COLOURS    # name:(rgba) map
 OVERLAY_COLOURS = dict(COLOURS, **scriptUtil.EXTRA_COLOURS)
@@ -673,6 +680,11 @@ See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/ins
     institutions = ["University of Dundee"],
     contact = "ome-users@lists.openmicroscopy.org.uk",
     ) 
+
+    if pilImported == False:
+        client.setOutput("Message", rstring("FAILED: 'PIL' (Python Image Library) NOT INSTALLED"))
+        client.closeSession()
+        return
     
     try:
         session = client.getSession()

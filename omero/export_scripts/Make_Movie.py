@@ -57,11 +57,14 @@ params:
 
 import omero.scripts as scripts
 import omero.util.script_utils as scriptUtil
-import omero.util.figureUtil as figUtil
 import omero
 import omero.min # Constants etc.
 import getopt, sys, os, subprocess, re
-import numpy
+try:
+    import numpy
+    numpyImported = True
+except ImportError:
+    numpyImported = False
 import omero.util.pixelstypetopython as pixelstypetopython
 from struct import *
 from omero.rtypes import wrap, rstring, rlong, rint, robject
@@ -71,8 +74,16 @@ from cStringIO import StringIO
 
 try:
     from PIL import Image, ImageDraw # see ticket:2597
+    pilImported = True
 except ImportError:
-    import Image, ImageDraw # see ticket:2597
+    try:
+        import Image, ImageDraw
+        pilImported = True
+    except ImportError:
+        pilImported = False
+
+if pilImported:
+    import omero.util.figureUtil as figUtil
 
 COLOURS = scriptUtil.COLOURS;
 COLOURS.update(scriptUtil.EXTRA_COLOURS)    # name:(rgba) map
@@ -577,7 +588,7 @@ def runAsScript():
     ckeys.sort()
     cOptions = wrap(ckeys)
     dataTypes= [rstring("Image")]
-    
+
     client = scripts.client('Make_Movie','MakeMovie creates a movie of the image and attaches it to the originating image.',
     scripts.String("Data_Type", optional=False, grouping="1", description="Choose Images via their 'Image' IDs.", values=dataTypes, default="Image"),
     scripts.List("IDs", optional=False, grouping="1", description="List of Image IDs to process.").ofType(rlong(0)),
@@ -613,6 +624,16 @@ def runAsScript():
     institutions = ["University of Dundee"],
     contact = "ome-users@lists.openmicroscopy.org.uk",
     )
+
+    if pilImported == False:
+        client.setOutput("Message", rstring("FAILED: 'PIL' (Python Image Library) NOT INSTALLED"))
+        client.closeSession()
+        return
+
+    if numpyImported == False:
+        client.setOutput("Message", rstring("FAILED: 'numpy' NOT INSTALLED"))
+        client.closeSession()
+        return
 
     try:
         conn = BlitzGateway(client_obj=client)
