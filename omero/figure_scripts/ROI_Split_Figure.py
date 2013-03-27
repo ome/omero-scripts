@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
  components/tools/OmeroPy/scripts/omero/figure_scripts/ROI_Split_Figure.py
 
@@ -53,8 +55,6 @@ try:
 except ImportError:
     import Image, ImageDraw # see ticket:2597
 
-JPEG = "image/jpeg"
-PNG = "image/png"
 
 COLOURS = scriptUtil.COLOURS    # name:(rgba) map
 OVERLAY_COLOURS = dict(COLOURS, **scriptUtil.EXTRA_COLOURS)
@@ -599,9 +599,15 @@ def roiFigure(conn, commandArgs):
         cColourMap = commandArgs["Merged_Colours"]
         for c in cColourMap:
             rgb = cColourMap[c]
+            try:
+                rgb = int(rgb)
+                cIndex = int(c)
+            except ValueError:
+                print "Merged_Colours map should be index:rgbInt. Not %s:%s" % (c, rgb)
+                continue
             rgba = imgUtil.RGBIntToRGBA(rgb)
-            mergedColours[int(c)] = rgba
-            mergedIndexes.append(int(c))
+            mergedColours[cIndex] = rgba
+            mergedIndexes.append(cIndex)
         mergedIndexes.sort()
     # make sure we have some merged channels
     if len(mergedIndexes) == 0:
@@ -692,19 +698,20 @@ def roiFigure(conn, commandArgs):
     
     #print figLegend    # bug fixing only
     
-    format = JPEG
-    if "Format" in commandArgs:
-        if commandArgs["Format"] == "PNG":
-            format = PNG
+    format = commandArgs["Format"]
             
     output = "roiFigure"
     if "Figure_Name" in commandArgs:
         output = str(commandArgs["Figure_Name"])
         
-    if format == PNG:
+    if format == 'PNG':
         output = output + ".png"
         fig.save(output, "PNG")
         mimetype = "image/png"
+    elif format == 'TIFF':
+        output = output + ".tiff"
+        fig.save(output, "TIFF")
+        mimetype = "image/tiff"
     else:
         output = output + ".jpg"
         fig.save(output)
@@ -730,7 +737,7 @@ def runAsScript():
     algorithums = [rstring('Maximum Intensity'),rstring('Mean Intensity')]
     roiLabel = """Specify an ROI to pick by specifying it's shape label. 'FigureROI' by default,
               (not case sensitive). If matching ROI not found, use any ROI."""
-    formats = [rstring('JPEG'),rstring('PNG')]
+    formats = [rstring('JPEG'),rstring('PNG'),rstring('TIFF')]
     ckeys = COLOURS.keys()
     ckeys.sort()
     cOptions = wrap(ckeys)

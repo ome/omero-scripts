@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
  components/tools/OmeroPy/scripts/omero/figure_scripts/Thumbnail_Figure.py
 
@@ -219,7 +221,7 @@ def makeThumbnailFigure(conn, scriptParams):
     # Get parent
     parent = None
     if "Parent_ID" in scriptParams and len(scriptParams["IDs"]) > 1:
-        if dataType == "Image":
+        if scriptParams["Data_Type"] == "Image":
             parent = conn.getObject("Dataset", scriptParams["Parent_ID"])
         else:
             parent = conn.getObject("Project", scriptParams["Parent_ID"])
@@ -285,6 +287,10 @@ def makeThumbnailFigure(conn, scriptParams):
         output = output + ".png"
         figure.save(output, "PNG")
         mimetype = "image/png"
+    elif format == 'TIFF':
+        output = output + ".tiff"
+        figure.save(output, "TIFF")
+        mimetype = "image/tiff"
     else:
         output = output + ".jpg"
         figure.save(output)
@@ -305,7 +311,7 @@ def runAsScript():
     def __init__(self, name, optional = False, out = False, description = None, type = None, min = None, max = None, values = None)
     """
         
-    formats = [rstring('JPEG'),rstring('PNG')]
+    formats = [rstring('JPEG'),rstring('PNG'),rstring('TIFF')]
     dataTypes = [rstring('Dataset'),rstring('Image')]
     
     client = scripts.client('Thumbnail_Figure.py', """Export a figure of thumbnails, optionally sorted by tag.
