@@ -449,13 +449,13 @@ if __name__ == "__main__":
     client = scripts.client('Kymograph.py', """This script processes Images, which have Line or PolyLine ROIs to create kymographs.
 Kymographs are created in the form of new OMERO Images, with single Z and T, same sizeC as input.""",
 
-    scripts.String("Data_Type", optional=False, grouping="1",
+    scripts.String("Data_Type", isoptional=False, grouping="1",
         description="Choose source of images (only Image supported)", values=dataTypes, default="Image"),
 
-    scripts.List("IDs", optional=False, grouping="2",
+    scripts.List("IDs", isoptional=False, grouping="2",
         description="List of Image IDs to process.").ofType(rlong(0)),
 
-    scripts.Int("Line_Width", optional=False, grouping="3", default=4,
+    scripts.Int("Line_Width", isoptional=False, grouping="3", default=4,
         description="Width in pixels of each time slice", min=1),
     
     scripts.Bool("Use_All_Timepoints", grouping="4", default=True,

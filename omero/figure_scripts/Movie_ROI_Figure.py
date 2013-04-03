@@ -676,10 +676,10 @@ def runAsScript():
     client = scripts.client('Movie_ROI_Figure.py', """Create a figure of movie frames from ROI region of image.
 See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/insight/insight-export-figures.html""",
 
-    scripts.String("Data_Type", optional=False, grouping="01",
+    scripts.String("Data_Type", isoptional=False, grouping="01",
         description="The data you want to work with.", values=dataTypes, default="Image"),
 
-    scripts.List("IDs", optional=False, grouping="02",
+    scripts.List("IDs", isoptional=False, grouping="02",
         description="List of Image IDs").ofType(rlong(0)),
     
     #scripts.List("Merged_Colours", grouping="03",
