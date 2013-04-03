@@ -369,10 +369,10 @@ Designed to work with single-plane images (Z=1 T=1) with multiple ROIs per image
 If you choose to make an image stack from all the ROIs, this script
 assumes that all the ROIs on each Image are the same size.""",
 
-    scripts.String("Data_Type", optional=False, grouping="1",
+    scripts.String("Data_Type", isoptional=False, grouping="1",
         description="Choose Images via their 'Dataset' or directly by 'Image' IDs.", values=dataTypes, default="Image"),
         
-    scripts.List("IDs", optional=False, grouping="2",
+    scripts.List("IDs", isoptional=False, grouping="2",
         description="List of Dataset IDs or Image IDs to process.").ofType(rlong(0)),
         
     scripts.String("Container_Name", grouping="3",

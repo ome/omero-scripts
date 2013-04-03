@@ -432,10 +432,10 @@ def runScript():
 file available for download as a batch export. 
 See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/insight/insight-util-scripts.html""",
 
-    scripts.String("Data_Type", optional=False, grouping="1",
+    scripts.String("Data_Type", isoptional=False, grouping="1",
         description="The data you want to work with.", values=dataTypes, default="Image"),
 
-    scripts.List("IDs", optional=False, grouping="2",
+    scripts.List("IDs", isoptional=False, grouping="2",
         description="List of Dataset IDs or Image IDs").ofType(rlong(0)),
         
     scripts.Bool("Export_Individual_Channels", grouping="3", 

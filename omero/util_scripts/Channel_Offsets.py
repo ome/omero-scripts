@@ -262,10 +262,10 @@ def runAsScript():
 applying an x, y and z shift to each channel independently.
 See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/insight/insight-util-scripts.html""",
 
-    scripts.String("Data_Type", optional=False, grouping="1",
+    scripts.String("Data_Type", isoptional=False, grouping="1",
         description="Pick Images by 'Image' ID or by the ID of their 'Dataset'", values=dataTypes, default="Image"),
 
-    scripts.List("IDs", optional=False, grouping="2",
+    scripts.List("IDs", isoptional=False, grouping="2",
         description="List of Dataset IDs or Image IDs to process.").ofType(rlong(0)),
 
     scripts.String("New_Dataset_Name", grouping="3",

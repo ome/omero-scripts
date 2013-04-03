@@ -384,16 +384,16 @@ if __name__ == "__main__":
     client = scripts.client('Plot_Profile.py', """This script processes Images, which have Line or PolyLine ROIs and outputs 
 the data as csv files, for plotting in E.g. exell.""",
 
-    scripts.String("Data_Type", optional=False, grouping="1",
+    scripts.String("Data_Type", isoptional=False, grouping="1",
         description="Choose source of images (only Image supported)", values=dataTypes, default="Image"),
 
-    scripts.List("IDs", optional=False, grouping="2",
+    scripts.List("IDs", isoptional=False, grouping="2",
         description="List of Image IDs to process.").ofType(rlong(0)),
 
-    scripts.Int("Line_Width", optional=False, grouping="3", default=1,
+    scripts.Int("Line_Width", isoptional=False, grouping="3", default=1,
         description="Width in pixels of each line plot", min=1),
 
-    scripts.String("Sum_or_Average", optional=False, grouping="3.1", default='Average',
+    scripts.String("Sum_or_Average", isoptional=False, grouping="3.1", default='Average',
         description="Output the Sum or Average (mean) of Line Profile. Option to include ALL line data with Average", values=sumAvgOptions),
 
     scripts.List("Channels", grouping="4",

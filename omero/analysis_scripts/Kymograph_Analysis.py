@@ -169,10 +169,10 @@ if __name__ == "__main__":
     client = scripts.client('Kymograph_Analysis.py', """This script analyses Kymograph images, which have Line or PolyLine ROIs that
 track moving objects. It generates a table of the speed of movement, saved as an Excell / csv file.""",
 
-    scripts.String("Data_Type", optional=False, grouping="1",
+    scripts.String("Data_Type", isoptional=False, grouping="1",
         description="Choose source of images (only Image supported)", values=dataTypes, default="Image"),
 
-    scripts.List("IDs", optional=False, grouping="2",
+    scripts.List("IDs", isoptional=False, grouping="2",
         description="List of Image IDs to process.").ofType(rlong(0)),
 
     version = "4.3.3",

@@ -245,25 +245,25 @@ arranging them into rows or columns as desired.
 Optionally add the Plate to a new or existing Screen.
 See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/insight/insight-util-scripts.html""",
 
-    scripts.String("Data_Type", optional=False, grouping="1",
+    scripts.String("Data_Type", isoptional=False, grouping="1",
         description="Choose source of images (only Dataset supported)", values=dataTypes, default="Dataset"),
 
-    scripts.List("IDs", optional=False, grouping="2",
+    scripts.List("IDs", isoptional=False, grouping="2",
         description="List of Dataset IDs to convert to new Plates.").ofType(rlong(0)),
 
     scripts.String("Filter_Names", grouping="2.1",
         description="Filter the images by names that contain this value"),
 
-    scripts.String("First_Axis", grouping="3", optional=False, default='column', values=firstAxis,
+    scripts.String("First_Axis", grouping="3", isoptional=False, default='column', values=firstAxis,
         description="""Arrange images accross 'column' first or down 'row'"""),
 
-    scripts.Int("First_Axis_Count", grouping="3.1", optional=False, default=12,
+    scripts.Int("First_Axis_Count", grouping="3.1", isoptional=False, default=12,
         description="Number of Rows or Columns in the 'First Axis'", min=1),
 
-    scripts.String("Column_Names", grouping="4", optional=False, default='number', values=rowColNaming,
+    scripts.String("Column_Names", grouping="4", isoptional=False, default='number', values=rowColNaming,
         description="""Name plate columns with 'number' or 'letter'"""),
 
-    scripts.String("Row_Names", grouping="5", optional=False, default='letter', values=rowColNaming,
+    scripts.String("Row_Names", grouping="5", isoptional=False, default='letter', values=rowColNaming,
         description="""Name plate rows with 'number' or 'letter'"""),
 
     scripts.String("Screen", grouping="6",

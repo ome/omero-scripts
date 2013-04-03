@@ -490,10 +490,10 @@ def runAsScript():
 greater Z, C, T dimensions.
 See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/insight/insight-util-scripts.html""",
     
-    scripts.String("Data_Type", optional=False, grouping="1",
+    scripts.String("Data_Type", isoptional=False, grouping="1",
         description="Use all the images in specified 'Datasets' or choose individual 'Images'.", values=dataTypes, default="Image"),
         
-    scripts.List("IDs", optional=False, grouping="2",
+    scripts.List("IDs", isoptional=False, grouping="2",
         description="List of Dataset IDs or Image IDs to combine.").ofType(rlong(0)),
         
     scripts.String("Filter_Names", grouping="2.1",

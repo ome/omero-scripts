@@ -318,10 +318,10 @@ def runAsScript():
 NB: OMERO.insight client provides a nicer UI for this script under 'Publishing Options'
 See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/insight/insight-export-figures.html""",
 
-        scripts.String("Data_Type", optional=False, grouping="1",
+        scripts.String("Data_Type", isoptional=False, grouping="1",
             description="The data you want to work with.", values=dataTypes, default="Dataset"),
 
-        scripts.List("IDs", optional=False, grouping="2",
+        scripts.List("IDs", isoptional=False, grouping="2",
             description="List of Dataset IDs or Image IDs").ofType(rlong(0)),
 
         scripts.List("Tag_IDs", grouping="3",

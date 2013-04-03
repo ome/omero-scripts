@@ -523,10 +523,10 @@ NB: OMERO.insight client provides a nicer UI for this script under 'Publishing O
 See https://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/insight/insight-export-figures.html""",
 
     # provide 'Data_Type' and 'IDs' parameters so that Insight auto-populates with currently selected images.
-    scripts.String("Data_Type", optional=False, grouping="01",
+    scripts.String("Data_Type", isoptional=False, grouping="01",
         description="The data you want to work with.", values=dataTypes, default="Image"),
 
-    scripts.List("IDs", optional=False, grouping="02",
+    scripts.List("IDs", isoptional=False, grouping="02",
         description="List of Image IDs").ofType(rlong(0)),
 
     scripts.List("T_Indexes", grouping="03", 
