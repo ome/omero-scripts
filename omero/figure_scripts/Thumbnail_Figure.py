@@ -57,6 +57,36 @@ def log(text):
     """ Adds lines of text to the logLines list, so they can be collected into a figure legend. """
     print text
     logLines.append(text)
+
+
+def sortImagesByTag(tagIds, imgTags):
+
+    # prepare list of {'iid': imgId, 'tagKey' : stringToSort }
+    # E.g. if tagIds = [5, 3, 9], we map to 'a', 'b', 'c', 
+    # so an Image with tags 3 & 9 will have 'tagKey': "bc"
+    letters = 'abcdefghijklmnopqrstuvwxyz'  # assume we have less than 26 tags!
+    sortedImages = []
+    for iid, tagIdList in imgTags.items():
+        orderedIndexes = []
+        orderedTags = []
+        for i, tid in enumerate(tagIds):
+            if tid in tagIdList:
+                orderedIndexes.append( letters[i] )
+                orderedTags.append(tid)
+        if len(orderedIndexes) > 0: 
+            tagKey = "".join(orderedIndexes)
+        else:
+            tagKey = "z"
+        sortedImages.append({'iid': iid, 'tagKey': tagKey, 'tagIds':orderedTags})
+
+    sortedImages.sort(key=lambda x:x['tagKey'])
+
+    # clean up our 'z' sorting hack above.
+    for i in sortedImages:
+        if i['tagKey'] == "z":
+            i['tagKey'] = ""
+
+    return sortedImages
     
     
 def paintDatasetCanvas(conn, images, title, tagIds=None, showUntagged = False, colCount = 10, length = 100):
@@ -115,9 +145,11 @@ def paintDatasetCanvas(conn, images, title, tagIds=None, showUntagged = False, c
     
     # if we have a list of tags, then sort images by tag 
     if tagIds:
-        log(" Sorting images by tags")
+        tagIds = [int(tagId) for tagId in tagIds]   # Cast to int since List can be any type
+        log(" Sorting images by tags: %s" % tagIds)
         tagNames = {}
         taggedImages = {}    # a map of tagId: list-of-image-Ids
+        imgTags = {}        # a map of imgId: list-of-tagIds
         for tagId in tagIds:
             taggedImages[tagId] = []
         
@@ -126,37 +158,47 @@ def paintDatasetCanvas(conn, images, title, tagIds=None, showUntagged = False, c
         annotations = metadataService.loadAnnotations("Image", dsImageIds, types, None, None)
         #filter images by annotation...
         for imageId, tags in annotations.items():
+            imgTagIds = []
             for tag in tags:
                 tagId = tag.getId().getValue()
-                if tagId in tagIds:        # if image has multiple tags, it will be display more than once
-                    taggedImages[tagId].append(imageId)        # add the image id to the appropriate list
-                    if imageId in dsImageIds:
-                        dsImageIds.remove(imageId)                # remember which we've picked already
-                    if tagId not in tagNames.keys():
-                        tagNames[tagId] = tag.getTextValue().getValue()        # make a dict of tag-names
-        
-        # if we want to show remaining images in dataset (not picked by tag)...
-        if showUntagged:
-            tagIds.append("noTag")
-            taggedImages["noTag"] = [untaggedId for untaggedId in dsImageIds]
-            tagNames["noTag"] = "Untagged"
-        
-        # print results and convert image-id to pixel-id
-        # make a canvas for each tag
-        for tagId in tagIds:
-            if tagId not in tagNames.keys():    # no images with this tag
-                continue
-            leftLabel = tagNames[tagId]
-            log(" Tag: %s  (contains %d images)" % (leftLabel, len(taggedImages[tagId])))
-            pixelIds = []
-            for imageId in taggedImages[tagId]:
-                log("  Name: %s  ID: %d" % (imageNames[imageId], imageId))
-                pixelIds.append(imagePixelMap[imageId])
-            print 'pixelIds', pixelIds
-            tagCanvas = imgUtil.paintThumbnailGrid(thumbnailStore, length, spacing, pixelIds, colCount, leftLabel=leftLabel)
+                tagNames[tagId] = tag.getTextValue().getValue()        # make a dict of tag-names
+                print "     Tag:", tagId, tagId in tagIds
+                imgTagIds.append(tagId)
+            imgTags[imageId] = imgTagIds
+
+        # get a sorted list of {'iid': iid, 'tagKey': tagKey, 'tagIds':orderedTags}
+        sortedThumbs = sortImagesByTag(tagIds, imgTags)
+
+        if not showUntagged:
+            sortedThumbs = [t for t in sortedThumbs if len(t['tagIds'])>0]
+
+        # make a canvas for each tag combination
+        def makeTagsetCanvas(tagString, groupedPixelIds):
+            log(" Tagset: %s  (contains %d images)" % (tagString, len(groupedPixelIds)))
+            tagCanvas = imgUtil.paintThumbnailGrid(thumbnailStore, length, spacing, groupedPixelIds, colCount, leftLabel=tagString)
             tagPanes.append(tagCanvas)
-            maxWidth = max(maxWidth, tagCanvas.size[0])
-            totalHeight += tagCanvas.size[1]
+
+        groupedPixelIds = []
+        currentTagStr = None
+        for i, img in enumerate(sortedThumbs):
+            tagIds = img['tagIds']
+            tagString = ", ".join( [tagNames[tid] for tid in tagIds] )
+            if tagString == "":
+                tagString = "Not Tagged"
+            # Keep grouping thumbs under similar tag set (if not on the last loop)
+            if tagString == currentTagStr or currentTagStr is None:
+                groupedPixelIds.append(imagePixelMap[img['iid']])
+            else:
+                # Process thumbs added so far
+                makeTagsetCanvas(currentTagStr, groupedPixelIds)
+                # reset for next tagset
+                groupedPixelIds = [ imagePixelMap[img['iid']] ]
+            currentTagStr = tagString
+
+        makeTagsetCanvas(currentTagStr, groupedPixelIds)
+
+        maxWidth = max([c.size[0] for c in tagPanes])
+        totalHeight = totalHeight + sum([c.size[1] for c in tagPanes])
     
     else:
         leftSpacer = spacing
