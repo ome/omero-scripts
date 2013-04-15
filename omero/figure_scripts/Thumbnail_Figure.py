@@ -172,33 +172,92 @@ def paintDatasetCanvas(conn, images, title, tagIds=None, showUntagged = False, c
         if not showUntagged:
             sortedThumbs = [t for t in sortedThumbs if len(t['tagIds'])>0]
 
-        # make a canvas for each tag combination
-        def makeTagsetCanvas(tagString, groupedPixelIds):
-            log(" Tagset: %s  (contains %d images)" % (tagString, len(groupedPixelIds)))
-            tagCanvas = imgUtil.paintThumbnailGrid(thumbnailStore, length, spacing, groupedPixelIds, colCount, leftLabel=tagString)
-            tagPanes.append(tagCanvas)
-
+        # Need to group sets of thumbnails by FIRST tag.
+        toptagSets = []
         groupedPixelIds = []
+        showSubsetLabels = False
         currentTagStr = None
         for i, img in enumerate(sortedThumbs):
             tagIds = img['tagIds']
-            tagString = ", ".join( [tagNames[tid] for tid in tagIds] )
-            if tagString == "":
+            if len(tagIds) == 0:
                 tagString = "Not Tagged"
-            # Keep grouping thumbs under similar tag set (if not on the last loop)
-            if tagString == currentTagStr or currentTagStr is None:
-                groupedPixelIds.append(imagePixelMap[img['iid']])
             else:
-                # Process thumbs added so far
-                makeTagsetCanvas(currentTagStr, groupedPixelIds)
-                # reset for next tagset
-                groupedPixelIds = [ imagePixelMap[img['iid']] ]
+                tagString = tagNames[tagIds[0]]
+            if tagString == currentTagStr or currentTagStr is None:
+                # only show subset labels (later) if there are more than 1 subset
+                if (len(tagIds) > 1):
+                    showSubsetLabels = True
+                groupedPixelIds.append({'pid':imagePixelMap[img['iid']], 'tagIds':tagIds})
+            else:
+                toptagSets.append({'tagText':currentTagStr, 'pixelIds':groupedPixelIds, 'showSubsetLabels':showSubsetLabels})
+                showSubsetLabels = len(tagIds) > 1
+                groupedPixelIds = [ {'pid':imagePixelMap[img['iid']], 'tagIds':tagIds} ]
             currentTagStr = tagString
+        toptagSets.append({'tagText':currentTagStr, 'pixelIds':groupedPixelIds, 'showSubsetLabels':showSubsetLabels})
 
-        makeTagsetCanvas(currentTagStr, groupedPixelIds)
+        print "toptagSets", toptagSets
 
-        maxWidth = max([c.size[0] for c in tagPanes])
-        totalHeight = totalHeight + sum([c.size[1] for c in tagPanes])
+        tagSubPanes = []
+        # make a canvas for each tag combination
+        def makeTagsetCanvas(tagString, tagsetPixIds, showSubsetLabels):
+            log(" Tagset: %s  (contains %d images)" % (tagString, len(tagsetPixIds)))
+            if not showSubsetLabels:
+                tagString = None
+            subCanvas = imgUtil.paintThumbnailGrid(thumbnailStore, length, spacing, tagsetPixIds, colCount, topLabel=tagString)
+            tagSubPanes.append(subCanvas)
+
+        for toptagSet in toptagSets:
+            tagText = toptagSet['tagText']
+            showSubsetLabels = toptagSet['showSubsetLabels']
+            imageData = toptagSet['pixelIds']
+            # loop through all thumbs under TAG, grouping into subsets.
+            tagsetPixIds = []
+            currentTagStr = None
+            for i, img in enumerate(imageData):
+                tagIds = img['tagIds']
+                pid = img['pid']
+                tagString = ", ".join( [tagNames[tid] for tid in tagIds] )
+                if tagString == "":
+                    tagString = "Not Tagged"
+                # Keep grouping thumbs under similar tag set (if not on the last loop)
+                if tagString == currentTagStr or currentTagStr is None:
+                    tagsetPixIds.append(pid)
+                else:
+                    # Process thumbs added so far
+                    makeTagsetCanvas(currentTagStr, tagsetPixIds, showSubsetLabels)
+                    # reset for next tagset
+                    tagsetPixIds = [ pid ]
+                currentTagStr = tagString
+
+            makeTagsetCanvas(currentTagStr, tagsetPixIds, showSubsetLabels)
+
+            maxWidth = max([c.size[0] for c in tagSubPanes])
+            totalHeight = sum([c.size[1] for c in tagSubPanes])
+
+            # paste them into a single canvas for each Tag
+            # Find the indent we need 
+            tagStrings = [tagNames[tid] for tid in tagIds if tid in tagNames]
+            if showUntagged:
+                tagStrings.append("Not Tagged")
+            maxTagNameWidth = max( [font.getsize(ts)[0] for ts in tagStrings] )
+
+            leftSpacer = spacing + maxTagNameWidth + 2*spacing  # Draw vertical line to right
+            size = (leftSpacer + maxWidth, totalHeight)
+            tagCanvas = Image.new(mode, size, WHITE)
+            pX = leftSpacer
+            pY = 0
+            for pane in tagSubPanes:
+                imgUtil.pasteImage(pane, tagCanvas, pX, pY)
+                pY += pane.size[1]
+            if tagText is not None:
+                draw = ImageDraw.Draw(tagCanvas)
+                tt_w, tt_h = font.getsize(tagText)
+                h_offset = (totalHeight - tt_h)/2
+                draw.text((spacing, h_offset), tagText, font=font, fill=(50,50,50))
+            # draw vertical line
+            draw.line((leftSpacer-spacing, 0, leftSpacer-spacing, totalHeight), fill=(0,0,0))
+            tagPanes.append(tagCanvas)
+            tagSubPanes = []
     
     else:
         leftSpacer = spacing
@@ -208,17 +267,18 @@ def paintDatasetCanvas(conn, images, title, tagIds=None, showUntagged = False, c
             pixelIds.append(imagePixelMap[imageId])
         figCanvas = imgUtil.paintThumbnailGrid(thumbnailStore, length, spacing, pixelIds, colCount)
         tagPanes.append(figCanvas)
-        maxWidth = max(maxWidth, figCanvas.size[0])
-        totalHeight += figCanvas.size[1]
-    
+
     # paste them into a single canvas
+    tagsetSpacer = length / 3
+    maxWidth = max([c.size[0] for c in tagPanes])
+    totalHeight = totalHeight + sum([c.size[1]+tagsetSpacer for c in tagPanes]) - tagsetSpacer
     size = (maxWidth, totalHeight)
     fullCanvas = Image.new(mode, size, WHITE)
     pX = 0
     pY = topSpacer
     for pane in tagPanes:
         imgUtil.pasteImage(pane, fullCanvas, pX, pY)
-        pY += pane.size[1]
+        pY += pane.size[1] + tagsetSpacer
         
     # create dates for the image timestamps. If dates are not the same, show first - last. 
     firstdate = timestampMin
