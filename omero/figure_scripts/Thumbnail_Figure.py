@@ -293,8 +293,9 @@ def paintDatasetCanvas(conn, images, title, tagIds=None, showUntagged = False, c
     dateY = spacing
     dateX = fullCanvas.size[0] - spacing - dateWidth
     draw.text((leftSpacer, dateY), title, font=font, fill=(0,0,0))        # title
-    if (leftSpacer+titleWidth) < dateX:            # if there's enough space...
-        draw.text((dateX, dateY), figureDate, font=font, fill=(0,0,0))    # add date 
+    # Don't show dates: see https://github.com/openmicroscopy/openmicroscopy/pull/1002
+    # if (leftSpacer+titleWidth) < dateX:            # if there's enough space...
+    #     draw.text((dateX, dateY), figureDate, font=font, fill=(0,0,0))    # add date 
     
     return fullCanvas
     
