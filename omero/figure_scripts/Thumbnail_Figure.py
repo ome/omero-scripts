@@ -195,6 +195,11 @@ def paintDatasetCanvas(conn, images, title, tagIds=None, showUntagged = False, c
             currentTagStr = tagString
         toptagSets.append({'tagText':currentTagStr, 'pixelIds':groupedPixelIds, 'showSubsetLabels':showSubsetLabels})
 
+        # Find the indent we need
+        maxTagNameWidth = max( [font.getsize(ts['tagText'])[0] for ts in toptagSets] )
+        if showUntagged:
+            maxTagNameWidth = max(maxTagNameWidth, font.getsize("Not Tagged")[0])
+
         print "toptagSets", toptagSets
 
         tagSubPanes = []
@@ -214,9 +219,9 @@ def paintDatasetCanvas(conn, images, title, tagIds=None, showUntagged = False, c
             tagsetPixIds = []
             currentTagStr = None
             for i, img in enumerate(imageData):
-                tagIds = img['tagIds']
+                tag_ids = img['tagIds']
                 pid = img['pid']
-                tagString = ", ".join( [tagNames[tid] for tid in tagIds] )
+                tagString = ", ".join( [tagNames[tid] for tid in tag_ids] )
                 if tagString == "":
                     tagString = "Not Tagged"
                 # Keep grouping thumbs under similar tag set (if not on the last loop)
@@ -235,11 +240,6 @@ def paintDatasetCanvas(conn, images, title, tagIds=None, showUntagged = False, c
             totalHeight = sum([c.size[1] for c in tagSubPanes])
 
             # paste them into a single canvas for each Tag
-            # Find the indent we need 
-            tagStrings = [tagNames[tid] for tid in tagIds if tid in tagNames]
-            if showUntagged:
-                tagStrings.append("Not Tagged")
-            maxTagNameWidth = max( [font.getsize(ts)[0] for ts in tagStrings] )
 
             leftSpacer = spacing + maxTagNameWidth + 2*spacing  # Draw vertical line to right
             size = (leftSpacer + maxWidth, totalHeight)
