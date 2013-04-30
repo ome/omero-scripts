@@ -349,6 +349,11 @@ def batchImageExport(conn, scriptParams):
     if format == 'OME-TIFF':
         for img in images:
             log("Exporting image as OME-TIFF: %s" % img.getName())
+            if img._prepareRE().requiresPixelsPyramid():
+                log(  "  ** Can't export a 'Big' image to OME-TIFF. **")
+                if len(images) == 1:
+                    return None, "Can't export a 'Big' image to OME-TIFF."
+                continue
             saveAsOmeTiff(conn, img, folder_name)
 
     else:
@@ -387,6 +392,8 @@ def batchImageExport(conn, scriptParams):
         finally:
             logFile.close()
 
+    if len(os.listdir(exp_dir)) == 0:
+        return None, "No files exported. See 'info' for more details" 
     # zip everything up (unless we've only got a single ome-tiff)
     if format == 'OME-TIFF' and len(os.listdir(exp_dir)) == 1:
         ometiffIds = [t.id for t in parent.listAnnotations(ns=omero.constants.namespaces.NSOMETIFF)]
