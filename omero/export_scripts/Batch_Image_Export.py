@@ -349,11 +349,11 @@ def batchImageExport(conn, scriptParams):
     for img in images:
         if img._prepareRE().requiresPixelsPyramid():
             log(  "  ** Can't export a 'Big' image to %s. **" % format)
-                if len(images) == 1:
-                    return None, "Can't export a 'Big' image to %s." % format
-                continue
+            if len(images) == 1:
+                return None, "Can't export a 'Big' image to %s." % format
+            continue
         else:
-            log("Exporting image as %s: %s" % (format, img.getName())
+            log("Exporting image as %s: %s" % (format, img.getName()))
 
         if format == 'OME-TIFF':
             saveAsOmeTiff(conn, img, folder_name)
