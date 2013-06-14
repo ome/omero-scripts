@@ -382,19 +382,19 @@ if __name__ == "__main__":
     sumAvgOptions = [rstring('Average'), rstring('Sum'), rstring('Average, with raw data')]
 
     client = scripts.client('Plot_Profile.py', """This script processes Images, which have Line or PolyLine ROIs and outputs 
-the data as csv files, for plotting in E.g. exell.""",
+the data as CSV files, for plotting in e.g. Excel.""",
 
     scripts.String("Data_Type", optional=False, grouping="1",
-        description="Choose source of images (only Image supported)", values=dataTypes, default="Image"),
+        description="Choose source of images (only Image supported).", values=dataTypes, default="Image"),
 
     scripts.List("IDs", optional=False, grouping="2",
         description="List of Image IDs to process.").ofType(rlong(0)),
 
     scripts.Int("Line_Width", optional=False, grouping="3", default=1,
-        description="Width in pixels of each line plot", min=1),
+        description="Width in pixels of each line plot.", min=1),
 
     scripts.String("Sum_or_Average", optional=False, grouping="3.1", default='Average',
-        description="Output the Sum or Average (mean) of Line Profile. Option to include ALL line data with Average", values=sumAvgOptions),
+        description="Output the Sum or Average (mean) of Line Profile. Option to include ALL line data with Average.", values=sumAvgOptions),
 
     scripts.List("Channels", grouping="4",
         description="Optional list of Channels to process. E.g 1, 2. Use ALL Channels by default.").ofType(omero.rtypes.rint(0)),
