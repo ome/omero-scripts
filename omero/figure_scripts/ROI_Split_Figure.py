@@ -171,7 +171,7 @@ def getROIsplitView    (re, pixels, zStart, zEnd, splitIndexes, channelNames, me
                 roiImage.load()        # hoping that when we zoom, don't zoom fullImage
             if roiZoom is not 1:
                 newSize = (int(roiWidth*roiZoom), int(roiHeight*roiZoom))
-                roiImage = roiImage.resize(newSize)
+                roiImage = roiImage.resize(newSize, Image.ANTIALIAS)
             renderedImages.append(roiImage)
             panelWidth = roiImage.size[0]
             re.setActive(index, False)                # turn the channel off again!
@@ -202,7 +202,7 @@ def getROIsplitView    (re, pixels, zStart, zEnd, splitIndexes, channelNames, me
     roiMergedImage.load()    # make sure this is not just a lazy copy of the full image
     if roiZoom is not 1:
         newSize = (int(roiWidth*roiZoom), int(roiHeight*roiZoom))
-        roiMergedImage = roiMergedImage.resize(newSize)
+        roiMergedImage = roiMergedImage.resize(newSize, Image.ANTIALIAS)
         
     if channelMismatch:
         log(" WARNING channel mismatch: The current image has fewer channels than the primary image.")
