@@ -45,6 +45,11 @@ import glob
 import zipfile
 from datetime import datetime
 
+try:
+    from PIL import Image # see ticket:2597
+except ImportError:
+    import Image
+
 # keep track of log strings. 
 logStrings = []
 
@@ -71,7 +76,7 @@ def compress(target, base):
     finally:
         zip_file.close()
 
-def savePlane(image, format, cName, zRange, projectZ, t=0, channel=None, greyscale=False, imgWidth=None, folder_name=None):
+def savePlane(image, format, cName, zRange, projectZ, t=0, channel=None, greyscale=False, zoomPercent=None, folder_name=None):
     """
     Renders and saves an image to disk.
     
@@ -81,7 +86,7 @@ def savePlane(image, format, cName, zRange, projectZ, t=0, channel=None, greysca
     @param t:                   T index
     @param channel:             Active channel index. If None, use current rendering settings
     @param greyscale:           If true, all visible channels will be greyscale 
-    @param imgWidth:            Resize image to this width if specified.
+    @param zoomPercent:         Resize image by this percent if specified.
     """
     
     originalName = image.getName()
@@ -94,7 +99,7 @@ def savePlane(image, format, cName, zRange, projectZ, t=0, channel=None, greysca
     log("t: %s" % t)
     #log("channel %s" % channel)
     #log("greyscale %s" % greyscale)
-    #log("imgWidth %s" % imgWidth)
+    #log("zoomPercent %s" % zoomPercent)
     
     # if channel == None: use current rendering settings
     if channel != None:
@@ -108,10 +113,10 @@ def savePlane(image, format, cName, zRange, projectZ, t=0, channel=None, greysca
 
     # All Z and T indices in this script are 1-based, but this method uses 0-based.
     plane = image.renderImage(zRange[0]-1, t-1)
-    if imgWidth:
+    if zoomPercent:
         w, h = plane.size
-        newH = (float(imgWidth) / w ) * h
-        plane = plane.resize((imgWidth, int(newH)))
+        fraction = (float(zoomPercent) / 100 )
+        plane = plane.resize((w * fraction, h * fraction), Image.ANTIALIAS)
         
     if format == "PNG":
         imgName = makeImageName(originalName, cName, zRange, t, "png", folder_name)
@@ -177,7 +182,7 @@ def saveAsOmeTiff(conn, image, folder_name=None):
 
     
 def savePlanesForImage(conn, image, sizeC, splitCs, mergedCs, channelNames=None,
-        zRange=None, tRange=None, greyscale=False, imgWidth=None, projectZ=False, format="PNG", folder_name=None):
+        zRange=None, tRange=None, greyscale=False, zoomPercent=None, projectZ=False, format="PNG", folder_name=None):
     """
     Saves all the required planes for a single image, either as individual planes or projection.
     
@@ -187,7 +192,7 @@ def savePlanesForImage(conn, image, sizeC, splitCs, mergedCs, channelNames=None,
     @param zRange:              Tuple: (zStart, zStop). If None, use default Zindex
     @param tRange:              Tuple: (tStart, tStop). If None, use default Tindex
     @param greyscale:           If true, all visible channels will be greyscale 
-    @param imgWidth:            Resize image to this width if specified.
+    @param zoomPercent:         Resize image by this percent if specified.
     @param projectZ:            If true, project over Z range.
     """
     
@@ -230,15 +235,15 @@ def savePlanesForImage(conn, image, sizeC, splitCs, mergedCs, channelNames=None,
         for t in tIndexes:
             if zRange == None:
                 defaultZ = image.getDefaultZ()+1
-                savePlane(image, format, cName, (defaultZ,), projectZ, t, c, gScale, imgWidth, folder_name)
+                savePlane(image, format, cName, (defaultZ,), projectZ, t, c, gScale, zoomPercent, folder_name)
             elif projectZ:
-                savePlane(image, format, cName, zRange, projectZ, t, c, gScale, imgWidth, folder_name)
+                savePlane(image, format, cName, zRange, projectZ, t, c, gScale, zoomPercent, folder_name)
             else:
                 if len(zRange) > 1:
                     for z in range(zRange[0], zRange[1]):
-                        savePlane(image, format, cName, (z,), projectZ, t, c, gScale, imgWidth, folder_name)
+                        savePlane(image, format, cName, (z,), projectZ, t, c, gScale, zoomPercent, folder_name)
                 else:
-                    savePlane(image, format, cName, zRange, projectZ, t, c, gScale, imgWidth, folder_name)
+                    savePlane(image, format, cName, zRange, projectZ, t, c, gScale, zoomPercent, folder_name)
 
 
 def batchImageExport(conn, scriptParams):
@@ -261,9 +266,9 @@ def batchImageExport(conn, scriptParams):
     channelNames = []
     if "Channel_Names" in scriptParams:
         channelNames = scriptParams["Channel_Names"]
-    imgWidth = None
-    if "Image_Width" in scriptParams:
-        imgWidth = scriptParams["Image_Width"]
+    zoomPercent = None
+    if "Zoom" in scriptParams and scriptParams["Zoom"] != "100%":
+        zoomPercent = int(scriptParams["Zoom"][:-1])
     
     
     # functions used below for each imaage.
@@ -373,15 +378,15 @@ def batchImageExport(conn, scriptParams):
             elif len(tRange) == 1:  log("  T-index: %d" % tRange[0])
             else:                   log("  T-range: %s-%s" % ( tRange[0],tRange[1]-1) )
             log("  Format: %s" % format)
-            if imgWidth is None:    log("  Image Width: no resize")
-            else:                   log("  Image Width: %s" % imgWidth)
+            if zoomPercent is None: log("  Image Zoom: 100%")
+            else:                   log("  Image Zoom: %s" % zoomPercent)
             log("  Greyscale: %s" % greyscale)
             log("Channel Rendering Settings:")
             for ch in img.getChannels():
                 log("  %s: %d-%d" % (ch.getLabel(), ch.getWindowStart(), ch.getWindowEnd()) )
         
             savePlanesForImage(conn, img, sizeC, splitCs, mergedCs, channelNames,
-                zRange, tRange, greyscale, imgWidth, projectZ=projectZ, format=format, folder_name=folder_name)
+                zRange, tRange, greyscale, zoomPercent, projectZ=projectZ, format=format, folder_name=folder_name)
 
         # write log for exported images (not needed for ome-tiff)
         logFile = open(os.path.join(exp_dir, 'Batch_Image_Export.txt'), 'w')
@@ -434,6 +439,7 @@ def runScript():
     tChoices = [rstring(defaultToption),
         rstring('ALL T planes'),
         rstring('Other (see below)')]
+    zoomPercents = omero.rtypes.wrap(["25%", "50%", "100%", "200%", "300%", "400%"])
      
     client = scripts.client('Batch_Image_Export.py', """Save multiple images as jpegs or pngs in a zip
 file available for download as a batch export. 
@@ -480,9 +486,9 @@ See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/ins
     
     scripts.Int("...specify_T_end", grouping="6.3",
         description="Choose a specific T-index to export", min=1),
-        
-    scripts.Int("Image_Width", grouping="7", 
-        description="The max width of each image panel. Default is actual size", min=1),
+
+    scripts.String("Zoom", grouping="7", values=zoomPercents,
+    description="Zoom (jpeg, png or tiff) before saving with ANTIALIAS interpolation", default="100%"),
 
     scripts.String("Format", grouping="8", 
         description="Format to save image", values=formats, default='JPEG'),
