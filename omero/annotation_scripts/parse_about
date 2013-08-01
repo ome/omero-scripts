@@ -1,0 +1,92 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+#
+# Copyright (C) 2013 University of Dundee & Open Microscopy Environment.
+# All rights reserved.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+"""
+Parser for the "About" section of README.md. You can execute this script
+in your user scripts repository in order to see the values that will be
+found:
+
+    ./parse_about
+
+This script depends on `misaka`which can be installed via:
+
+     pip install misaka
+
+"""
+
+import misaka as m
+
+
+class ScriptsRenderer(m.BaseRenderer):
+    """
+    Reads through README.md until '# About #' is reached,
+    then stores key/value pairs of each header which is
+    at the 6th level.
+    """
+
+    def __init__(self, *args, **kwargs):
+        m.BaseRenderer.__init__(self, *args, **kwargs)
+        self.__level = ["Root"]
+        self.__about = {}
+
+    def header(self, text, level):
+
+        # Cut off at current level
+        if len(self.__level) > level:
+            self.__level = self.__level[0:level]
+
+        # If too short, append None
+        while len(self.__level) < level:
+            self.__level.append(None)
+
+        # Finally, append the current value
+        self.__level.append(text.strip())
+
+    def paragraph(self, text):
+        if len(self.__level) == 7:
+            if self.__level[1] == "About":
+                self.__about[self.__level[6]] = text
+
+    def about(self):
+        return self.__about
+
+
+def parse_about(text):
+    r = ScriptsRenderer()
+    md = m.Markdown(r)
+    md.render(text)
+    return r.about()
+
+
+def slurp(filename):
+    f = None
+    try:
+        f = open(filename, "r")
+        return f.read()
+    finally:
+        if f:
+            f.close()
+
+
+if __name__ == "__main__":
+    about = parse_about(slurp("README.md"))
+    for k, v in sorted(about.items()):
+        print k, "=>", v
