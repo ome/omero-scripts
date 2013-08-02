@@ -1,0 +1,16 @@
+{
+    "repositoryName": "OMERO User Scripts",
+    "owners": [
+        "Alice",
+        "Bob"
+    ],
+    "institution": "Open Microscopy Environment",
+    "url": "https://www.openmicroscopy.org/site/community/script-sharing",
+    "email": "ome-devel@lists.openmicroscopy.org.uk",
+    "description": [
+        "This file will be automatically parsed and used to create an entry on the scripts sharing page.",
+        "..."
+    ],
+    "minimumOmeroVersion": "4.4",
+    "maximumOmeroVersion": "4.4"
+}
