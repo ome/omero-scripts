@@ -9,6 +9,7 @@
     "email": "ome-devel@lists.openmicroscopy.org.uk",
     "description": [
         "This file will be automatically parsed and used to create an entry on the scripts sharing page.",
+        "Please modify this description as well as the other values in this file as you see fit.",
         "..."
     ],
     "minimumOmeroVersion": "4.4",
