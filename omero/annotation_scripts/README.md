@@ -21,9 +21,16 @@ Installation
 
         git clone git@github.com:YOURNAMEHERE/omero-user-scripts.git YOURNAMEHERE
 
-3. Find a suitable sub-directory by reading through the README files
+3. Pick a suitable sub-directory:
 
-        less */README.md
+    | Directory          | Scripts which ...                                                                    |
+    | ---------          | -----------------                                                                    |
+    | *analysis_scripts* | crunch images to produce numerical results and similar tasks                         |
+    | *export_scripts*   | take one or more images as an input, and produce a representation for exchange       |
+    | *figure_scripts*   | take one or more images as an input, and produce some form of summary representation |
+    | *import_scripts*   | are run on images after they've been imported into OMERO for some extra processing   |
+    | *setup_scripts*    | are executed once, often by administrators, to configure OMERO itself                |
+    | *util_scripts*     | are periodically run to clean up or otherwise improve existing data or OMERO itself  |
 
 4. Move the example script to that directory with a valid name
 
