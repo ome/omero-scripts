@@ -21,7 +21,11 @@ Installation
 
         git clone git@github.com:YOURNAMEHERE/omero-user-scripts.git YOURNAMEHERE
 
-4. Move the example script to the proper sub-directory with a valid name
+3. Find a suitable sub-directory by reading through the README files
+
+        less */README.md
+
+4. Move the example script to that directory with a valid name
 
         cd YOURNAMEHERE
         git mv Example.py util_scripts/daily_cleanup.py
