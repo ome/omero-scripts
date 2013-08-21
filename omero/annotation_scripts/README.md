@@ -13,7 +13,7 @@ Installation
 
 1. Fork omero-user-scripts in your own github account
 
-2. Change into your the scripts location of your OMERO installation
+2. Change into the scripts location of your OMERO installation
 
         cd OMERO_DIST/lib/scripts
 
