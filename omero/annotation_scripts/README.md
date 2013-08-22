@@ -19,7 +19,7 @@ Installation
 
 3. Clone the repository
 
-        git clone git@github.com:YOURNAMEHERE/omero-user-scripts.git YOURNAMEHERE
+        git clone git@github.com:YOURGITUSER/omero-user-scripts.git YOUR_SCRIPTS
 
 3. Pick a suitable sub-directory:
 
@@ -34,7 +34,7 @@ Installation
 
 4. Move [Example.py](Example.py) to that directory with a valid name
 
-        cd YOURNAMEHERE
+        cd YOUR_SCRIPTS
         git mv Example.py util_scripts/daily_cleanup.py
 
 5. List the current scripts in the system
