@@ -54,6 +54,9 @@ Testing your script
 
         path/to/bin/omero script launch SCRIPT_ID
 
+4. See the [developer documentation](https://www.openmicroscopy.org/site/support/omero4/developers/scripts/)
+   for more information on testing and modifying your scripts.
+
 Legal
 -----
 
