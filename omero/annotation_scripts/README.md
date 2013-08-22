@@ -23,16 +23,16 @@ Installation
 
 3. Pick a suitable sub-directory:
 
-    | Directory          | Scripts which ...                                                                    |
-    | ---------          | -----------------                                                                    |
-    | *analysis_scripts* | crunch images to produce numerical results and similar tasks                         |
-    | *export_scripts*   | take one or more images as an input, and produce a representation for exchange       |
-    | *figure_scripts*   | take one or more images as an input, and produce some form of summary representation |
-    | *import_scripts*   | are run on images after they've been imported into OMERO for some extra processing   |
-    | *setup_scripts*    | are executed once, often by administrators, to configure OMERO itself                |
-    | *util_scripts*     | are periodically run to clean up or otherwise improve existing data or OMERO itself  |
+    | Directory            | Scripts which ...                                                                    |
+    | ---------            | -----------------                                                                    |
+    | **analysis_scripts** | crunch images to produce numerical results and similar tasks                         |
+    | **export_scripts**   | take one or more images as an input, and produce a representation for exchange       |
+    | **figure_scripts**   | take one or more images as an input, and produce some form of summary representation |
+    | **import_scripts**   | are run on images after they've been imported into OMERO for some extra processing   |
+    | **setup_scripts**    | are executed once, often by administrators, to configure OMERO itself                |
+    | **util_scripts**     | are periodically run to clean up or otherwise improve existing data or OMERO itself  |
 
-4. Move the [example script](Example.py) to that directory with a valid name
+4. Move [Example.py](Example.py) to that directory with a valid name
 
         cd YOURNAMEHERE
         git mv Example.py util_scripts/daily_cleanup.py
@@ -50,7 +50,7 @@ See [LICENSE](LICENSE)
 # About #
 This section provides machine-readable information about your scripts.
 It will be used to help generate a landing page and links for your work.
-Please modify *all* values on *each* branch to describe your scripts.
+Please modify **all** values on **each** branch to describe your scripts.
 
 ###### Repository name ######
 Base OMERO User Scripts repository
