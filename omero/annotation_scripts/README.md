@@ -4,12 +4,12 @@ OMERO User Scripts
 OMERO.py scripts which use the OMERO.scripts API
 
 Requirements
-============
+------------
 
 * OMERO 4.4.x
 
 Installation
-============
+------------
 
 1. Fork [omero-user-scripts](https://github.com/ome/omero-user-scripts/fork) in your own github account
 
@@ -21,7 +21,10 @@ Installation
 
         git clone git@github.com:YOURGITUSER/omero-user-scripts.git YOUR_SCRIPTS
 
-3. Pick a suitable sub-directory:
+Adding a script
+---------------
+
+1. Pick a suitable sub-directory:
 
     | Directory            | Scripts which ...                                                                    |
     | ---------            | -----------------                                                                    |
@@ -32,17 +35,27 @@ Installation
     | **setup_scripts**    | are executed once, often by administrators, to configure OMERO itself                |
     | **util_scripts**     | are periodically run to clean up or otherwise improve existing data or OMERO itself  |
 
-4. Move [Example.py](Example.py) to that directory with a valid name
+2. Place your script in that directory:
+  * If you have an existing script, copy it directly in, and remove [Example.py](Example.py)
+  * Otherwise, rename [Example.py](Example.py) and edit it in place.
 
-        cd YOUR_SCRIPTS
-        git mv Example.py util_scripts/daily_cleanup.py
+Testing your script
+-------------------
 
-5. List the current scripts in the system
+1. List the current scripts in the system
 
         path/to/bin/omero script list
 
+2. List the parameters
+
+        path/to/bin/omero script params SCRIPT_ID
+
+3. Launch the script
+
+        path/to/bin/omero script launch SCRIPT_ID
+
 Legal
-=====
+-----
 
 See [LICENSE](LICENSE)
 
