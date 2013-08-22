@@ -32,7 +32,7 @@ Installation
     | *setup_scripts*    | are executed once, often by administrators, to configure OMERO itself                |
     | *util_scripts*     | are periodically run to clean up or otherwise improve existing data or OMERO itself  |
 
-4. Move the example script to that directory with a valid name
+4. Move the [example script](Example.py) to that directory with a valid name
 
         cd YOURNAMEHERE
         git mv Example.py util_scripts/daily_cleanup.py
