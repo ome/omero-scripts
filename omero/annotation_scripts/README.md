@@ -84,7 +84,7 @@ The OME Team
 Open Microscopy Environment
 
 ###### URL ######
-https://www.openmicroscopy.org/info/scripts
+http://openmicroscopy.org/info/scripts
 
 ###### Email ######
 ome-devel@lists.openmicroscopy.org.uk
