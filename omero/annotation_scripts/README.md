@@ -1,8 +1,6 @@
 OMERO User Scripts
 ==================
 
-OMERO.py scripts which use the OMERO.scripts API
-
 Requirements
 ------------
 
