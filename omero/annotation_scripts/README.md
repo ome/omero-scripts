@@ -44,7 +44,7 @@ Installation
 Legal
 =====
 
-See LICENSE
+See [LICENSE](LICENSE)
 
 
 # About #
