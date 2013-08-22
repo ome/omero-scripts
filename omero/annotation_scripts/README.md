@@ -50,7 +50,7 @@ See [LICENSE](LICENSE)
 # About #
 This section provides machine-readable information about your scripts.
 It will be used to help generate a landing page and links for your work.
-Please modify on each branch to describe your scripts.
+Please modify *all* values on *each* branch to describe your scripts.
 
 ###### Repository name ######
 Base OMERO User Scripts repository
