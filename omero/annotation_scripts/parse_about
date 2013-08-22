@@ -44,19 +44,26 @@ class ScriptsRenderer(m.BaseRenderer):
 
     def __init__(self, *args, **kwargs):
         m.BaseRenderer.__init__(self, *args, **kwargs)
-        self.__current = None
-        self.__about = None
+        self.__level = ["Root"]
+        self.__about = {}
 
     def header(self, text, level):
-        if level == 1 and text.strip() == "About":
-            self.__about = {}
-        if self.__about is not None and level == 6:
-            self.__current = text.strip()
+
+        # Cut off at current level
+        if len(self.__level) > level:
+            self.__level = self.__level[0:level]
+
+        # If too short, append None
+        while len(self.__level) < level:
+            self.__level.append(None)
+
+        # Finally, append the current value
+        self.__level.append(text.strip())
 
     def paragraph(self, text):
-        if self.__current:
-            self.__about[self.__current] = text
-            self.__current = None
+        if len(self.__level) == 7:
+            if self.__level[1] == "About":
+                self.__about[self.__level[6]] = text
 
     def about(self):
         return self.__about
