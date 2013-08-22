@@ -46,3 +46,33 @@ Legal
 
 See LICENSE
 
+
+# About #
+This section provides machine-readable information about your scripts.
+It will be used to help generate a landing page and links for your work.
+Please modify on each branch to describe your scripts.
+
+###### Repository name ######
+Base OMERO User Scripts repository
+
+###### Minimum version ######
+4.4
+
+###### Maximum version ######
+4.4
+
+###### Owner(s) ######
+The OME Team
+
+###### Institution ######
+Open Microscopy Environment
+
+###### URL ######
+https://www.openmicroscopy.org/site/community/script-sharing
+
+###### Email ######
+ome-devel@lists.openmicroscopy.org.uk
+
+###### Description ######
+Example script repository to be cloned, modified, and extended.
+This text may be used on OME resources to explain your scripts.
