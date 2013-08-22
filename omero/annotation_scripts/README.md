@@ -24,14 +24,15 @@ Adding a script
 
 1. Pick a suitable sub-directory:
 
-    | Directory            | Scripts which ...                                                                    |
-    | ---------            | -----------------                                                                    |
-    | **analysis_scripts** | crunch images to produce numerical results and similar tasks                         |
-    | **export_scripts**   | take one or more images as an input, and produce a representation for exchange       |
-    | **figure_scripts**   | take one or more images as an input, and produce some form of summary representation |
-    | **import_scripts**   | are run on images after they've been imported into OMERO for some extra processing   |
-    | **setup_scripts**    | are executed once, often by administrators, to configure OMERO itself                |
-    | **util_scripts**     | are periodically run to clean up or otherwise improve existing data or OMERO itself  |
+    | Directory              | Scripts which ...                                                                    |
+    | ---------              | -----------------                                                                    |
+    | **analysis_scripts**   | crunch images to produce numerical results and similar tasks                         |
+    | **export_scripts**     | take one or more images as an input, and produce a representation for exchange       |
+    | **figure_scripts**     | take one or more images as an input, and produce some form of summary representation |
+    | **import_scripts**     | are run on images after they've been imported into OMERO for some extra processing   |
+    | **processing_scripts** | create new images from existing images or other data                                 |
+    | **setup_scripts**      | are executed once, often by administrators, to configure OMERO itself                |
+    | **util_scripts**       | are periodically run to clean up or otherwise improve existing data or OMERO itself  |
 
 2. Place your script in that directory:
   * If you have an existing script, copy it directly in, and remove [Example.py](Example.py)
