@@ -11,7 +11,7 @@ Requirements
 Installation
 ============
 
-1. Fork omero-user-scripts in your own github account
+1. Fork [omero-user-scripts](https://github.com/ome/omero-user-scripts/fork) in your own github account
 
 2. Change into the scripts location of your OMERO installation
 
