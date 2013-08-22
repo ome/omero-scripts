@@ -1,4 +1,4 @@
 # OMERO User Scripts
 
-Please see our [Script Sharing](https://www.openmicroscopy.org/site/community/script-sharing)
-page on how to use this repository.
+Please see our [User Scripts](https://www.openmicroscopy.org/info/scripts) page
+on how to use this repository.
