@@ -1,11 +1,6 @@
 OMERO User Scripts
 ==================
 
-Requirements
-------------
-
-* OMERO 4.4.x
-
 Installation
 ------------
 
@@ -76,7 +71,7 @@ Base OMERO User Scripts repository
 4.4
 
 ###### Maximum version ######
-4.4
+5.0
 
 ###### Owner(s) ######
 The OME Team
