@@ -181,7 +181,7 @@ def createMovieFigure(conn, pixelIds, tIndexes, zStart, zEnd, width, height, spa
         
         # make a canvas for the row of splitview images...(will add time labels above each row)
         colCount = min(maxColCount, len(renderedImages))
-        rowCount = math.ceil(float(len(renderedImages)) / colCount)
+        rowCount = int(math.ceil(float(len(renderedImages)) / colCount))
         font = imgUtil.getFont(width/12)
         fontHeight = font.getsize("Textq")[1]
         canvasWidth = ((width + spacer) * colCount) + spacer
