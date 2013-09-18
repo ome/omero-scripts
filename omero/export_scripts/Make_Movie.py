@@ -540,6 +540,7 @@ def writeMovie(commandArgs, conn):
     movieName = "Movie"
     if "Movie_Name" in commandArgs:
         movieName = commandArgs["Movie_Name"]
+        movieName = os.path.basename(movieName)
     if not movieName.endswith(".%s" % ext):
         movieName = "%s.%s" % (movieName, ext)
         
