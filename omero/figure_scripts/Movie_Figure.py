@@ -481,7 +481,7 @@ def movieFigure(conn, commandArgs):
     output = "movieFigure"
     if "Figure_Name" in commandArgs:
         output = str(commandArgs["Figure_Name"])
-        
+        output = os.path.basename(output)
     if format == 'PNG':
         output = output + ".png"
         figure.save(output, "PNG")
