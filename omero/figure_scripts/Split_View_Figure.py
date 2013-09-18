@@ -598,6 +598,7 @@ def splitViewFigure(conn, scriptParams):
     figLegend = "\n".join(logStrings)
 
     output = scriptParams["Figure_Name"]
+    output = os.path.basename(output)
     format = scriptParams["Format"]
     if format == "PNG":
         output = output + ".png"

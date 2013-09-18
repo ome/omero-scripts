@@ -44,6 +44,7 @@ import omero.util.script_utils as scriptUtil
 from omero.rtypes import *
 import omero.util.imageUtil as imgUtil
 from datetime import date
+import os
 
 try:
     from PIL import Image, ImageDraw # see ticket:2597
@@ -385,6 +386,7 @@ def makeThumbnailFigure(conn, scriptParams):
     
     format = scriptParams["Format"]
     output = scriptParams["Figure_Name"]
+    output = os.path.basename(output)
         
     if format == 'PNG':
         output = output + ".png"

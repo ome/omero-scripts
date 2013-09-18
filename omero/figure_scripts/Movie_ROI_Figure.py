@@ -633,7 +633,7 @@ def roiFigure(conn, commandArgs):
     output = "movieROIFigure"
     if "Figure_Name" in commandArgs:
         output = str(commandArgs["Figure_Name"])
-        
+        output = os.path.basename(output)
     if format == 'PNG':
         output = output + ".png"
         fig.save(output, "PNG")
