@@ -478,26 +478,30 @@ def movieFigure(conn, commandArgs):
     
     format = commandArgs["Format"]
             
-    output = "movieFigure"
+    figureName = "movieFigure"
     if "Figure_Name" in commandArgs:
-        output = str(commandArgs["Figure_Name"])
-        output = os.path.basename(output)
+        figureName = str(commandArgs["Figure_Name"])
+        figureName = os.path.basename(output)
+    output = "localfile"
     if format == 'PNG':
         output = output + ".png"
-        figure.save(output, "PNG")
+        figureName = figureName + ".png"
+        fig.save(output, "PNG")
         mimetype = "image/png"
     elif format == 'TIFF':
         output = output + ".tiff"
-        figure.save(output, "TIFF")
+        figureName = figureName + ".tiff"
+        fig.save(output, "TIFF")
         mimetype = "image/tiff"
     else:
         output = output + ".jpg"
-        figure.save(output)
+        figureName = figureName + ".jpg"
+        fig.save(output)
         mimetype = "image/jpeg"
     
     namespace = omero.constants.namespaces.NSCREATED+"/omero/figure_scripts/Movie_Figure"
     fileAnnotation, faMessage = scriptUtil.createLinkFileAnnotation(conn, output, omeroImage, 
-    output="Movie figure", mimetype=mimetype, ns=namespace, desc=figLegend)
+    output="Movie figure", mimetype=mimetype, ns=namespace, desc=figLegend, origFilePathAndName=figureName)
     message += faMessage
     
     return fileAnnotation, message
