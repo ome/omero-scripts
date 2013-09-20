@@ -271,12 +271,10 @@ def runAsScript():
 
     client = scripts.client(
         'Channel_Offsets.py',
-        """
-Create new Images from existing images, applying an x, y and z shift to each
-channel independently.
-See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/
-insight/insight-util-scripts.html
-        """,
+        """Create new Images from existing images, applying an x, y and z \
+shift to each channel independently.
+See http://www.openmicroscopy.org/site/support/omero4/users/\
+client-tutorials/insight/insight-util-scripts.html""",
 
         scripts.String(
             "Data_Type", optional=False, grouping="1",
