@@ -652,19 +652,23 @@ def splitViewFigure(conn, scriptParams):
 
     figLegend = "\n".join(logStrings)
 
-    output = scriptParams["Figure_Name"]
-    output = os.path.basename(output)
+    figureName = scriptParams["Figure_Name"]
+    figureName = os.path.basename(figureName)
+    output = "localfile"
     format = scriptParams["Format"]
-    if format == "PNG":
+    if format == 'PNG':
         output = output + ".png"
+        figureName = figureName + ".png"
         fig.save(output, "PNG")
         mimetype = "image/png"
     elif format == 'TIFF':
         output = output + ".tiff"
+        figureName = figureName + ".tiff"
         fig.save(output, "TIFF")
         mimetype = "image/tiff"
     else:
         output = output + ".jpg"
+        figureName = figureName + ".jpg"
         fig.save(output)
         mimetype = "image/jpeg"
 
@@ -674,7 +678,8 @@ def splitViewFigure(conn, scriptParams):
     namespace = NSCREATED + "/omero/figure_scripts/Split_View_Figure"
     fileAnnotation, faMessage = scriptUtil.createLinkFileAnnotation(
         conn, output, omeroImage, output="Split view figure",
-        mimetype=mimetype, ns=namespace, desc=figLegend)
+        mimetype=mimetype, ns=namespace, desc=figLegend,
+        origFilePathAndName=figureName)
     message += faMessage
 
     return fileAnnotation, message

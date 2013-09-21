@@ -433,27 +433,30 @@ def makeThumbnailFigure(conn, scriptParams):
     figLegend = "\n".join(logLines)
 
     format = scriptParams["Format"]
-    output = scriptParams["Figure_Name"]
-    output = os.path.basename(output)
+    figureName = scriptParams["Figure_Name"]
+    figureName = os.path.basename(figureName)
+    output = "localfile"
 
     if format == 'PNG':
         output = output + ".png"
+        figureName = figureName + ".png"
         figure.save(output, "PNG")
         mimetype = "image/png"
     elif format == 'TIFF':
         output = output + ".tiff"
+        figureName = figureName + ".tiff"
         figure.save(output, "TIFF")
         mimetype = "image/tiff"
     else:
         output = output + ".jpg"
+        figureName = figureName + ".jpg"
         figure.save(output)
         mimetype = "image/jpeg"
 
     namespace = NSCREATED + "/omero/figure_scripts/Thumbnail_Figure"
     fileAnnotation, faMessage = scriptUtil.createLinkFileAnnotation(
-        conn, output, parent,
-        output="Thumbnail figure", mimetype=mimetype, ns=namespace,
-        desc=figLegend)
+        conn, output, parent, output="Thumbnail figure", mimetype=mimetype,
+        ns=namespace, desc=figLegend, origFilePathAndName=figureName)
     message += faMessage
 
     return fileAnnotation, message

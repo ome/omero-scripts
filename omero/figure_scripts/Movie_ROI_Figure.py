@@ -674,20 +674,24 @@ def roiFigure(conn, commandArgs):
     #print figLegend    # bug fixing only
     format = commandArgs["Format"]
 
-    output = "movieROIFigure"
+    figureName = "movieROIFigure"
     if "Figure_Name" in commandArgs:
-        output = str(commandArgs["Figure_Name"])
-        output = os.path.basename(output)
+        figureName = commandArgs["Figure_Name"]
+        figureName = os.path.basename(figureName)
+    output = "localfile"
     if format == 'PNG':
         output = output + ".png"
+        figureName = figureName + ".png"
         fig.save(output, "PNG")
         mimetype = "image/png"
     elif format == 'TIFF':
         output = output + ".tiff"
+        figureName = figureName + ".tiff"
         fig.save(output, "TIFF")
         mimetype = "image/tiff"
     else:
         output = output + ".jpg"
+        figureName = figureName + ".jpg"
         fig.save(output)
         mimetype = "image/jpeg"
 
@@ -698,7 +702,8 @@ def roiFigure(conn, commandArgs):
     namespace = NSCREATED + "/omero/figure_scripts/Movie_ROI_Figure"
     fileAnnotation, faMessage = scriptUtil.createLinkFileAnnotation(
         conn, output, omeroImage, output="Movie ROI figure",
-        mimetype=mimetype, ns=namespace, desc=figLegend)
+        mimetype=mimetype, ns=namespace, desc=figLegend,
+        origFilePathAndName=figureName)
     message += faMessage
 
     return fileAnnotation, message
