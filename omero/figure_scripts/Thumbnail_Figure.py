@@ -44,7 +44,7 @@ from omero.gateway import BlitzGateway
 import omero.util.script_utils as scriptUtil
 from omero.rtypes import rlong, rstring, robject, unwrap
 import omero.util.imageUtil as imgUtil
-import omero.constants.namespaces.NSCREATED
+from omero.constants.namespaces import NSCREATED
 import os
 
 try:
@@ -453,8 +453,7 @@ def makeThumbnailFigure(conn, scriptParams):
         figure.save(output)
         mimetype = "image/jpeg"
 
-    namespace = omero.constants.namespaces.NSCREATED + \
-        "/omero/figure_scripts/Thumbnail_Figure"
+    namespace = NSCREATED + "/omero/figure_scripts/Thumbnail_Figure"
     fileAnnotation, faMessage = scriptUtil.createLinkFileAnnotation(
         conn, output, parent, output="Thumbnail figure", mimetype=mimetype,
         ns=namespace, desc=figLegend, origFilePathAndName=figureName)
