@@ -514,17 +514,17 @@ def movieFigure(conn, commandArgs):
     if format == 'PNG':
         output = output + ".png"
         figureName = figureName + ".png"
-        fig.save(output, "PNG")
+        figure.save(output, "PNG")
         mimetype = "image/png"
     elif format == 'TIFF':
         output = output + ".tiff"
         figureName = figureName + ".tiff"
-        fig.save(output, "TIFF")
+        figure.save(output, "TIFF")
         mimetype = "image/tiff"
     else:
         output = output + ".jpg"
         figureName = figureName + ".jpg"
-        fig.save(output)
+        figure.save(output)
         mimetype = "image/jpeg"
 
     namespace = NSCREATED + "/omero/figure_scripts/Movie_Figure"
