@@ -39,7 +39,7 @@ from omero.gateway import BlitzGateway
 import omero.util.script_utils as script_utils
 import omero
 from omero.rtypes import rstring, rlong, robject
-from omero.constants.namespaces import NSCREATED
+from omero.constants.namespaces import NSCREATED, NSOMETIFF
 import os
 
 import glob
@@ -447,12 +447,11 @@ def batchImageExport(conn, scriptParams):
         return None, "No files exported. See 'info' for more details"
     # zip everything up (unless we've only got a single ome-tiff)
     if format == 'OME-TIFF' and len(os.listdir(exp_dir)) == 1:
-        ometiffIds = [t.id for t in parent.listAnnotations(
-            ns=omero.constants.namespaces.NSOMETIFF)]
+        ometiffIds = [t.id for t in parent.listAnnotations(ns=NSOMETIFF)]
         print "Deleting OLD ome-tiffs: %s" % ometiffIds
         conn.deleteObjects("Annotation", ometiffIds)
         export_file = os.path.join(folder_name, os.listdir(exp_dir)[0])
-        namespace = omero.constants.namespaces.NSOMETIFF
+        namespace = NSOMETIFF
         outputDisplayName = "OME-TIFF"
         mimetype = 'image/tiff'
     else:

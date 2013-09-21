@@ -44,6 +44,9 @@ import omero.util.script_utils as scriptUtil
 import omero
 from omero.gateway import BlitzGateway
 from omero.rtypes import rint, rlong, rstring, robject, wrap, unwrap
+from omero.constants.namespaces import NSCREATED
+from omero.constants.projection.ProjectionType import MAXIMUMINTENSITY
+from omero.constants.projection.ProjectionType import MEANINTENSITY
 import os
 import StringIO
 from datetime import date
@@ -104,7 +107,7 @@ def getSplitView(conn, pixelIds, zStart, zEnd, splitIndexes, channelNames,
     """
 
     if algorithm is None:    # omero::constants::projection::ProjectionType
-        algorithm = omero.constants.projection.ProjectionType.MAXIMUMINTENSITY
+        algorithm = MAXIMUMINTENSITY
     timepoint = 0
     mode = "RGB"
     white = (255, 255, 255)
@@ -620,9 +623,9 @@ def splitViewFigure(conn, scriptParams):
 
     colourChannels = not scriptParams["Split_Panels_Grey"]
 
-    algorithm = omero.constants.projection.ProjectionType.MAXIMUMINTENSITY
+    algorithm = MAXIMUMINTENSITY
     if "Mean Intensity" == scriptParams["Algorithm"]:
-        algorithm = omero.constants.projection.ProjectionType.MEANINTENSITY
+        algorithm = MEANINTENSITY
 
     stepping = min(scriptParams["Stepping"], sizeZ)
 
@@ -668,8 +671,7 @@ def splitViewFigure(conn, scriptParams):
     # Upload the figure 'output' to the server, creating a file annotation and
     # attaching it to the omeroImage, adding the
     # figLegend as the fileAnnotation description.
-    namespace = omero.constants.namespaces.NSCREATED + \
-        "/omero/figure_scripts/Split_View_Figure"
+    namespace = NSCREATED + "/omero/figure_scripts/Split_View_Figure"
     fileAnnotation, faMessage = scriptUtil.createLinkFileAnnotation(
         conn, output, omeroImage, output="Split view figure",
         mimetype=mimetype, ns=namespace, desc=figLegend)

@@ -39,6 +39,7 @@ ROIs as zoomed panels beside the images.
 
 """
 
+import omero
 import omero.scripts as scripts
 import omero.util.imageUtil as imgUtil
 import omero.util.figureUtil as figUtil
@@ -46,8 +47,9 @@ import omero.util.script_utils as scriptUtil
 from omero.gateway import BlitzGateway
 from omero.rtypes import rlong, robject, rstring, wrap, unwrap
 import os
-import omero.constants.namespaces
-import omero.constants.projection.ProjectionType
+from omero.constants.namespaces import NSCREATED
+from omero.constants.projection.ProjectionType import MAXIMUMINTENSITY
+from omero.constants.projection.ProjectionType import MEANINTENSITY
 import StringIO
 from datetime import date
 
@@ -84,7 +86,7 @@ def getROIsplitView(re, pixels, zStart, zEnd, splitIndexes, channelNames,
     """
 
     if algorithm is None:    # omero::constants::projection::ProjectionType
-        algorithm = omero.constants.projection.ProjectionType.MAXIMUMINTENSITY
+        algorithm = MAXIMUMINTENSITY
     mode = "RGB"
     white = (255, 255, 255)
 
@@ -709,12 +711,11 @@ def roiFigure(conn, commandArgs):
     if "Split_Panels_Grey" in commandArgs and commandArgs["Split_Panels_Grey"]:
         colourChannels = False
 
-    algorithm = omero.constants.projection.ProjectionType.MAXIMUMINTENSITY
+    algorithm = MAXIMUMINTENSITY
     if "Algorithm" in commandArgs:
         a = commandArgs["Algorithm"]
         if (a == "Mean Intensity"):
-            algorithm = \
-                omero.constants.projection.ProjectionType.MEANINTENSITY
+            algorithm = MEANINTENSITY
 
     stepping = 1
     if "Stepping" in commandArgs:
@@ -792,8 +793,7 @@ def roiFigure(conn, commandArgs):
     # it to the omeroImage, adding the
     # figLegend as the fileAnnotation description.
     # Returns the id of the originalFileLink child. (ID object, not value)
-    namespace = omero.constants.namespaces.NSCREATED + \
-        "/omero/figure_scripts/ROI_Split_Figure"
+    namespace = NSCREATED + "/omero/figure_scripts/ROI_Split_Figure"
     fileAnnotation, faMessage = scriptUtil.createLinkFileAnnotation(
         conn, output, omeroImage, output="ROI Split figure",
         mimetype=mimetype, ns=namespace, desc=figLegend)

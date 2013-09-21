@@ -38,16 +38,16 @@ Initialises the namespace and keywords for the FLIM script,
 """
 
 # OMERO Imports
-import omero.clients
 import omero.scripts as scripts
-
+from omero.constants.analysis.flim import KEYWORDFLIMCELL, NSFLIM, \
+    KEYWORDFLIMBACKGROUND
 
 # Script Utility helper methods.
 import omero.util.script_utils as script_utils
 
-CELL = omero.constants.analysis.flim.KEYWORDFLIMCELL
-NAMESPACE = omero.constants.analysis.flim.NSFLIM
-BACKGROUND = omero.constants.analysis.flim.KEYWORDFLIMBACKGROUND
+CELL = KEYWORDFLIMCELL
+NAMESPACE = NSFLIM
+BACKGROUND = KEYWORDFLIMBACKGROUND
 
 
 def initialise(session):

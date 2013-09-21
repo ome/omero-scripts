@@ -69,7 +69,7 @@ import omero.util.pixelstypetopython as pixelstypetopython
 from struct import unpack
 from omero.rtypes import wrap, rstring, rlong, rint, robject
 from omero.gateway import BlitzGateway
-from omero.constants.namespaces import NSCREATED
+from omero.constants.namespaces import NSCREATED, NSMOVIE
 
 from cStringIO import StringIO
 
@@ -85,7 +85,7 @@ COLOURS.update(scriptUtil.EXTRA_COLOURS)    # name:(rgba) map
 MPEG = 'MPEG'
 QT = 'Quicktime'
 WMV = 'WMV'
-MOVIE_NS = omero.constants.metadata.NSMOVIE
+MOVIE_NS = NSMOVIE
 formatNSMap = {MPEG: MOVIE_NS, QT: MOVIE_NS, WMV: MOVIE_NS}
 formatExtensionMap = {MPEG: "avi", QT: "avi", WMV: "avi"}
 formatMap = {MPEG: "avi", QT: "avi", WMV: "avi"}
