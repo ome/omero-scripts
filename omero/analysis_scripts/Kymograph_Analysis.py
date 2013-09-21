@@ -23,7 +23,7 @@
 ------------------------------------------------------------------------------
 
 This script is the second Kymograph script, for analyzing lines drawn on
-kymograph images that have been created by the 'Kymograph.py' Script. 
+kymograph images that have been created by the 'Kymograph.py' Script.
 
 
 @author Will Moore
@@ -37,18 +37,21 @@ kymograph images that have been created by the 'Kymograph.py' Script.
 
 from omero.gateway import BlitzGateway
 import omero
-from omero.rtypes import *
+from omero.rtypes import rlong, rstring, robject
 import omero.scripts as scripts
 import omero.util.script_utils as scriptUtil
-import math
-import os
+import logging
+
+logger = logging.getLogger('kymograph_analysis')
 
 
 def pointsStringToXYlist(string):
     """
-    Method for converting the string returned from omero.model.ShapeI.getPoints()
+    Method for converting the string returned from
+    omero.model.ShapeI.getPoints()
     into list of (x,y) points.
-    E.g: "points[309,427, 366,503, 190,491] points1[309,427, 366,503, 190,491] points2[309,427, 366,503, 190,491]"
+    E.g: "points[309,427, 366,503, 190,491] points1[309,427, 366,503, 190,491]
+    points2[309,427, 366,503, 190,491]"
     """
     pointLists = string.strip().split("points")
     if len(pointLists) < 2:
@@ -58,43 +61,50 @@ def pointsStringToXYlist(string):
     xyList = []
     for xy in firstList.strip(" []").split(", "):
         x, y = xy.split(",")
-        xyList.append( ( int( x.strip() ), int(y.strip() ) ) )
+        xyList.append((int(x.strip()), int(y.strip())))
     return xyList
 
 
 def processImages(conn, scriptParams):
 
     fileAnns = []
-    message =""
+    message = ""
     # Get the images
     images, logMessage = scriptUtil.getObjects(conn, scriptParams)
     message += logMessage
     if not images:
         return None, message
     # Check for line and polyline ROIs and filter images list
-    images = [image for image in images if image.getROICount(["Polyline","Line"])>0]
+    images = [image for image in images if
+              image.getROICount(["Polyline", "Line"]) > 0]
     if not images:
         message += "No ROI containing line or polyline was found."
         return None, message
 
     for image in images:
-        print "\nAnalysing Image: %s ID: %s" % (image.getName(), image.getId())
-        
+        print "\nAnalysing Image: %s ID: %s" \
+            % (image.getName(), image.getId())
+
         if image.getSizeT() > 1:
-            message += "%s ID: %s appears to be a time-lapse Image, not a kymograph." % (image.getName(), image.getId())
+            message += "%s ID: %s appears to be a time-lapse Image," \
+                " not a kymograph." % (image.getName(), image.getId())
             continue
-        
+
         roiService = conn.getRoiService()
         result = roiService.findByImage(image.getId(), None)
-        
+
         secsPerPixelY = image.getPixelSizeY()
         micronsPerPixelX = image.getPixelSizeX()
         if secsPerPixelY and micronsPerPixelX:
             micronsPerSec = micronsPerPixelX / secsPerPixelY
-        else: micronsPerSec = None
-        
-        # for each line or polyline, create a row in csv table: y(t), x, dy(dt), dx, x/t (line), x/t (average)
-        colNames = "\nt_start (pixels), x_start (pixels), t_end (pixels), x_end (pixels), dt (pixels), dx (pixels), x/t, average x/t, speed(um/sec)"
+        else:
+            micronsPerSec = None
+
+        # for each line or polyline, create a row in csv table: y(t), x,
+        # dy(dt), dx, x/t (line), x/t (average)
+        colNames = "\nt_start (pixels), x_start (pixels), t_end (pixels)," \
+            " x_end (pixels), dt (pixels), dx (pixels), x/t, average x/t," \
+            " speed(um/sec)"
         tableData = ""
         for roi in result.rois:
             for s in roi.copyShapes():
@@ -108,11 +118,13 @@ def processImages(conn, scriptParams):
                     dy = abs(y1-y2)
                     dxPerY = float(dx)/dy
                     tableData += "\n"
-                    tableData += ",".join([str(x) for x in (y1, x1, y2, x2, dy, dx, dxPerY, dxPerY, "")])
+                    tableData += ",".join(
+                        [str(x) for x in (y1, x1, y2, x2, dy, dx, dxPerY,
+                                          dxPerY, "")])
                     if micronsPerSec:
                         speed = dxPerY * micronsPerSec
                         tableData += "%s" % speed
-            
+
                 elif type(s) == omero.model.PolylineI:
                     tableData += "\nPolyline"
                     points = pointsStringToXYlist(s.getPoints().getValue())
@@ -125,7 +137,9 @@ def processImages(conn, scriptParams):
                         dxPerY = float(dx)/dy
                         avXperY = abs(float(x2-xStart)/(y2-yStart))
                         tableData += "\n"
-                        tableData += ",".join([str(x) for x in (y1, x1, y2, x2, dy, dx, dxPerY, avXperY, "")])
+                        tableData += ",".join(
+                            [str(x) for x in (y1, x1, y2, x2, dy, dx, dxPerY,
+                                              avXperY, "")])
                         if micronsPerSec:
                             speed = dxPerY * micronsPerSec
                             tableData += "%s" % speed
@@ -136,7 +150,7 @@ def processImages(conn, scriptParams):
             tableString += '\nmicronsPerPixelX: %s' % micronsPerPixelX
             tableString += "\nmicronsPerSec: %s" % micronsPerSec
             tableString += "\n"
-            tableString += colNames 
+            tableString += colNames
             tableString += tableData
             print tableString
             csvFileName = 'kymograph_velocities_%s.csv' % image.getId()
@@ -146,8 +160,9 @@ def processImages(conn, scriptParams):
             finally:
                 csvFile.close()
 
-            fileAnn, faMessage = scriptUtil.createLinkFileAnnotation(conn, csvFileName, image, 
-                output="Line Plot csv (Excel) file", mimetype="text/csv", desc=None)
+            fileAnn, faMessage = scriptUtil.createLinkFileAnnotation(
+                conn, csvFileName, image, output="Line Plot csv (Excel) file",
+                mimetype="text/csv", desc=None)
             print fileAnn, faMessage
             if fileAnn:
                 fileAnns.append(fileAnn)
@@ -155,30 +170,37 @@ def processImages(conn, scriptParams):
             print "Found NO lines or polylines to analyse for Image"
 
     if not fileAnns:
-        faMessage = "No Analysis files created. See 'Info' or 'Error' for more details"
+        faMessage = "No Analysis files created. See 'Info' or 'Error'" \
+            " for more details"
     elif len(fileAnns) > 1:
         faMessage = "Created %s csv (Excel) files" % len(fileAnns)
     message += faMessage
     return fileAnns, message
-                        
+
 
 if __name__ == "__main__":
 
     dataTypes = [rstring('Image')]
 
-    client = scripts.client('Kymograph_Analysis.py', """This script analyses Kymograph images, which have Line or PolyLine ROIs that
-track moving objects. It generates a table of the speed of movement, saved as an Excell / csv file.""",
+    client = scripts.client(
+        'Kymograph_Analysis.py',
+        """This script analyses Kymograph images, which have Line or \
+PolyLine  ROIs that track moving objects. It generates a table of the speed \
+of movement, saved as an Excell / csv file.""",
 
-    scripts.String("Data_Type", optional=False, grouping="1",
-        description="Choose source of images (only Image supported)", values=dataTypes, default="Image"),
+        scripts.String(
+            "Data_Type", optional=False, grouping="1",
+            description="Choose source of images (only Image supported)",
+            values=dataTypes, default="Image"),
 
-    scripts.List("IDs", optional=False, grouping="2",
-        description="List of Image IDs to process.").ofType(rlong(0)),
+        scripts.List(
+            "IDs", optional=False, grouping="2",
+            description="List of Image IDs to process.").ofType(rlong(0)),
 
-    version = "4.3.3",
-    authors = ["William Moore", "OME Team"],
-    institutions = ["University of Dundee"],
-    contact = "ome-users@lists.openmicroscopy.org.uk",
+        version="4.3.3",
+        authors=["William Moore", "OME Team"],
+        institutions=["University of Dundee"],
+        contact="ome-users@lists.openmicroscopy.org.uk",
     )
 
     try:
@@ -194,7 +216,7 @@ track moving objects. It generates a table of the speed of movement, saved as an
         conn = BlitzGateway(client_obj=client)
 
         fileAnns, message = processImages(conn, scriptParams)
-        
+
         if fileAnns:
             if len(fileAnns) == 1:
                 client.setOutput("Line_Data", robject(fileAnns[0]._obj))
