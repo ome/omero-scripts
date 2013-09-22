@@ -45,8 +45,8 @@ import omero
 from omero.gateway import BlitzGateway
 from omero.rtypes import rint, rlong, rstring, robject, wrap, unwrap
 from omero.constants.namespaces import NSCREATED
-from omero.constants.projection.ProjectionType import MAXIMUMINTENSITY
-from omero.constants.projection.ProjectionType import MEANINTENSITY
+from omero.constants.projection import ProjectionType
+from omero.constants.projection import ProjectionType
 import os
 import StringIO
 from datetime import date
@@ -107,7 +107,7 @@ def getSplitView(conn, pixelIds, zStart, zEnd, splitIndexes, channelNames,
     """
 
     if algorithm is None:    # omero::constants::projection::ProjectionType
-        algorithm = MAXIMUMINTENSITY
+        algorithm = ProjectionType.MAXIMUMINTENSITY
     timepoint = 0
     mode = "RGB"
     white = (255, 255, 255)
@@ -623,9 +623,9 @@ def splitViewFigure(conn, scriptParams):
 
     colourChannels = not scriptParams["Split_Panels_Grey"]
 
-    algorithm = MAXIMUMINTENSITY
+    algorithm = ProjectionType.MAXIMUMINTENSITY
     if "Mean Intensity" == scriptParams["Algorithm"]:
-        algorithm = MEANINTENSITY
+        algorithm = ProjectionType.MEANINTENSITY
 
     stepping = min(scriptParams["Stepping"], sizeZ)
 

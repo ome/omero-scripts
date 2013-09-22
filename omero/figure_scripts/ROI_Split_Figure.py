@@ -48,8 +48,8 @@ from omero.gateway import BlitzGateway
 from omero.rtypes import rlong, robject, rstring, wrap, unwrap
 import os
 from omero.constants.namespaces import NSCREATED
-from omero.constants.projection.ProjectionType import MAXIMUMINTENSITY
-from omero.constants.projection.ProjectionType import MEANINTENSITY
+from omero.constants.projection import ProjectionType
+from omero.constants.projection import ProjectionType
 import StringIO
 from datetime import date
 
@@ -86,7 +86,7 @@ def getROIsplitView(re, pixels, zStart, zEnd, splitIndexes, channelNames,
     """
 
     if algorithm is None:    # omero::constants::projection::ProjectionType
-        algorithm = MAXIMUMINTENSITY
+        algorithm = ProjectionType.MAXIMUMINTENSITY
     mode = "RGB"
     white = (255, 255, 255)
 
@@ -711,11 +711,11 @@ def roiFigure(conn, commandArgs):
     if "Split_Panels_Grey" in commandArgs and commandArgs["Split_Panels_Grey"]:
         colourChannels = False
 
-    algorithm = MAXIMUMINTENSITY
+    algorithm = ProjectionType.MAXIMUMINTENSITY
     if "Algorithm" in commandArgs:
         a = commandArgs["Algorithm"]
         if (a == "Mean Intensity"):
-            algorithm = MEANINTENSITY
+            algorithm = ProjectionType.MEANINTENSITY
 
     stepping = 1
     if "Stepping" in commandArgs:

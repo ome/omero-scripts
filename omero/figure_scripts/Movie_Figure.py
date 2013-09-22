@@ -49,8 +49,8 @@ from omero.rtypes import rint, rlong, rstring, robject, wrap
 import os
 import StringIO
 from omero.constants.namespaces import NSCREATED
-from omero.constants.projection.ProjectionType import MAXIMUMINTENSITY
-from omero.constants.projection.ProjectionType import MEANINTENSITY
+from omero.constants.projection import ProjectionType
+from omero.constants.projection import ProjectionType
 from datetime import date
 import math
 
@@ -461,11 +461,11 @@ def movieFigure(conn, commandArgs):
 
     spacer = (width/25) + 2
 
-    algorithm = MAXIMUMINTENSITY
+    algorithm = ProjectionType.MAXIMUMINTENSITY
     if "Algorithm" in commandArgs:
         a = commandArgs["Algorithm"]
         if (a == "Mean Intensity"):
-            algorithm = MEANINTENSITY
+            algorithm = ProjectionType.MEANINTENSITY
 
     stepping = 1
     if "Stepping" in commandArgs:
