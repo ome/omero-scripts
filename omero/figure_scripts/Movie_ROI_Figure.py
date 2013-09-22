@@ -47,8 +47,8 @@ from omero.gateway import BlitzGateway
 from omero.rtypes import rlong, rint, rstring, robject, wrap, unwrap
 from omero.constants.namespaces import NSCREATED
 import omero.model
-from omero.constants.projection.ProjectionType import MEANINTENSITY
-from omero.constants.projection.ProjectionType import MAXIMUMINTENSITY
+from omero.constants.projection import ProjectionType
+from omero.constants.projection import ProjectionType
 import os
 import StringIO
 from datetime import date
@@ -605,11 +605,11 @@ def roiFigure(conn, commandArgs):
     #        if c in COLOURS:
     #            mergedColours[i] = COLOURS[c]
 
-    algorithm = MAXIMUMINTENSITY
+    algorithm = ProjectionType.MAXIMUMINTENSITY
     if "Algorithm" in commandArgs:
         a = commandArgs["Algorithm"]
         if (a == "Mean Intensity"):
-            algorithm = MEANINTENSITY
+            algorithm = ProjectionType.MEANINTENSITY
 
     stepping = 1
     if "Stepping" in commandArgs:
