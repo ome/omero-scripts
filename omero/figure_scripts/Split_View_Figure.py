@@ -46,7 +46,6 @@ from omero.gateway import BlitzGateway
 from omero.rtypes import rint, rlong, rstring, robject, wrap, unwrap
 from omero.constants.namespaces import NSCREATED
 from omero.constants.projection import ProjectionType
-from omero.constants.projection import ProjectionType
 import os
 import StringIO
 from datetime import date

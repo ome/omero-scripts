@@ -49,7 +49,6 @@ from omero.rtypes import rlong, robject, rstring, wrap, unwrap
 import os
 from omero.constants.namespaces import NSCREATED
 from omero.constants.projection import ProjectionType
-from omero.constants.projection import ProjectionType
 import StringIO
 from datetime import date
 
