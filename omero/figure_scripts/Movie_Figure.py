@@ -50,7 +50,6 @@ import os
 import StringIO
 from omero.constants.namespaces import NSCREATED
 from omero.constants.projection import ProjectionType
-from omero.constants.projection import ProjectionType
 from datetime import date
 import math
 
