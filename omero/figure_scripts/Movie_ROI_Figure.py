@@ -46,7 +46,7 @@ import omero.util.script_utils as scriptUtil
 from omero.gateway import BlitzGateway
 from omero.rtypes import rlong, rint, rstring, robject, wrap, unwrap
 from omero.constants.namespaces import NSCREATED
-import omero.model.RectI
+import omero.model
 from omero.constants.projection.ProjectionType import MEANINTENSITY
 from omero.constants.projection.ProjectionType import MAXIMUMINTENSITY
 import os
