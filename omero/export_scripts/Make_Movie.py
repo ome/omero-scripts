@@ -69,7 +69,8 @@ import omero.util.pixelstypetopython as pixelstypetopython
 from struct import unpack
 from omero.rtypes import wrap, rstring, rlong, rint, robject
 from omero.gateway import BlitzGateway
-from omero.constants.namespaces import NSCREATED, NSMOVIE
+from omero.constants.namespaces import NSCREATED
+from omero.constants.metadata import NSMOVIE
 
 from cStringIO import StringIO
 
