@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
  components/tools/OmeroPy/scripts/omero/util_scripts/Channel_Offsets.py
 
@@ -93,11 +95,11 @@ def newImageWithChannelOffsets(conn, imageId, channel_offsets, dataset=None):
 
     # for convenience, make a map of channel:offsets
     offsetMap = {}
-    newImageColors = []
+    channelList = []
     for c in channel_offsets:
         cIndex = c['index']
         if cIndex < sizeC:
-            newImageColors.append(colors[cIndex])
+            channelList.append(cIndex)
             offsetMap[cIndex] = {'x':c['x'], 'y': c['y'], 'z':c['z']}
 
     def offsetPlane(plane, x, y):
@@ -156,9 +158,8 @@ def newImageWithChannelOffsets(conn, imageId, channel_offsets, dataset=None):
     descLines = [" Channel %s: Offsets x: %s y: %s z: %s" % (c['index'], c['x'], c['y'], c['z']) for c in channel_offsets]
     desc = "Image created from Image ID: %s by applying Channel Offsets:\n" % imageId
     desc += "\n".join(descLines)
-    serviceFactory = conn.c.sf  # make sure that script_utils creates a NEW rawPixelsStore
     i = conn.createImageFromNumpySeq(offsetPlaneGen(), newImageName,
-        sizeZ=sizeZ, sizeC=len(offsetMap.items()), sizeT=sizeT, description=desc, dataset=None)
+        sizeZ=sizeZ, sizeC=len(offsetMap.items()), sizeT=sizeT, description=desc, sourceImageId=imageId, channelList=channelList)
 
     # Link image to dataset
     link = None
@@ -167,16 +168,7 @@ def newImageWithChannelOffsets(conn, imageId, channel_offsets, dataset=None):
         link.parent = omero.model.DatasetI(dataset.getId(), False)
         link.child = omero.model.ImageI(i.getId(), False)
         conn.getUpdateService().saveAndReturnObject(link)
-    
-    # apply colors from the original image to the new one
-    i._prepareRenderingEngine()
-    print "Applying colors..."
-    for c, color in enumerate(newImageColors):
-        r,g,b = color
-        print "Index %d: r,g,b: %d, %d, %d" % (c, r, g, b)
-        i._re.setRGBA(c, r, g, b, 255)
-    i._re.saveCurrentSettings()
-    i._re.close()
+
     return i, link
 
 def processImages(conn, scriptParams):

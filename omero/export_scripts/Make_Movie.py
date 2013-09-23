@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
  components/tools/OmeroPy/scripts/omero/export_scripts/Make_Movie.py
 
@@ -319,7 +321,7 @@ def reshape_to_fit(image, sizeX, sizeY, bg=(0,0,0)):
     # scale
     print "scale...from ", image.size, " to ", sizeX, sizeY
     ratio = min(float(sizeX) / image_w, float(sizeY) / image_h)
-    image = image.resize(map(lambda x: x*ratio, image.size), Image.ANTIALIAS)
+    image = image.resize(map(lambda x: int(x*ratio), image.size), Image.ANTIALIAS)
     print ratio, image.size
     # paste
     bg = Image.new("RGBA", (sizeX, sizeY), (0,0,0))     # black bg

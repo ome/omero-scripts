@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
  components/tools/OmeroPy/scripts/omero/util_scripts/Images_From_ROIs.py
 
@@ -207,36 +209,10 @@ def processImage(conn, imageId, parameterMap):
 
             print "sizeZ, sizeC, sizeT", sizeZ, sizeC, sizeT
             description = "Created from image:\n  Name: %s\n  Image ID: %d \n x: %d y: %d" % (imageName, imageId, x, y)
-            serviceFactory = conn.c.sf  # make sure that script_utils creates a NEW rawPixelsStore
             newImg = conn.createImageFromNumpySeq(tileGen(), imageName,
-                sizeZ=sizeZ, sizeC=sizeC, sizeT=sizeT, description=description)
+                sizeZ=sizeZ, sizeC=sizeC, sizeT=sizeT, description=description, sourceImageId=imageId)
 
             print "New Image Id = %s" % newImg.getId()
-
-            # Apply colors from the original image to the new one
-            for i, c in enumerate(newImg.getChannels()):
-                lc = c.getLogicalChannel()
-                lc.setName(cNames[i])
-                lc.save()
-                r,g,b = colors[i]
-                # need to reload channels to avoid optimistic lock on update
-                cObj = conn.getQueryService().get("Channel", c.id)
-                cObj.red = rint(r)
-                cObj.green = rint(g)
-                cObj.blue = rint(b)
-                cObj.alpha = rint(255)
-                conn.getUpdateService().saveObject(cObj)
-
-            newImg.resetRDefs() # reset based on colors above
-
-            px = conn.getQueryService().get("Pixels", newImg.getPixelsId())
-            if physicalSizeX is not None:
-                px.setPhysicalSizeX(rdouble(physicalSizeX))
-            if physicalSizeY is not None:
-                px.setPhysicalSizeY(rdouble(physicalSizeY))
-            if physicalSizeZ is not None:
-                px.setPhysicalSizeZ(rdouble(physicalSizeZ))
-            conn.getUpdateService().saveObject(px)
 
             images.append(newImg)
             iIds.append(newImg.getId())
