@@ -512,6 +512,11 @@ def splitViewFigure(conn, scriptParams):
     pixelIds = []
     imageLabels = []
 
+    # function for getting image labels.
+    def getImageNames(fullName, tagsList, pdList):
+        name = fullName.split("/")[-1]
+        return [name]
+
     # default function for getting labels is getName (or use datasets / tags)
     if scriptParams["Image_Labels"] == "Datasets":
         def getDatasets(name, tagsList, pdList):
@@ -522,10 +527,7 @@ def splitViewFigure(conn, scriptParams):
             return tagsList
         getLabels = getTags
     else:
-        # function for getting image labels.
-        def getLabels(fullName, tagsList, pdList):
-            name = fullName.split("/")[-1]
-            return [name]
+        getLabels = getImageNames
 
     # Get the images
     images, logMessage = scriptUtil.getObjects(conn, scriptParams)
