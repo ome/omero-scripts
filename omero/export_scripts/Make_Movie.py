@@ -540,6 +540,7 @@ def writeMovie(commandArgs, conn):
     movieName = "Movie"
     if "Movie_Name" in commandArgs:
         movieName = commandArgs["Movie_Name"]
+        movieName = os.path.basename(movieName)
     if not movieName.endswith(".%s" % ext):
         movieName = "%s.%s" % (movieName, ext)
         
@@ -547,21 +548,22 @@ def writeMovie(commandArgs, conn):
     framesPerSec = 2
     if "FPS" in commandArgs:
         framesPerSec = commandArgs["FPS"]
-    buildAVI(mw, mh, filelist, framesPerSec, movieName, format)
+    output = "localfile.%s" % ext
+    buildAVI(mw, mh, filelist, framesPerSec, output, format)
     figLegend = "\n".join(logLines)
     mimetype = formatMimetypes[format]
 
-    if not os.path.exists(movieName):
-        print "mencoder Failed to create movie file: %s" % movieName
-        return None, "Failed to create movie file: %s" % movieName
+    if not os.path.exists(output):
+        print "mencoder Failed to create movie file: %s" % output
+        return None, "Failed to create movie file: %s" % output
     if not commandArgs["Do_Link"]:
-        originalFile = scriptUtil.createFile(updateService, movieName, mimetype, movieName);
-        scriptUtil.uploadFile(rawFileStore, originalFile, movieName)
+        originalFile = scriptUtil.createFile(updateService, output, mimetype, movieName);
+        scriptUtil.uploadFile(rawFileStore, originalFile, output)
         return originalFile, message
     
     namespace = omero.constants.namespaces.NSCREATED+"/omero/export_scripts/Make_Movie"
-    fileAnnotation, annMessage = scriptUtil.createLinkFileAnnotation(conn, movieName, omeroImage,
-        output="Movie", ns=namespace, mimetype=mimetype)
+    fileAnnotation, annMessage = scriptUtil.createLinkFileAnnotation(conn, output, omeroImage,
+        output="Movie", ns=namespace, mimetype=mimetype, origFilePathAndName=movieName)
     message += annMessage
     return fileAnnotation._obj, message
 
