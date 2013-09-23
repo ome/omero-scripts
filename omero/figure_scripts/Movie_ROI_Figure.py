@@ -505,6 +505,11 @@ def roiFigure(conn, commandArgs):
     imageIds = []
     imageLabels = []
 
+    # function for getting image labels.
+    def getImageNames(fullName, tagsList, pdList):
+        name = fullName.split("/")[-1]
+        return [name]
+
     # default function for getting labels is getName (or use datasets / tags)
     if "Image_Labels" in commandArgs:
         if commandArgs["Image_Labels"] == "Datasets":
@@ -515,11 +520,10 @@ def roiFigure(conn, commandArgs):
             def getTags(name, tagsList, pdList):
                 return tagsList
             getLabels = getTags
+        else:
+            getLabels = getImageNames
     else:
-        # function for getting image labels.
-        def getLabels(fullName, tagsList, pdList):
-            name = fullName.split("/")[-1]
-            return [name]
+        getLabels = getImageNames
 
     # Get the images
     images, logMessage = scriptUtil.getObjects(conn, commandArgs)
