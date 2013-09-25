@@ -255,6 +255,7 @@ def batchImageExport(conn, scriptParams):
     dataType = scriptParams["Data_Type"]
     ids = scriptParams["IDs"]
     folder_name = scriptParams["Folder_Name"]
+    folder_name = os.path.basename(folder_name)
     format = scriptParams["Format"]
     projectZ = "Choose_Z_Section" in scriptParams and scriptParams["Choose_Z_Section"] == 'Max projection'
     

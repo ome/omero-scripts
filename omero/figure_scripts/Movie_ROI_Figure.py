@@ -630,20 +630,24 @@ def roiFigure(conn, commandArgs):
     
     format = commandArgs["Format"]
             
-    output = "movieROIFigure"
+    figureName = "movieROIFigure"
     if "Figure_Name" in commandArgs:
-        output = str(commandArgs["Figure_Name"])
-        
+        figureName = commandArgs["Figure_Name"]
+        figureName = os.path.basename(figureName)
+    output = "localfile"
     if format == 'PNG':
         output = output + ".png"
+        figureName = figureName + ".png"
         fig.save(output, "PNG")
         mimetype = "image/png"
     elif format == 'TIFF':
         output = output + ".tiff"
+        figureName = figureName + ".tiff"
         fig.save(output, "TIFF")
         mimetype = "image/tiff"
     else:
         output = output + ".jpg"
+        figureName = figureName + ".jpg"
         fig.save(output)
         mimetype = "image/jpeg"
     
@@ -652,7 +656,7 @@ def roiFigure(conn, commandArgs):
     # Returns the id of the originalFileLink child. (ID object, not value)
     namespace = omero.constants.namespaces.NSCREATED+"/omero/figure_scripts/Movie_ROI_Figure"
     fileAnnotation, faMessage = scriptUtil.createLinkFileAnnotation(conn, output, omeroImage, 
-    output="Movie ROI figure", mimetype=mimetype, ns=namespace, desc=figLegend)
+    output="Movie ROI figure", mimetype=mimetype, ns=namespace, desc=figLegend, origFilePathAndName=figureName)
     message += faMessage
     
     return fileAnnotation, message
