@@ -24,14 +24,14 @@ Adding a script
    a. If you don't plan to have many scripts, then you need not have any sub-directories
       and can place scripts directly under YOUR_SCRIPTS.
 
-   b. Otherwise, create a suitable sub-directory. We encourage one of:
+   b. Otherwise, create a suitable sub-directory. Examples of directories in use:
 
     | Directory              | Scripts which ...                                                                    |
     | ---------              | -----------------                                                                    |
     | **analysis_scripts**   | crunch images to produce numerical results and similar tasks                         |
     | **export_scripts**     | take one or more images as an input, and produce a representation for exchange       |
     | **figure_scripts**     | take one or more images as an input, and produce some form of summary representation |
-    | **hcs_scripts**        | work with screens/plates/wells rather than just images
+    | **hcs_scripts**        | work with screens/plates/wells rather than just images                               |
     | **import_scripts**     | are run on images after they've been imported into OMERO for some extra processing   |
     | **processing_scripts** | create new images from existing images or other data                                 |
     | **setup_scripts**      | are executed once, often by administrators, to configure OMERO itself                |
