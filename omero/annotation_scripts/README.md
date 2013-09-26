@@ -24,6 +24,7 @@ Adding a script
     | **analysis_scripts**   | crunch images to produce numerical results and similar tasks                         |
     | **export_scripts**     | take one or more images as an input, and produce a representation for exchange       |
     | **figure_scripts**     | take one or more images as an input, and produce some form of summary representation |
+    | **hcs_scripts**        | work with screens/plates/wells rather than just images
     | **import_scripts**     | are run on images after they've been imported into OMERO for some extra processing   |
     | **processing_scripts** | create new images from existing images or other data                                 |
     | **setup_scripts**      | are executed once, often by administrators, to configure OMERO itself                |
