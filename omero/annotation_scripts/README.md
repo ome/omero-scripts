@@ -17,7 +17,14 @@ Installation
 Adding a script
 ---------------
 
-1. Pick a suitable sub-directory:
+1. Choose a naming scheme for your scripts. The name of the clone
+   (e.g. "YOUR_SCRIPTS"), the script name, and all sub-directories will be shown
+   to your users in the UI, so think about script organization upfront.
+
+   a. If you don't plan to have many scripts, then you need not have any sub-directories
+      and can place scripts directly under YOUR_SCRIPTS.
+
+   b. Otherwise, create a suitable sub-directory. We encourage one of:
 
     | Directory              | Scripts which ...                                                                    |
     | ---------              | -----------------                                                                    |
@@ -30,9 +37,9 @@ Adding a script
     | **setup_scripts**      | are executed once, often by administrators, to configure OMERO itself                |
     | **util_scripts**       | are periodically run to clean up or otherwise improve existing data or OMERO itself  |
 
-2. Place your script in that directory:
+2. Place your script in the chosen directory:
   * If you have an existing script, simply save it.
-  * Otherwise, copy [Example.txt](Example.txt) and edit it in place.
+  * Otherwise, copy [Example.txt](Example.txt) and edit it in place. (Don't use git mv)
 
 3. Add the file to git, commit, and push.
 
