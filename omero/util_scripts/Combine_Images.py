@@ -454,7 +454,7 @@ def combineImages(conn, parameterMap):
     objects, logMessage = scriptUtil.getObjects(conn, parameterMap)
     message += logMessage
     if not objects:
-        print "No Objects Found"
+        print message
         return None, message
 
     # get the images IDs from list (in order) or dataset (sorted by name)
