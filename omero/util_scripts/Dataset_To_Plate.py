@@ -37,11 +37,14 @@ import omero.scripts as scripts
 from omero.gateway import BlitzGateway
 import omero.util.script_utils as script_utils
 import omero
-from omero.rtypes import *
+
+from omero.rtypes import rint, rlong, rstring, robject
+
 
 def addImageToPlate(conn, image, plateId, column, row, removeFrom=None):
     """
-    Add the Image to a Plate, creating a new well at the specified column and row
+    Add the Image to a Plate, creating a new well at the specified column and
+    row
     NB - This will fail if there is already a well at that point
     """
     updateService = conn.getUpdateService()
@@ -64,8 +67,9 @@ def addImageToPlate(conn, image, plateId, column, row, removeFrom=None):
 
     # remove from Datast
     if removeFrom is not None:
-        links = list( image.getParentLinks(removeFrom.id) )
-        print "     Removing image from %d Dataset: %s" % (len(links), removeFrom.name)
+        links = list(image.getParentLinks(removeFrom.id))
+        print "     Removing image from %d Dataset: %s" \
+            % (len(links), removeFrom.name)
         for l in links:
             conn.deleteObjectDirect(l._obj)
     return True
@@ -83,7 +87,8 @@ def dataset_to_plate(conn, scriptParams, datasetId, screen):
     # create Plate
     plate = omero.model.PlateI()
     plate.name = rstring(str(dataset.name))
-    plate.columnNamingConvention = rstring(str(scriptParams["Column_Names"])) # 'letter' or 'number'
+    plate.columnNamingConvention = rstring(str(scriptParams["Column_Names"]))
+    # 'letter' or 'number'
     plate.rowNamingConvention = rstring(str(scriptParams["Row_Names"]))
     plate = updateService.saveAndReturnObject(plate)
 
@@ -95,7 +100,8 @@ def dataset_to_plate(conn, scriptParams, datasetId, screen):
     else:
         link = None
 
-    print "Moving images from Dataset: %d %s to Plate: %d %s" % (dataset.id, dataset.name, plate.id.val, plate.name.val)
+    print "Moving images from Dataset: %d %s to Plate: %d %s" \
+        % (dataset.id, dataset.name, plate.id.val, plate.name.val)
 
     row = 0
     col = 0
@@ -109,18 +115,21 @@ def dataset_to_plate(conn, scriptParams, datasetId, screen):
     if "Filter_Names" in scriptParams:
         filterBy = scriptParams["Filter_Names"]
         print "Filtering images for names containing: %s" % filterBy
-        images = [i for i in images if (i.getName().find(filterBy) >=0)]
-    images.sort(key = lambda x: x.name.lower())
+        images = [i for i in images if (i.getName().find(filterBy) >= 0)]
+    images.sort(key=lambda x: x.name.lower())
 
     # Do we try to remove images from Dataset and Delte Datset when/if empty?
     removeFrom = None
-    removeDataset = "Remove_From_Dataset" in scriptParams and scriptParams["Remove_From_Dataset"]
+    removeDataset = "Remove_From_Dataset" in scriptParams and \
+        scriptParams["Remove_From_Dataset"]
     if removeDataset:
         removeFrom = dataset
 
     for image in images:
-        print "    moving image: %d %s to row: %d, column: %d" % (image.id, image.name, row, col)
-        added = addImageToPlate(conn, image, plate.id.val, col, row, removeFrom)
+        print "    moving image: %d %s to row: %d, column: %d" \
+            % (image.id, image.name, row, col)
+        addedCount = addImageToPlate(conn, image, plate.id.val, col, row,
+                                     removeFrom)
         # update row and column index
         if firstAxisIsRow:
             row += 1
@@ -140,17 +149,19 @@ def dataset_to_plate(conn, scriptParams, datasetId, screen):
         if datasetImgCount == addedCount:
             dcs = list()
             print 'Deleting Dataset %d %s' % (dataset.id, dataset.name)
-            options = None # {'/Image': 'KEEP'}    # don't delete the images!
-            dcs.append(omero.api.delete.DeleteCommand("/Dataset", dataset.id, options))
+            options = None  # {'/Image': 'KEEP'}    # don't delete the images!
+            dcs.append(omero.api.delete.DeleteCommand(
+                "/Dataset", dataset.id, options))
             deleteHandle = conn.getDeleteService().queueDelete(dcs)
     return plate, link, deleteHandle
+
 
 def datasets_to_plates(conn, scriptParams):
 
     updateService = conn.getUpdateService()
 
-    message =""
-    
+    message = ""
+
     # Get the datasets ID
     datasets, logMessage = script_utils.getObjects(conn, scriptParams)
     message += logMessage
@@ -161,7 +172,8 @@ def datasets_to_plates(conn, scriptParams):
     IDs = [ds.getId() for ds in datasets if ds.canLink()]
     if len(IDs) != len(datasets):
         permIDs = [str(ds.getId()) for ds in datasets if not ds.canLink()]
-        message += "You do not have the permissions to add the images from the dataset(s): %s." % ",".join(permIDs)
+        message += "You do not have the permissions to add the images from"\
+            " the dataset(s): %s." % ",".join(permIDs)
     if not IDs:
         return None, message
 
@@ -187,7 +199,8 @@ def datasets_to_plates(conn, scriptParams):
     links = []
     deletes = []
     for datasetId in IDs:
-        plate, link, deleteHandle = dataset_to_plate(conn, scriptParams, datasetId, screen)
+        plate, link, deleteHandle = dataset_to_plate(conn, scriptParams,
+                                                     datasetId, screen)
         if plate is not None:
             plates.append(plate)
         if link is not None:
@@ -198,7 +211,7 @@ def datasets_to_plates(conn, scriptParams):
     # wait for any deletes to finish
     for handle in deletes:
         cb = omero.callbacks.DeleteCallbackI(conn.c, handle)
-        while True: # ms
+        while True:  # ms
             if cb.block(100) is None:
                 print "Waiting for delete"
             else:
@@ -216,7 +229,7 @@ def datasets_to_plates(conn, scriptParams):
         robj = plates[0]
     else:
         robj = None
-        
+
     if plates:
         if len(plates) == 1:
             message += " New plate created: %s" % plates[0].name.val
@@ -230,51 +243,74 @@ def datasets_to_plates(conn, scriptParams):
         message += "No plate created."
     return robj, message
 
+
 def runAsScript():
     """
-    The main entry point of the script, as called by the client via the scripting service, passing the required parameters.
+    The main entry point of the script, as called by the client via the
+    scripting service, passing the required parameters.
     """
 
     dataTypes = [rstring('Dataset')]
     firstAxis = [rstring('column'), rstring('row')]
     rowColNaming = [rstring('letter'), rstring('number')]
 
-    client = scripts.client('Dataset_To_Plate.py', """Take a Dataset of Images and put them in a new Plate,
+    client = scripts.client(
+        'Dataset_To_Plate.py',
+        """Take a Dataset of Images and put them in a new Plate, \
 arranging them into rows or columns as desired.
 Optionally add the Plate to a new or existing Screen.
-See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/insight/insight-util-scripts.html""",
+See http://www.openmicroscopy.org/site/support/omero4/users/\
+client-tutorials/insight/insight-util-scripts.html""",
 
-    scripts.String("Data_Type", optional=False, grouping="1",
-        description="Choose source of images (only Dataset supported)", values=dataTypes, default="Dataset"),
+        scripts.String(
+            "Data_Type", optional=False, grouping="1",
+            description="Choose source of images (only Dataset supported)",
+            values=dataTypes, default="Dataset"),
 
-    scripts.List("IDs", optional=False, grouping="2",
-        description="List of Dataset IDs to convert to new Plates.").ofType(rlong(0)),
+        scripts.List(
+            "IDs", optional=False, grouping="2",
+            description="List of Dataset IDs to convert to new"
+            " Plates.").ofType(rlong(0)),
 
-    scripts.String("Filter_Names", grouping="2.1",
-        description="Filter the images by names that contain this value"),
+        scripts.String(
+            "Filter_Names", grouping="2.1",
+            description="Filter the images by names that contain this value"),
 
-    scripts.String("First_Axis", grouping="3", optional=False, default='column', values=firstAxis,
-        description="""Arrange images accross 'column' first or down 'row'"""),
+        scripts.String(
+            "First_Axis", grouping="3", optional=False, default='column',
+            values=firstAxis,
+            description="""Arrange images accross 'column' first or down"
+            " 'row'"""),
 
-    scripts.Int("First_Axis_Count", grouping="3.1", optional=False, default=12,
-        description="Number of Rows or Columns in the 'First Axis'", min=1),
+        scripts.Int(
+            "First_Axis_Count", grouping="3.1", optional=False, default=12,
+            description="Number of Rows or Columns in the 'First Axis'",
+            min=1),
 
-    scripts.String("Column_Names", grouping="4", optional=False, default='number', values=rowColNaming,
-        description="""Name plate columns with 'number' or 'letter'"""),
+        scripts.String(
+            "Column_Names", grouping="4", optional=False, default='number',
+            values=rowColNaming,
+            description="""Name plate columns with 'number' or 'letter'"""),
 
-    scripts.String("Row_Names", grouping="5", optional=False, default='letter', values=rowColNaming,
-        description="""Name plate rows with 'number' or 'letter'"""),
+        scripts.String(
+            "Row_Names", grouping="5", optional=False, default='letter',
+            values=rowColNaming,
+            description="""Name plate rows with 'number' or 'letter'"""),
 
-    scripts.String("Screen", grouping="6",
-        description="""Option: put Plate(s) in a Screen. Enter Name of new screen or ID of existing screen"""),
+        scripts.String(
+            "Screen", grouping="6",
+            description="Option: put Plate(s) in a Screen. Enter Name of new"
+            " screen or ID of existing screen"""),
 
-    scripts.Bool("Remove_From_Dataset", grouping="7", default=True,
-        description="""Remove Images from Dataset as they are added to Plate"""),
+        scripts.Bool(
+            "Remove_From_Dataset", grouping="7", default=True,
+            description="Remove Images from Dataset as they are added to"
+            " Plate"),
 
-    version = "4.3.2",
-    authors = ["William Moore", "OME Team"],
-    institutions = ["University of Dundee"],
-    contact = "ome-users@lists.openmicroscopy.org.uk",
+        version="4.3.2",
+        authors=["William Moore", "OME Team"],
+        institutions=["University of Dundee"],
+        contact="ome-users@lists.openmicroscopy.org.uk",
     )
 
     try:
@@ -293,10 +329,10 @@ See http://www.openmicroscopy.org/site/support/omero4/users/client-tutorials/ins
         # convert Dataset(s) to Plate(s). Returns new plates or screen
         newObj, message = datasets_to_plates(conn, scriptParams)
 
-        client.setOutput("Message",rstring(message))
+        client.setOutput("Message", rstring(message))
         if newObj:
-            client.setOutput("New_Object",robject(newObj))
-            
+            client.setOutput("New_Object", robject(newObj))
+
     finally:
         client.closeSession()
 
