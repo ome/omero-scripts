@@ -387,7 +387,7 @@ def batchImageExport(conn, scriptParams):
 
     for img in images:
         if img._prepareRE().requiresPixelsPyramid():
-            log(  "  ** Can't export a 'Big' image to %s. **" % format)
+            log("  ** Can't export a 'Big' image to %s. **" % format)
             if len(images) == 1:
                 return None, "Can't export a 'Big' image to %s." % format
             continue
@@ -398,8 +398,9 @@ def batchImageExport(conn, scriptParams):
             saveAsOmeTiff(conn, img, folder_name)
         else:
             if img._prepareRE().requiresPixelsPyramid():
-                log(  "  ** Can't export a 'Big' image to OME-TIFF. **")
-            log("\n----------- Saving planes from image: '%s' ------------" % img.getName())
+                log("  ** Can't export a 'Big' image to OME-TIFF. **")
+            log("\n----------- Saving planes from image: '%s' ------------"
+                % img.getName())
             sizeC = img.getSizeC()
             sizeZ = img.getSizeZ()
             sizeT = img.getSizeT()
