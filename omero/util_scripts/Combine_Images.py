@@ -356,7 +356,7 @@ def makeSingleImage(services, parameterMap, imageIds, dataset, colourMap):
 
     if "Channel_Names" in parameterMap:
         for c, name in enumerate(parameterMap["Channel_Names"]):
-            cNames[c] = name.getValue()
+            cNames[c] = name
 
     imageName = "combinedImage"
     description = "created from image Ids: %s" % imageIds
@@ -444,8 +444,7 @@ def combineImages(conn, parameterMap):
 
     colourMap = {}
     if "Channel_Colours" in parameterMap:
-        for c, col in enumerate(parameterMap["Channel_Colours"]):
-            colour = col.getValue()
+        for c, colour in enumerate(parameterMap["Channel_Colours"]):
             if colour in COLOURS:
                 colourMap[c] = COLOURS[colour]
     print "colourMap", colourMap
@@ -455,6 +454,7 @@ def combineImages(conn, parameterMap):
     objects, logMessage = scriptUtil.getObjects(conn, parameterMap)
     message += logMessage
     if not objects:
+        print message
         return None, message
 
     # get the images IDs from list (in order) or dataset (sorted by name)
@@ -631,7 +631,7 @@ client-tutorials/insight/insight-util-scripts.html""",
         parameterMap = {}
         for key in client.getInputKeys():
             if client.getInput(key):
-                parameterMap[key] = client.getInput(key).getValue()
+                parameterMap[key] = client.getInput(key, unwrap=True)
 
         print parameterMap
 
