@@ -8,7 +8,7 @@ Installation
 
         cd OMERO_DIST/lib/scripts
 
-2. Clone the repository
+2. Clone the repository with a unique name (e.g. "useful_scripts")
 
         git clone https://github.com/THISREPOSITORY/omero-user-scripts.git UNIQUE_NAME
 
@@ -20,7 +20,7 @@ Installation
 Upgrading
 ---------
 
-1. Change into the repository location
+1. Change into the repository location cloned into during installation
 
         cd OMERO_DIST/lib/scripts/UNIQUE_NAME
 
