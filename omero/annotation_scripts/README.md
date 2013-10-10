@@ -17,6 +17,22 @@ Installation
 
         path/to/bin/omero script list
 
+Upgrading
+---------
+
+1. Change into the repository location
+
+        cd OMERO_DIST/lib/scripts/UNIQUE_NAME
+
+2. Update the repository to the latest version
+
+        git pull --rebase
+
+3. Update your list of installed scripts by examining the list of scripts
+   in OMERO.insight or OMERO.web, or by running the following command
+
+        path/to/bin/omero script list
+
 Developer Installation
 ----------------------
 
