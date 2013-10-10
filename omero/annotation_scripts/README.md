@@ -12,11 +12,8 @@ Installation
 
         git clone https://github.com/THISREPOSITORY/omero-user-scripts.git UNIQUE_NAME
 
-3. Update your list of installed scripts
-
-   a. By examining the list of scripts in OMERO.insight or OMERO.web
-
-   b. By running
+3. Update your list of installed scripts by examining the list of scripts
+   in OMERO.insight or OMERO.web or by running
 
         path/to/bin/omero script list
 
