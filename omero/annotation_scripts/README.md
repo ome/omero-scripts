@@ -4,7 +4,23 @@ OMERO User Scripts
 Installation
 ------------
 
-1. Fork [omero-user-scripts](https://github.com/ome/omero-user-scripts/fork) in your own github account
+1. Change into the scripts location of your OMERO installation
+
+        cd OMERO_DIST/lib/scripts
+
+2. Clone the repository
+
+        git clone https://github.com/THISREPOSITORY/omero-user-scripts.git UNIQUE_NAME
+
+3. Update your list of installed scripts by examining the list of scripts
+   in OMERO.insight or OMERO.web or by running
+
+        path/to/bin/omero script list
+
+Developer Installation
+----------------------
+
+1. Fork [omero-user-scripts](https://github.com/ome/omero-user-scripts/fork) in your own GitHub account
 
 2. Change into the scripts location of your OMERO installation
 
