@@ -412,7 +412,10 @@ def processImages(conn, scriptParams):
         if len(infos) > 0:
             duration = infos[0].deltaT
             print "duration", duration
-            tInterval = duration/(sizeT-1)
+            if sizeT == 1:
+                tInterval = duration
+            else:
+                tInterval = duration/(sizeT-1)
         elif pixels.timeIncrement is not None:
             print "pixels.timeIncrement", pixels.timeIncrement
             tInterval = pixels.timeIncrement
