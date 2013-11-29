@@ -91,6 +91,10 @@ def getLineData(pixels, x1, y1, x2, y2, lineW=2, theZ=0, theC=0, theT=0):
     lineX = x2-x1
     lineY = y2-y1
 
+    if lineY == 0:
+        raise Exception(
+            "%s-%s for divisor. Cannot continue",
+            y2, y1)
     rads = math.atan(float(lineX)/lineY)
 
     # How much extra Height do we need, top and bottom?
@@ -412,7 +416,10 @@ def processImages(conn, scriptParams):
         if len(infos) > 0:
             duration = infos[0].deltaT
             print "duration", duration
-            tInterval = duration/(sizeT-1)
+            if sizeT == 1:
+                tInterval = duration
+            else:
+                tInterval = duration/(sizeT-1)
         elif pixels.timeIncrement is not None:
             print "pixels.timeIncrement", pixels.timeIncrement
             tInterval = pixels.timeIncrement
