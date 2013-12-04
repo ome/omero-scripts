@@ -361,7 +361,7 @@ def processImages(conn, scriptParams):
         pixels = image.getPrimaryPixels()
 
         dataset = image.getDataset()
-        if not dataset.canLink():
+        if dataset is not None and not dataset.canLink():
             dataset = None
 
         roiService = conn.getRoiService()
