@@ -348,7 +348,8 @@ def processImages(conn, scriptParams):
 
     for image in images:
         if image.getSizeT() == 1:
-            print "Image: %s is not a movie (sizeT = 1) - Can't create Kymograph" % image.getId()
+            print "Image: %s is not a movie (sizeT = 1)"\
+                " - Can't create Kymograph" % image.getId()
             continue
         newImages = []      # kymographs derived from the current image.
         cNames = []
