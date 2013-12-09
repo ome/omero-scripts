@@ -2,7 +2,7 @@ OMERO Core Scripts
 ==================
 
 This directory contains OMERO scripts which use the
-OmeroScripts API. All scripts (e.g. "*.py") present in the
+OMERO.scripts API. All scripts (e.g. "*.py") present in the
 directory will be automatically distributed with all binary
 builds. Which file-endings will be detected and how they
 will be launched are both configured centrally in the server.
