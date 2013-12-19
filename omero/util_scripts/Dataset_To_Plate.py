@@ -38,7 +38,7 @@ from omero.gateway import BlitzGateway
 import omero.util.script_utils as script_utils
 import omero
 
-from omero.rtypes import rint, rlong, rstring, robject
+from omero.rtypes import rint, rlong, rstring, robject, rlist
 
 
 def addImageToPlate(conn, image, plateId, column, row, removeFrom=None):
@@ -165,6 +165,33 @@ def datasets_to_plates(conn, scriptParams):
     # Get the datasets ID
     datasets, logMessage = script_utils.getObjects(conn, scriptParams)
     message += logMessage
+
+    def has_images_linked_to_well(dataset):
+        params = omero.sys.Parameters()
+        params.map = {}
+        query = "select well from Well as well "\
+                "left outer join fetch well.wellSamples as ws " \
+                "left outer join fetch ws.image as img "\
+                "where img.id in (:ids)"
+        params.map["ids"] = rlist([rlong(i.getId()) for i in
+                                   dataset.listChildren()])
+        wells = conn.getQueryService().findAllByQuery(
+            query, params, conn.SERVICE_OPTS)
+        if wells:
+            print "Dataset %s contains images linked to wells." \
+                % dataset.getId()
+            return True
+        else:
+            return False
+
+    # Exclude datasets containing images already linked to a well
+    nDatasets = len(datasets)
+    datasets = [x for x in datasets if not has_images_linked_to_well(x)]
+    if len(datasets) < nDatasets:
+        message += "Excluded %s out of %s dataset(s). " \
+            % (nDatasets - len(datasets), nDatasets)
+
+    # Return if all input dataset are not found or excluded
     if not datasets:
         return None, message
 
