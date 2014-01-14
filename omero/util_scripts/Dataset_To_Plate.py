@@ -38,7 +38,7 @@ from omero.gateway import BlitzGateway
 import omero.util.script_utils as script_utils
 import omero
 
-from omero.rtypes import rint, rlong, rstring, robject, rlist
+from omero.rtypes import rint, rlong, rstring, robject, rlist, unwrap
 
 
 def addImageToPlate(conn, image, plateId, column, row, removeFrom=None):
@@ -169,15 +169,15 @@ def datasets_to_plates(conn, scriptParams):
     def has_images_linked_to_well(dataset):
         params = omero.sys.Parameters()
         params.map = {}
-        query = "select well from Well as well "\
-                "left outer join fetch well.wellSamples as ws " \
-                "left outer join fetch ws.image as img "\
+        query = "select count(well) from Well as well "\
+                "left outer join well.wellSamples as ws " \
+                "left outer join ws.image as img "\
                 "where img.id in (:ids)"
         params.map["ids"] = rlist([rlong(i.getId()) for i in
                                    dataset.listChildren()])
-        wells = conn.getQueryService().findAllByQuery(
-            query, params, conn.SERVICE_OPTS)
-        if wells:
+        n_wells = unwrap(conn.getQueryService().projection(
+            query, params, conn.SERVICE_OPTS)[0])[0]
+        if n_wells > 0:
             print "Dataset %s contains images linked to wells." \
                 % dataset.getId()
             return True
