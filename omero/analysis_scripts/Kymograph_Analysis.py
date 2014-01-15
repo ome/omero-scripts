@@ -4,8 +4,7 @@
  components/tools/OmeroPy/scripts/omero/analysis_scripts/Kymograph_Analysis.py
 
 -----------------------------------------------------------------------------
-  Copyright (C) 2006-2011 University of Dundee. All rights reserved.
-
+  Copyright (C) 2006-2014 University of Dundee. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -167,7 +166,7 @@ def processImages(conn, scriptParams):
             if fileAnn:
                 fileAnns.append(fileAnn)
         else:
-            print "Found NO lines or polylines to analyse for Image"
+            print "Found NO lines or polylines to analyze for Image"
 
     if not fileAnns:
         faMessage = "No Analysis files created. See 'Info' or 'Error'" \
@@ -184,9 +183,9 @@ if __name__ == "__main__":
 
     client = scripts.client(
         'Kymograph_Analysis.py',
-        """This script analyses Kymograph images, which have Line or \
-PolyLine  ROIs that track moving objects. It generates a table of the speed \
-of movement, saved as an Excell / csv file.""",
+        """This script analyzes Kymograph images, which have Line or \
+PolyLine ROIs that track moving objects. It generates a table of the speed \
+of movement, saved as an Excel / CSV file.""",
 
         scripts.String(
             "Data_Type", optional=False, grouping="1",
