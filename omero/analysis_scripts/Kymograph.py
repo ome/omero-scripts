@@ -347,6 +347,10 @@ def processImages(conn, scriptParams):
         return None, message
 
     for image in images:
+        if image.getSizeT() == 1:
+            print "Image: %s is not a movie (sizeT = 1)"\
+                " - Can't create Kymograph" % image.getId()
+            continue
         newImages = []      # kymographs derived from the current image.
         cNames = []
         colors = []
@@ -358,7 +362,7 @@ def processImages(conn, scriptParams):
         pixels = image.getPrimaryPixels()
 
         dataset = image.getDataset()
-        if not dataset.canLink():
+        if dataset is not None and not dataset.canLink():
             dataset = None
 
         roiService = conn.getRoiService()
@@ -412,7 +416,10 @@ def processImages(conn, scriptParams):
         if len(infos) > 0:
             duration = infos[0].deltaT
             print "duration", duration
-            tInterval = duration/(sizeT-1)
+            if sizeT == 1:
+                tInterval = duration
+            else:
+                tInterval = duration/(sizeT-1)
         elif pixels.timeIncrement is not None:
             print "pixels.timeIncrement", pixels.timeIncrement
             tInterval = pixels.timeIncrement
