@@ -38,7 +38,7 @@ from omero.gateway import BlitzGateway
 import omero.util.script_utils as script_utils
 import omero
 
-from omero.rtypes import rint, rlong, rstring, robject, rlist, unwrap
+from omero.rtypes import rint, rlong, rstring, robject, unwrap
 
 
 def addImageToPlate(conn, image, plateId, column, row, removeFrom=None):
