@@ -81,6 +81,8 @@ def processImages(conn, scriptParams):
         message += "No ROI containing line or polyline was found."
         return None, message
 
+    csvData = []
+
     for image in images:
         print "\nAnalysing Image: %s ID: %s" \
             % (image.getName(), image.getId())
@@ -146,28 +148,32 @@ def processImages(conn, scriptParams):
 
         # write table data to csv...
         if len(tableData) > 0:
-            tableString = "secsPerPixelY: %s" % secsPerPixelY
+            tableString = "\nAnalysing Image ID: %s" % image.getId()
+            tableString += "\nsecsPerPixelY: %s" % secsPerPixelY
             tableString += '\nmicronsPerPixelX: %s' % micronsPerPixelX
-            tableString += "\nmicronsPerSec: %s" % micronsPerSec
+            # tableString += "\nmicronsPerSec: %s" % micronsPerSec
             tableString += "\n"
             tableString += colNames
             tableString += tableData
             print tableString
-            csvFileName = 'kymograph_velocities_%s.csv' % image.getId()
-            csvFile = open(csvFileName, 'w')
-            try:
-                csvFile.write(tableString)
-            finally:
-                csvFile.close()
-
-            fileAnn, faMessage = scriptUtil.createLinkFileAnnotation(
-                conn, csvFileName, image, output="Line Plot csv (Excel) file",
-                mimetype="text/csv", desc=None)
-            print fileAnn, faMessage
-            if fileAnn:
-                fileAnns.append(fileAnn)
+            csvData.append(tableString)
         else:
             print "Found NO lines or polylines to analyse for Image"
+
+    iids = [str(i.getId()) for i in images]
+    csvFileName = 'kymograph_velocities_%s.csv' % "-".join(iids)
+    csvFile = open(csvFileName, 'w')
+    try:
+        csvFile.write("\n \n".join(csvData))
+    finally:
+        csvFile.close()
+
+    fileAnn, faMessage = scriptUtil.createLinkFileAnnotation(
+        conn, csvFileName, image, output="Line Plot csv (Excel) file",
+        mimetype="text/csv", desc=None)
+    print fileAnn, faMessage
+    if fileAnn:
+        fileAnns.append(fileAnn)
 
     if not fileAnns:
         faMessage = "No Analysis files created. See 'Info' or 'Error'" \
