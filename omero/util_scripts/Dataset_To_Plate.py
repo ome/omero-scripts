@@ -168,13 +168,11 @@ def datasets_to_plates(conn, scriptParams):
 
     def has_images_linked_to_well(dataset):
         params = omero.sys.ParametersI()
-        params.map = {}
         query = "select count(well) from Well as well "\
                 "left outer join well.wellSamples as ws " \
                 "left outer join ws.image as img "\
                 "where img.id in (:ids)"
-        params.map["ids"] = rlist([rlong(i.getId()) for i in
-                                   dataset.listChildren()])
+        params.addIds([i.getId() for i in dataset.listChildren()])
         n_wells = unwrap(conn.getQueryService().projection(
             query, params, conn.SERVICE_OPTS)[0])[0]
         if n_wells > 0:
