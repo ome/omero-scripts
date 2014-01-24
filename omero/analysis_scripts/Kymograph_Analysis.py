@@ -37,6 +37,7 @@ kymograph images that have been created by the 'Kymograph.py' Script.
 from omero.gateway import BlitzGateway
 import omero
 from omero.rtypes import rlong, rstring, robject
+from omero.model import ImageAnnotationLinkI, ImageI
 import omero.scripts as scripts
 import omero.util.script_utils as scriptUtil
 import logging
@@ -160,6 +161,7 @@ def processImages(conn, scriptParams):
             print "Found NO lines or polylines to analyze for Image"
 
     iids = [str(i.getId()) for i in images]
+    toLinkCsv = [i.getId() for i in images if i.canAnnotate()]
     csvFileName = 'kymograph_velocities_%s.csv' % "-".join(iids)
     csvFile = open(csvFileName, 'w')
     try:
@@ -167,10 +169,25 @@ def processImages(conn, scriptParams):
     finally:
         csvFile.close()
 
-    fileAnn, faMessage = scriptUtil.createLinkFileAnnotation(
-        conn, csvFileName, image, output="Line Plot csv (Excel) file",
-        mimetype="text/csv", desc=None)
-    print fileAnn, faMessage
+    # fileAnn, faMessage = scriptUtil.createLinkFileAnnotation(
+    #     conn, csvFileName, image, output="Line Plot csv (Excel) file",
+    #     mimetype="text/csv", desc=None)
+
+    fileAnn = conn.createFileAnnfromLocalFile(csvFileName, mimetype="text/csv")
+    faMessage = "Created Line Plot csv (Excel) file"
+
+    links = []
+    if len(toLinkCsv) == 0:
+        faMessage += " but could not attach to images."
+    for iid in toLinkCsv:
+        print "linking csv to Image: ", iid
+        link = ImageAnnotationLinkI()
+        link.parent = ImageI(iid, False)
+        link.child = fileAnn._obj
+        links.append(link)
+    if len(links) > 0:
+        links = conn.getUpdateService().saveAndReturnArray(links)
+
     if fileAnn:
         fileAnns.append(fileAnn)
 
