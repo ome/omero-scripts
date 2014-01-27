@@ -60,7 +60,9 @@ def numpyToImage(plane):
         # int32 is handled by PIL (not uint32 etc). TODO: support floats
         convArray = zeros(plane.shape, dtype=int32)
         convArray += plane
-        return Image.fromarray(convArray)
+        # Trac#11912 PIL < 1.1.7 fromarray doesn't handle 16 bit images
+        return Image.fromstring(
+            'I', (plane.shape[1], plane.shape[0]), convArray)
     return Image.fromarray(plane)
 
 
