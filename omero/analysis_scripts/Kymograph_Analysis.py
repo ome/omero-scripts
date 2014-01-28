@@ -169,10 +169,6 @@ def processImages(conn, scriptParams):
     finally:
         csvFile.close()
 
-    # fileAnn, faMessage = scriptUtil.createLinkFileAnnotation(
-    #     conn, csvFileName, image, output="Line Plot csv (Excel) file",
-    #     mimetype="text/csv", desc=None)
-
     fileAnn = conn.createFileAnnfromLocalFile(csvFileName, mimetype="text/csv")
     faMessage = "Created Line Plot csv (Excel) file"
 
