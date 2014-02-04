@@ -3,5 +3,5 @@ python:
   - "2.6"
 virtualenv:
   system_site_packages: true
-install: pip install flake8 --use-mirrors
+install: pip install flake8
 script: flake8 -v .
