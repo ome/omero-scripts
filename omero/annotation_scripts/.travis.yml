@@ -4,4 +4,4 @@ python:
 virtualenv:
   system_site_packages: true
 install: pip install flake8
-script: flake8 -v .
+script: flake8 -v . --filename=*.py, *.txt
