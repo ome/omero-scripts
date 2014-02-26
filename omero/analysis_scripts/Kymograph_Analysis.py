@@ -152,7 +152,6 @@ def processImages(conn, scriptParams):
             tableString = "\nAnalysing Image ID: %s" % image.getId()
             tableString += "\nsecsPerPixelY: %s" % secsPerPixelY
             tableString += '\nmicronsPerPixelX: %s' % micronsPerPixelX
-            # tableString += "\nmicronsPerSec: %s" % micronsPerSec
             tableString += "\n"
             tableString += colNames
             tableString += tableData
