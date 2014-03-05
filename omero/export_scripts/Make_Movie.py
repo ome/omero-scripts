@@ -508,7 +508,7 @@ def writeMovie(commandArgs, conn):
         cWindows = []
         cColours = []
         for c in commandArgs["Channels"]:
-            m = re.match('^(?P<i>\d+)(\|(?P<ws>\d+)'+\
+            m = re.match('^(?P<i>\d+)(\|(?P<ws>\d+)' +
                          '\:(?P<we>\d+))?(\$(?P<c>.+))?$', c)
             if m is not None:
                 cRange.append(int(m.group('i'))-1)
