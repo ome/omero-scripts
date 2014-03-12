@@ -254,11 +254,12 @@ def polyLineKymograph(conn, scriptParams, image, polylines, lineWidth,
             cData = vstack(tRows)
             yield cData
 
+    name = "%s_kymograph" % image.getName()
     desc = "Kymograph generated from Image ID: %s, polyline: %s" \
         % (image.getId(), firstShape['points'])
     desc += "\nwith each timepoint being %s vertical pixels" % lineWidth
     newImg = conn.createImageFromNumpySeq(
-        planeGen(), "kymograph", 1, sizeC, 1, description=desc,
+        planeGen(), name, 1, sizeC, 1, description=desc,
         dataset=dataset)
     return newImg
 
@@ -320,11 +321,12 @@ def linesKymograph(conn, scriptParams, image, lines, lineWidth, dataset):
                 tRows.append(rowData)
             yield vstack(tRows)
 
+    name = "%s_kymograph" % image.getName()
     desc = "Kymograph generated from Image ID: %s, line: %s" \
         % (image.getId(), firstLine)
     desc += "\nwith each timepoint being %s vertical pixels" % lineWidth
     newImg = conn.createImageFromNumpySeq(
-        planeGen(), "kymograph", 1, sizeC, 1, description=desc,
+        planeGen(), name, 1, sizeC, 1, description=desc,
         dataset=dataset)
     return newImg
 
