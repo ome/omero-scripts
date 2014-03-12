@@ -105,13 +105,15 @@ def processImages(conn, scriptParams):
         # for each line or polyline, create a row in csv table: y(t), x,
         # dy(dt), dx, x/t (line), x/t (average)
         colNames = "\nt_start (pixels), x_start (pixels), t_end (pixels)," \
-            " x_end (pixels), dt (pixels), dx (pixels), x/t, average x/t," \
-            " speed(um/sec)"
+            " x_end (pixels), dt (pixels), dx (pixels), x/t, speed(um/sec)," \
+            "avg x/t, avg speed(um/sec)"
         tableData = ""
         for roi in result.rois:
             for s in roi.copyShapes():
+                if s is None:
+                    continue    # seems possible in some situations
                 if type(s) == omero.model.LineI:
-                    tableData += "\nLine"
+                    tableData += "\nLine ID: %s" % s.getId().getValue()
                     x1 = s.getX1().getValue()
                     x2 = s.getX2().getValue()
                     y1 = s.getY1().getValue()
@@ -119,16 +121,16 @@ def processImages(conn, scriptParams):
                     dx = abs(x1-x2)
                     dy = abs(y1-y2)
                     dxPerY = float(dx)/dy
+                    speed = ""
+                    if micronsPerSec:
+                        speed = dxPerY * micronsPerSec
                     tableData += "\n"
                     tableData += ",".join(
                         [str(x) for x in (y1, x1, y2, x2, dy, dx, dxPerY,
-                                          dxPerY, "")])
-                    if micronsPerSec:
-                        speed = dxPerY * micronsPerSec
-                        tableData += "%s" % speed
+                                          speed)])
 
                 elif type(s) == omero.model.PolylineI:
-                    tableData += "\nPolyline"
+                    tableData += "\nPolyline ID: %s" % s.getId().getValue()
                     points = pointsStringToXYlist(s.getPoints().getValue())
                     xStart, yStart = points[0]
                     for i in range(1, len(points)):
@@ -138,17 +140,20 @@ def processImages(conn, scriptParams):
                         dy = abs(y1-y2)
                         dxPerY = float(dx)/dy
                         avXperY = abs(float(x2-xStart)/(y2-yStart))
+                        speed = ""
+                        avgSpeed = ""
+                        if micronsPerSec:
+                            speed = dxPerY * micronsPerSec
+                            avgSpeed = avXperY * micronsPerSec
                         tableData += "\n"
                         tableData += ",".join(
                             [str(x) for x in (y1, x1, y2, x2, dy, dx, dxPerY,
-                                              avXperY, "")])
-                        if micronsPerSec:
-                            speed = dxPerY * micronsPerSec
-                            tableData += "%s" % speed
+                                              speed, avXperY, avgSpeed)])
 
         # write table data to csv...
         if len(tableData) > 0:
-            tableString = "\nAnalysing Image ID: %s" % image.getId()
+            tableString = "Image ID:, %s," % image.getId()
+            tableString += "Name:, %s" % image.getName()
             tableString += "\nsecsPerPixelY: %s" % secsPerPixelY
             tableString += '\nmicronsPerPixelX: %s' % micronsPerPixelX
             tableString += "\n"

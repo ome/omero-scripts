@@ -383,6 +383,8 @@ def processImages(conn, scriptParams):
             lines = {}          # map of theT: line
             polylines = {}      # map of theT: polyline
             for s in roi.copyShapes():
+                if s is None:
+                    continue
                 theZ = s.getTheZ() and s.getTheZ().getValue() or 0
                 theT = s.getTheT() and s.getTheT().getValue() or 0
                 # TODO: Add some filter of shapes. E.g. text? / 'lines' only
