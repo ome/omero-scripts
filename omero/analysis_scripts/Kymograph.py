@@ -147,7 +147,7 @@ def getLineData(pixels, x1, y1, x2, y2, lineW=2, theZ=0, theC=0, theT=0):
         plane = vstack((plane, pad_data))
 
     pil = numpyToImage(plane)
-    #pil.show()
+    # pil.show()
 
     # Now need to rotate so that x1,y1 is horizontally to the left of x2,y2
     toRotate = 90 - math.degrees(rads)
@@ -157,7 +157,7 @@ def getLineData(pixels, x1, y1, x2, y2, lineW=2, theZ=0, theC=0, theT=0):
     # filter=Image.BICUBIC see
     # http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2172449/
     rotated = pil.rotate(toRotate, expand=True)
-    #rotated.show()
+    # rotated.show()
 
     # finally we need to crop to the length of the line
     length = int(math.sqrt(math.pow(lineX, 2) + math.pow(lineY, 2)))
@@ -167,7 +167,7 @@ def getLineData(pixels, x1, y1, x2, y2, lineW=2, theZ=0, theC=0, theT=0):
     cropY = (rotH - lineW)/2
     cropY2 = cropY + lineW
     cropped = rotated.crop((cropX, cropY, cropX2, cropY2))
-    #cropped.show()
+    # cropped.show()
     return asarray(cropped)
 
 

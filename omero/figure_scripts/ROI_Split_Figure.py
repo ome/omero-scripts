@@ -217,8 +217,9 @@ def getROIsplitView(re, pixels, zStart, zEnd, splitIndexes, channelNames,
         merged = re.renderCompressed(planeDef)
     fullMergedImage = Image.open(StringIO.StringIO(merged))
     roiMergedImage = fullMergedImage.crop(box)
-    roiMergedImage.load()   # make sure this is not just a lazy copy of the
-                            # full image
+    # make sure this is not just a lazy copy of the full image
+    roiMergedImage.load()
+
     if roiZoom is not 1:
         newSize = (int(roiWidth*roiZoom), int(roiHeight*roiZoom))
         roiMergedImage = roiMergedImage.resize(newSize, Image.ANTIALIAS)
@@ -273,8 +274,8 @@ def getROIsplitView(re, pixels, zStart, zEnd, splitIndexes, channelNames,
         px = px + panelWidth + spacer
     # and the merged image
     if showTopLabels:
-        #indent = (panelWidth - (font.getsize("Merged")[0])) / 2
-        #draw.text((px+indent, textY), "Merged", font=font, fill=(0,0,0))
+        # indent = (panelWidth - (font.getsize("Merged")[0])) / 2
+        # draw.text((px+indent, textY), "Merged", font=font, fill=(0,0,0))
         if (mergedNames):
             for index in mergedIndexes:
                 if index in mergedColours:
@@ -767,12 +768,12 @@ def roiFigure(conn, commandArgs):
         log("\n"+logMessage)
         message += logMessage
         return None, message
-    #fig.show()        # bug-fixing only
+    # fig.show()        # bug-fixing only
 
     log("")
     figLegend = "\n".join(logStrings)
 
-    #print figLegend    # bug fixing only
+    # print figLegend    # bug fixing only
     format = commandArgs["Format"]
 
     figureName = "roiFigure"

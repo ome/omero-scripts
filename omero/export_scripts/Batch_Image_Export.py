@@ -103,14 +103,14 @@ def savePlane(image, format, cName, zRange, projectZ, t=0, channel=None,
     originalName = image.getName()
     log("")
     log("savePlane..")
-    #log("originalName %s" % originalName)
-    #log("format %s" % format)
+    # log("originalName %s" % originalName)
+    # log("format %s" % format)
     log("channel: %s" % cName)
     log("z: %s" % zRange)
     log("t: %s" % t)
-    #log("channel %s" % channel)
-    #log("greyscale %s" % greyscale)
-    #log("zoomPercent %s" % zoomPercent)
+    # log("channel %s" % channel)
+    # log("greyscale %s" % greyscale)
+    # log("zoomPercent %s" % zoomPercent)
 
     # if channel == None: use current rendering settings
     if channel is not None:
@@ -155,7 +155,7 @@ def makeImageName(originalName, cName, zRange, t, extension, folder_name):
     E.g. imported/myImage.dv -> myImage_DAPI_z13_t01.png
     """
     name = os.path.basename(originalName)
-    #name = name.rsplit(".",1)[0]  # remove extension
+    # name = name.rsplit(".",1)[0]  # remove extension
     if len(zRange) == 2:
         z = "%02d-%02d" % (zRange[0], zRange[1])
     else:
@@ -194,7 +194,7 @@ def saveAsOmeTiff(conn, image, folder_name=None):
     f = open(str(imgName), "wb")
     for piece in block_gen:
         f.write(piece)
-    #f.seek(0)
+    # f.seek(0)
     f.close()
 
 

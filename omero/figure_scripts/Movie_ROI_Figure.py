@@ -603,7 +603,7 @@ def roiFigure(conn, commandArgs):
     #  if no colours added, use existing rendering settings.
     mergedColours = {}
     # Actually, nicer to always use existing rendering settings.
-    #if "Merged_Colours" in commandArgs:
+    # if "Merged_Colours" in commandArgs:
     #    for i, c in enumerate(commandArgs["Merged_Colours"]):
     #        if c in COLOURS:
     #            mergedColours[i] = COLOURS[c]
@@ -665,7 +665,7 @@ def roiFigure(conn, commandArgs):
         imageLabels, spacer, algorithm, stepping, scalebar, overlayColour,
         roiZoom, maxColumns, showRoiDuration, roiLabel)
 
-    #fig.show()        # bug-fixing only
+    # fig.show()        # bug-fixing only
 
     if fig is None:
         logMessage = "No figure produced"
@@ -674,7 +674,7 @@ def roiFigure(conn, commandArgs):
         return None, message
     figLegend = "\n".join(logStrings)
 
-    #print figLegend    # bug fixing only
+    # print figLegend    # bug fixing only
     format = commandArgs["Format"]
 
     figureName = "movieROIFigure"
@@ -744,7 +744,7 @@ users/client-tutorials/insight/insight-export-figures.html""",
             "IDs", optional=False, grouping="02",
             description="List of Image IDs").ofType(rlong(0)),
 
-        #scripts.List("Merged_Colours", grouping="03",
+        # scripts.List("Merged_Colours", grouping="03",
         #    description="A list of colours to apply to merged channels.",
         # values=cOptions),
 
