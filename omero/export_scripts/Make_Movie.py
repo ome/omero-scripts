@@ -440,7 +440,7 @@ def prepareWatermark(conn, commandArgs, sizeX, sizeY):
     # only resize watermark if too big
     if wm_w > sizeX or wm_h > sizeY:
         wm = reshape_to_fit(wm, sizeX, sizeY)
-    #wm = wm.convert("L")
+    # wm = wm.convert("L")
     return wm
 
 
