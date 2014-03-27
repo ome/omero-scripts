@@ -299,7 +299,7 @@ def addLeftLabels(panelCanvas, imageLabels, rowIndex, width, spacer):
     font = imgUtil.getFont(width/12)
     textHeight = font.getsize("Sampleq")[1]
     textGap = spacer / 2
-    #rowSpacing = panelCanvas.size[1]/len(pixelIds)
+    # rowSpacing = panelCanvas.size[1]/len(pixelIds)
 
     # find max number of labels
     maxCount = 0
@@ -506,7 +506,7 @@ def movieFigure(conn, commandArgs):
     log("")
     figLegend = "\n".join(logLines)
 
-    #print figLegend    # bug fixing only
+    # print figLegend    # bug fixing only
     format = commandArgs["Format"]
 
     figureName = "movieFigure"

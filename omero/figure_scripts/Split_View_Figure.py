@@ -295,16 +295,16 @@ def getSplitView(conn, pixelIds, zStart, zEnd, splitIndexes, channelNames,
             yIndent = xIndent
             # if we've scaled to half size, zoom = 2
             zoom = imgUtil.getZoomFactor(i.size, width, height)
-            sbar = float(scalebar) / zoom       # and the scale bar will be
-                                                # half size
+            # and the scale bar will be half size
+            sbar = float(scalebar) / zoom
             status, logMsg = figUtil.addScalebar(
                 sbar, xIndent, yIndent, scaledImage, pixels, overlayColour)
             log(logMsg)
 
         imgUtil.pasteImage(scaledImage, canvas, px, py)
 
-        totalWidth = max(totalWidth, canvasWidth)   # most should be same
-                                                    # width anyway
+        # most should be same width anyway
+        totalWidth = max(totalWidth, canvasWidth)
         # add together the heights of each row
         totalHeight = totalHeight + canvasHeight
         rowPanels.append(canvas)
@@ -395,9 +395,9 @@ def makeSplitViewFigure(conn, pixelIds, zStart, zEnd, splitIndexes,
     white = (255, 255, 255)
     textHeight = font.getsize("Textq")[1]
     # topSpacer = spacer + textHeight + textGap
-    #textCanvas = Image.new(mode, (1,1), white)
-    #textdraw = ImageDraw.Draw(textCanvas)
-    #h = textdraw.textsize("Textq", font=font) [1]
+    # textCanvas = Image.new(mode, (1,1), white)
+    # textdraw = ImageDraw.Draw(textCanvas)
+    # h = textdraw.textsize("Textq", font=font) [1]
 
     # if adding text to the left, write the text on horizontal canvas, then
     # rotate to vertical (below)
