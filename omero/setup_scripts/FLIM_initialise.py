@@ -54,7 +54,7 @@ def initialise(session):
     iQuery = session.getQueryService()
     iUpdate = session.getUpdateService()
 
-    #keywords = BACKGROUND+","+CELL;
+    # keywords = BACKGROUND+","+CELL;
     keywords = CELL
     script_utils.registerNamespace(iQuery, iUpdate, NAMESPACE, keywords)
 

@@ -125,8 +125,8 @@ def processImage(conn, imageId, parameterMap):
     physicalSizeX = pixels.getPhysicalSizeX()
     physicalSizeY = pixels.getPhysicalSizeY()
 
-    rois = getRectangles(conn, imageId)     # x, y, w, h, zStart, zEnd,
-                                            # tStart, tEnd
+    # x, y, w, h, zStart, zEnd, tStart, tEnd
+    rois = getRectangles(conn, imageId)
 
     imgW = image.getSizeX()
     imgH = image.getSizeY()
@@ -164,8 +164,8 @@ def processImage(conn, imageId, parameterMap):
         def tileGen():
             # list a tile from each ROI and create a generator of 2D planes
             zctTileList = []
-            c = 0  # assume single channel image
-                   # Electron Microscopy use case
+            # assume single channel image Electron Microscopy use case
+            c = 0
             for r in rois:
                 x, y, w, h, z1, z2, t1, t2 = r
                 tile = (x, y, width, height)
