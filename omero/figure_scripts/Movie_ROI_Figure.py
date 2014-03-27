@@ -604,9 +604,9 @@ def roiFigure(conn, commandArgs):
     mergedColours = {}
     # Actually, nicer to always use existing rendering settings.
     # if "Merged_Colours" in commandArgs:
-    #    for i, c in enumerate(commandArgs["Merged_Colours"]):
-    #        if c in COLOURS:
-    #            mergedColours[i] = COLOURS[c]
+    #     for i, c in enumerate(commandArgs["Merged_Colours"]):
+    #         if c in COLOURS:
+    #             mergedColours[i] = COLOURS[c]
 
     algorithm = ProjectionType.MAXIMUMINTENSITY
     if "Algorithm" in commandArgs:
@@ -744,9 +744,10 @@ users/client-tutorials/insight/insight-export-figures.html""",
             "IDs", optional=False, grouping="02",
             description="List of Image IDs").ofType(rlong(0)),
 
-        # scripts.List("Merged_Colours", grouping="03",
-        #    description="A list of colours to apply to merged channels.",
-        # values=cOptions),
+        # scripts.List(
+        #     "Merged_Colours", grouping="03",
+        #     description="A list of colours to apply to merged channels.",
+        #     values=cOptions),
 
         scripts.List(
             "Merged_Channels", grouping="03",
