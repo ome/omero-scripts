@@ -67,7 +67,7 @@ import re
 import numpy
 import omero.util.pixelstypetopython as pixelstypetopython
 from struct import unpack
-from omero.rtypes import wrap, rstring, rlong, rint, robject
+from omero.rtypes import wrap, rstring, rlong, robject
 from omero.gateway import BlitzGateway
 from omero.constants.namespaces import NSCREATED
 from omero.constants.metadata import NSMOVIE
@@ -508,7 +508,8 @@ def writeMovie(commandArgs, conn):
         cWindows = []
         cColours = []
         for c in commandArgs["Channels"]:
-            m = re.match('^(?P<i>\d+)(\|(?P<ws>\d+)\:(?P<we>\d+))?(\$(?P<c>.+))?$', c)
+            m = re.match('^(?P<i>\d+)(\|(?P<ws>\d+)'+\
+                         '\:(?P<we>\d+))?(\$(?P<c>.+))?$', c)
             if m is not None:
                 cRange.append(int(m.group('i'))-1)
                 cWindows.append([float(m.group('ws')), float(m.group('we'))])
@@ -524,7 +525,9 @@ def writeMovie(commandArgs, conn):
             commandArgs["Show_Time"] = False
 
     frameNo = 1
-    omeroImage.setActiveChannels(map(lambda x: x+1, cRange), cWindows, cColours)
+    omeroImage.setActiveChannels(map(lambda x: x+1, cRange),
+                                 cWindows,
+                                 cColours)
     renderingEngine = omeroImage._re
 
     overlayColour = (255, 255, 255)
