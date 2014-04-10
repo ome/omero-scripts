@@ -287,6 +287,7 @@ def validChannels(set, sizeC):
     if(len(set) == 0):
         return False
     for val in set:
+        val = int(val.split('|')[0].split('$')[0])
         if(val < 0 or val > sizeC):
             return False
     return True
@@ -499,9 +500,19 @@ def writeMovie(commandArgs, conn):
         commandArgs["Scalebar"] = 0
 
     cRange = range(0, sizeC)
+    cWindows = None
+    cColours = None
     if "Channels" in commandArgs and \
             validChannels(commandArgs["Channels"], sizeC):
-        cRange = commandArgs["Channels"]
+        cRange = []
+        cWindows = []
+        cColours = []
+        for c in commandArgs["Channels"]:
+            m = re.match('^(?P<i>\d+)(\|(?P<ws>\d+)\:(?P<we>\d+))?(\$(?P<c>.+))?$', c)
+            if m is not None:
+                cRange.append(int(m.group('i'))-1)
+                cWindows.append([float(m.group('ws')), float(m.group('we'))])
+                cColours.append(m.group('c'))
 
     tzList = calculateRanges(sizeZ, sizeT, commandArgs)
 
@@ -513,7 +524,7 @@ def writeMovie(commandArgs, conn):
             commandArgs["Show_Time"] = False
 
     frameNo = 1
-    omeroImage.setActiveChannels(map(lambda x: x+1, cRange))
+    omeroImage.setActiveChannels(map(lambda x: x+1, cRange), cWindows, cColours)
     renderingEngine = omeroImage._re
 
     overlayColour = (255, 255, 255)
@@ -689,7 +700,7 @@ def runAsScript():
         scripts.List(
             "Channels",
             description="The selected channels",
-            grouping="5").ofType(rint(0)),
+            grouping="5").ofType(rstring('')),
 
         scripts.Bool(
             "Show_Time",
