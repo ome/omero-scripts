@@ -67,7 +67,7 @@ import re
 import numpy
 import omero.util.pixelstypetopython as pixelstypetopython
 from struct import unpack
-from omero.rtypes import wrap, rstring, rlong, robject
+from omero.rtypes import wrap, rstring, rint, rlong, robject
 from omero.gateway import BlitzGateway
 from omero.constants.namespaces import NSCREATED
 from omero.constants.metadata import NSMOVIE
@@ -502,18 +502,21 @@ def writeMovie(commandArgs, conn):
     cRange = range(0, sizeC)
     cWindows = None
     cColours = None
-    if "Channels" in commandArgs and \
-            validChannels(commandArgs["Channels"], sizeC):
+    if "ChannelsExtended" in commandArgs and \
+            validChannels(commandArgs["ChannelsExtended"], sizeC):
         cRange = []
         cWindows = []
         cColours = []
-        for c in commandArgs["Channels"]:
+        for c in commandArgs["ChannelsExtended"]:
             m = re.match('^(?P<i>\d+)(\|(?P<ws>\d+)' +
                          '\:(?P<we>\d+))?(\$(?P<c>.+))?$', c)
             if m is not None:
                 cRange.append(int(m.group('i'))-1)
                 cWindows.append([float(m.group('ws')), float(m.group('we'))])
                 cColours.append(m.group('c'))
+    elif "Channels" in commandArgs and \
+            validChannels(commandArgs["Channels"], sizeC):
+        cRange = commandArgs["Channels"]
 
     tzList = calculateRanges(sizeZ, sizeT, commandArgs)
 
@@ -703,7 +706,13 @@ def runAsScript():
         scripts.List(
             "Channels",
             description="The selected channels",
-            grouping="5").ofType(rstring('')),
+            grouping="5.1").ofType(rint(0)),
+
+        scripts.List(
+            "ChannelsExtended",
+            description="The selected channels, with optional range"
+            " and colour. Takes precendence over Channels.",
+            grouping="5.2").ofType(rstring('')),
 
         scripts.Bool(
             "Show_Time",
