@@ -117,8 +117,8 @@ def manuallyAssignImages(parameterMap, imageIds, sourceZ):
 
     for i, d in enumerate(dimensionParams):
         if d in parameterMap and len(parameterMap[d]) > 0:
-            dim = parameterMap[d][0]  # First letter of 'Channel' or 'Time'
-                                      # or 'Z'
+            # First letter of 'Channel' or 'Time' or 'Z'
+            dim = parameterMap[d][0]
             dims.append(dim)
             if dim == "Z" and sourceZ > 1:
                 continue
@@ -330,14 +330,14 @@ def makeSingleImage(services, parameterMap, imageIds, dataset, colourMap):
     query_string = "select p from Pixels p join fetch p.image i join "\
         "fetch p.pixelsType pt where i.id='%d'" % imageId
     pixels = queryService.findByQuery(query_string, None)
-    pixelsType = pixels.getPixelsType()  # use the pixels type object we
-                                         # got from the first image.
+    # use the pixels type object we got from the first image.
+    pixelsType = pixels.getPixelsType()
 
     # combined image will have same X and Y sizes...
     sizeX = pixels.getSizeX().getValue()
     sizeY = pixels.getSizeY().getValue()
-    sourceZ = pixels.getSizeZ().getValue()  # if we have a Z stack, use this
-                                            # in new image (don't combine Z)
+    # if we have a Z stack, use this in new image (don't combine Z)
+    sourceZ = pixels.getSizeZ().getValue()
 
     # Now we need to find where our planes are coming from.
     # imageMap is a map of destination:source, defined as (newX, newY,
@@ -403,11 +403,11 @@ def makeSingleImage(services, parameterMap, imageIds, dataset, colourMap):
                                           minValue, maxValue, rgba)
 
     # rename new channels
-    pixels = renderingEngine.getPixels()  # has channels loaded - (getting
-                                          # Pixels from image doesn't)
+    pixels = renderingEngine.getPixels()
+    # has channels loaded - (getting Pixels from image doesn't)
     i = 0
-    for c in pixels.iterateChannels():  # c is an instance of
-                                        # omero.model.ChannelI
+    for c in pixels.iterateChannels():
+        # c is an instance of omero.model.ChannelI
         if i >= len(cNames):
             break
         lc = c.getLogicalChannel()  # returns omero.model.LogicalChannelI

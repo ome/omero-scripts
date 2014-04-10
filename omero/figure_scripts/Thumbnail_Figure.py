@@ -173,7 +173,7 @@ def paintDatasetCanvas(conn, images, title, tagIds=None, showUntagged=False,
         types = ["ome.model.annotations.TagAnnotation"]
         annotations = metadataService.loadAnnotations(
             "Image", dsImageIds, types, None, None)
-        #filter images by annotation...
+        # filter images by annotation...
         for imageId, tags in annotations.items():
             imgTagIds = []
             for tag in tags:
