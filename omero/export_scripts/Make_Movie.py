@@ -801,11 +801,8 @@ def runAsScript():
 
     try:
         conn = BlitzGateway(client_obj=client)
-        commandArgs = {}
 
-        for key in client.getInputKeys():
-            if client.getInput(key):
-                commandArgs[key] = client.getInput(key, unwrap=True)
+        commandArgs = scriptUtil.parseInputs(client)
         print commandArgs
 
         fileAnnotation, message = writeMovie(commandArgs, conn)

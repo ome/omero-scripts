@@ -589,10 +589,7 @@ users/client-tutorials/insight/insight-util-scripts.html""",
 
         conn = BlitzGateway(client_obj=client)
 
-        # process the list of args above.
-        for key in client.getInputKeys():
-            if client.getInput(key):
-                scriptParams[key] = client.getInput(key, unwrap=True)
+        scriptParams = script_utils.parseInputs(client)
         log(scriptParams)
 
         # call the main script - returns a file annotation wrapper
