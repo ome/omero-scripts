@@ -532,13 +532,9 @@ users/client-tutorials/insight/insight-export-figures.html""",
         )
 
     try:
-        commandArgs = {}
-
         conn = BlitzGateway(client_obj=client)
 
-        for key in client.getInputKeys():
-            if client.getInput(key):
-                commandArgs[key] = unwrap(client.getInput(key))
+        commandArgs = scriptUtil.parseInputs(client)
         print commandArgs
 
         # Makes the figure and attaches it to Project/Dataset. Returns

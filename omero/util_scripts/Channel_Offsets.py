@@ -370,12 +370,7 @@ client-tutorials/insight/insight-util-scripts.html""",
     )
 
     try:
-        # process the list of args above.
-        scriptParams = {}
-        for key in client.getInputKeys():
-            if client.getInput(key):
-                scriptParams[key] = client.getInput(key, unwrap=True)
-
+        scriptParams = script_utils.parseInputs(client)
         print scriptParams
 
         # wrap client to use the Blitz Gateway

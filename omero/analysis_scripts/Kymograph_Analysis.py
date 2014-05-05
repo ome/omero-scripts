@@ -226,12 +226,7 @@ of movement, saved as an Excel / CSV file.""",
     )
 
     try:
-        # process the list of args above.
-        scriptParams = {}
-        for key in client.getInputKeys():
-            if client.getInput(key):
-                scriptParams[key] = client.getInput(key, unwrap=True)
-
+        scriptParams = scriptUtil.parseInputs(client)
         print scriptParams
 
         # wrap client to use the Blitz Gateway
