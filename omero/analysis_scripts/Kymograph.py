@@ -529,7 +529,7 @@ same sizeC as input.""",
     )
 
     try:
-        scriptParams = scriptUtil.parseInputs(client)
+        scriptParams = client.getInputs(unwrap=True)
         print scriptParams
 
         # wrap client to use the Blitz Gateway

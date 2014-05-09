@@ -627,7 +627,7 @@ client-tutorials/insight/insight-util-scripts.html""",
     )
 
     try:
-        parameterMap = scriptUtil.parseInputs(client)
+        parameterMap = client.getInputs(unwrap=True)
         print parameterMap
 
         conn = BlitzGateway(client_obj=client)

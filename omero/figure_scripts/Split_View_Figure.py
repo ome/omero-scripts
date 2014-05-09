@@ -805,7 +805,7 @@ users/client-tutorials/insight/insight-export-figures.html""",
     try:
         conn = BlitzGateway(client_obj=client)
 
-        scriptParams = scriptUtil.parseInputs(client)
+        scriptParams = client.getInputs(unwrap=True)
         print scriptParams
 
         # call the main script, attaching resulting figure to Image. Returns

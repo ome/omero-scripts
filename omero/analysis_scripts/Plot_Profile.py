@@ -444,7 +444,7 @@ and outputs the data as CSV files, for plotting in e.g. Excel.""",
     )
 
     try:
-        scriptParams = scriptUtil.parseInputs(client)
+        scriptParams = client.getInputs(unwrap=True)
         print scriptParams
 
         # wrap client to use the Blitz Gateway

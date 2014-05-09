@@ -589,7 +589,7 @@ users/client-tutorials/insight/insight-util-scripts.html""",
 
         conn = BlitzGateway(client_obj=client)
 
-        scriptParams = script_utils.parseInputs(client)
+        scriptParams = client.getInputs(unwrap=True)
         log(scriptParams)
 
         # call the main script - returns a file annotation wrapper
