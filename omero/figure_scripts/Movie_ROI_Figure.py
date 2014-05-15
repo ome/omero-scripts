@@ -44,7 +44,7 @@ import omero.util.imageUtil as imgUtil
 import omero.util.figureUtil as figUtil
 import omero.util.script_utils as scriptUtil
 from omero.gateway import BlitzGateway
-from omero.rtypes import rlong, rint, rstring, robject, wrap, unwrap
+from omero.rtypes import rlong, rint, rstring, robject, wrap
 from omero.constants.namespaces import NSCREATED
 import omero.model
 from omero.constants.projection import ProjectionType
