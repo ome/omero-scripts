@@ -42,7 +42,7 @@ project.
 import omero.scripts as scripts
 from omero.gateway import BlitzGateway
 import omero.util.script_utils as scriptUtil
-from omero.rtypes import rlong, rstring, robject, unwrap
+from omero.rtypes import rlong, rstring, robject
 import omero.util.imageUtil as imgUtil
 from omero.constants.namespaces import NSCREATED
 import os
