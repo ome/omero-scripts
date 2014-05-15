@@ -39,6 +39,7 @@ def get_original_file(conn, plateId, fileId):
     if plate is None:
         sys.stderr.write("Error: Object does not exist.\n")
         sys.exit(1)
+    file = None
     for ann in plate.listAnnotations():
         if isinstance(ann, omero.gateway.FileAnnotationWrapper):
             print "File ID:", ann.getFile().getId(), ann.getFile().getName(),\
