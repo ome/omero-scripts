@@ -44,7 +44,7 @@ import omero.util.imageUtil as imgUtil
 import omero.util.figureUtil as figUtil
 import omero.util.script_utils as scriptUtil
 from omero.gateway import BlitzGateway
-from omero.rtypes import rlong, rint, rstring, robject, wrap, unwrap
+from omero.rtypes import rlong, rint, rstring, robject, wrap
 from omero.constants.namespaces import NSCREATED
 import omero.model
 from omero.constants.projection import ProjectionType
@@ -823,13 +823,9 @@ users/client-tutorials/insight/insight-export-figures.html""",
     )
 
     try:
-        commandArgs = {}
         conn = BlitzGateway(client_obj=client)
 
-        # process the list of args above.
-        for key in client.getInputKeys():
-            if client.getInput(key):
-                commandArgs[key] = unwrap(client.getInput(key))
+        commandArgs = client.getInputs(unwrap=True)
         print commandArgs
 
         # call the main script, attaching resulting figure to Image. Returns

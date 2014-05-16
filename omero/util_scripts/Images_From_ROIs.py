@@ -404,13 +404,7 @@ assumes that all the ROIs on each Image are the same size.""",
     )
 
     try:
-
-        # process the list of args above.
-        parameterMap = {}
-        for key in client.getInputKeys():
-            if client.getInput(key):
-                parameterMap[key] = client.getInput(key, unwrap=True)
-
+        parameterMap = client.getInputs(unwrap=True)
         print parameterMap
 
         # create a wrapper so we can use the Blitz Gateway.
