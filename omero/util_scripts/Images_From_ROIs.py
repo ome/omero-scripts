@@ -4,7 +4,7 @@
  components/tools/OmeroPy/scripts/omero/util_scripts/Images_From_ROIs.py
 
 -----------------------------------------------------------------------------
-  Copyright (C) 2006-2010 University of Dundee. All rights reserved.
+  Copyright (C) 2006-2014 University of Dundee. All rights reserved.
 
 
   This program is free software; you can redistribute it and/or modify
