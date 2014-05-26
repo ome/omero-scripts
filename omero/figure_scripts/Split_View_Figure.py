@@ -4,7 +4,7 @@
  components/tools/OmeroPy/scripts/omero/figure_scripts/Split_View_Figure.py
 
 -----------------------------------------------------------------------------
-  Copyright (C) 2006-2009 University of Dundee. All rights reserved.
+  Copyright (C) 2006-2014 University of Dundee. All rights reserved.
 
 
   This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@ import omero.util.imageUtil as imgUtil
 import omero.util.script_utils as scriptUtil
 import omero
 from omero.gateway import BlitzGateway
-from omero.rtypes import rint, rlong, rstring, robject, wrap, unwrap
+from omero.rtypes import rint, rlong, rstring, robject, wrap
 from omero.constants.namespaces import NSCREATED
 from omero.constants.projection import ProjectionType
 import os
@@ -803,13 +803,9 @@ users/client-tutorials/insight/insight-export-figures.html""",
     )
 
     try:
-        scriptParams = {}
         conn = BlitzGateway(client_obj=client)
 
-        # process the list of args above.
-        for key in client.getInputKeys():
-            if client.getInput(key):
-                scriptParams[key] = unwrap(client.getInput(key))
+        scriptParams = client.getInputs(unwrap=True)
         print scriptParams
 
         # call the main script, attaching resulting figure to Image. Returns

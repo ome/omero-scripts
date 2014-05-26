@@ -4,7 +4,7 @@
  components/tools/OmeroPy/scripts/omero/figure_scripts/Thumbnail_Figure.py
 
 -----------------------------------------------------------------------------
-  Copyright (C) 2006-2009 University of Dundee. All rights reserved.
+  Copyright (C) 2006-2014 University of Dundee. All rights reserved.
 
 
   This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ project.
 import omero.scripts as scripts
 from omero.gateway import BlitzGateway
 import omero.util.script_utils as scriptUtil
-from omero.rtypes import rlong, rstring, robject, unwrap
+from omero.rtypes import rlong, rstring, robject
 import omero.util.imageUtil as imgUtil
 from omero.constants.namespaces import NSCREATED
 import os
@@ -532,13 +532,9 @@ users/client-tutorials/insight/insight-export-figures.html""",
         )
 
     try:
-        commandArgs = {}
-
         conn = BlitzGateway(client_obj=client)
 
-        for key in client.getInputKeys():
-            if client.getInput(key):
-                commandArgs[key] = unwrap(client.getInput(key))
+        commandArgs = client.getInputs(unwrap=True)
         print commandArgs
 
         # Makes the figure and attaches it to Project/Dataset. Returns
