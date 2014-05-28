@@ -4,7 +4,7 @@
  components/tools/OmeroPy/scripts/omero/analysis_scripts/Kymograph.py
 
 -----------------------------------------------------------------------------
-  Copyright (C) 2006-2011 University of Dundee. All rights reserved.
+  Copyright (C) 2006-2014 University of Dundee. All rights reserved.
 
 
   This program is free software; you can redistribute it and/or modify
@@ -254,11 +254,12 @@ def polyLineKymograph(conn, scriptParams, image, polylines, lineWidth,
             cData = vstack(tRows)
             yield cData
 
+    name = "%s_kymograph" % image.getName()
     desc = "Kymograph generated from Image ID: %s, polyline: %s" \
         % (image.getId(), firstShape['points'])
     desc += "\nwith each timepoint being %s vertical pixels" % lineWidth
     newImg = conn.createImageFromNumpySeq(
-        planeGen(), "kymograph", 1, sizeC, 1, description=desc,
+        planeGen(), name, 1, sizeC, 1, description=desc,
         dataset=dataset)
     return newImg
 
@@ -320,11 +321,12 @@ def linesKymograph(conn, scriptParams, image, lines, lineWidth, dataset):
                 tRows.append(rowData)
             yield vstack(tRows)
 
+    name = "%s_kymograph" % image.getName()
     desc = "Kymograph generated from Image ID: %s, line: %s" \
         % (image.getId(), firstLine)
     desc += "\nwith each timepoint being %s vertical pixels" % lineWidth
     newImg = conn.createImageFromNumpySeq(
-        planeGen(), "kymograph", 1, sizeC, 1, description=desc,
+        planeGen(), name, 1, sizeC, 1, description=desc,
         dataset=dataset)
     return newImg
 
@@ -383,6 +385,8 @@ def processImages(conn, scriptParams):
             lines = {}          # map of theT: line
             polylines = {}      # map of theT: polyline
             for s in roi.copyShapes():
+                if s is None:
+                    continue
                 theZ = s.getTheZ() and s.getTheZ().getValue() or 0
                 theT = s.getTheT() and s.getTheT().getValue() or 0
                 # TODO: Add some filter of shapes. E.g. text? / 'lines' only
@@ -525,12 +529,7 @@ same sizeC as input.""",
     )
 
     try:
-        # process the list of args above.
-        scriptParams = {}
-        for key in client.getInputKeys():
-            if client.getInput(key):
-                scriptParams[key] = client.getInput(key, unwrap=True)
-
+        scriptParams = client.getInputs(unwrap=True)
         print scriptParams
 
         # wrap client to use the Blitz Gateway

@@ -4,7 +4,7 @@
  components/tools/OmeroPy/scripts/omero/export_scripts/Make_Movie.py
 
 -----------------------------------------------------------------------------
-  Copyright (C) 2006-2009 University of Dundee. All rights reserved.
+  Copyright (C) 2006-2014 University of Dundee. All rights reserved.
 
 
   This program is free software; you can redistribute it and/or modify
@@ -59,6 +59,7 @@ params:
 
 import omero.scripts as scripts
 import omero.util.script_utils as scriptUtil
+import omero.util.figureUtil as figureUtil
 import omero
 import omero.min  # Constants etc.
 import os
@@ -67,12 +68,13 @@ import re
 import numpy
 import omero.util.pixelstypetopython as pixelstypetopython
 from struct import unpack
-from omero.rtypes import wrap, rstring, rlong, rint, robject
+from omero.rtypes import wrap, rstring, rint, rlong, robject
 from omero.gateway import BlitzGateway
 from omero.constants.namespaces import NSCREATED
 from omero.constants.metadata import NSMOVIE
 
 from cStringIO import StringIO
+from types import StringTypes
 
 try:
     from PIL import Image, ImageDraw  # see ticket:2597
@@ -232,7 +234,8 @@ def addPlaneInfo(z, t, pixels, image, colour):
 
 
 def addTimePoints(time, pixels, image, colour):
-    """ Displays the time-points. """
+    """ Displays the time-points as hrs:mins:secs """
+    time = figureUtil.formatTime(time, "HOURS_MINS_SECS")
     image_w, image_h = image.size
     draw = ImageDraw.Draw(image)
     textY = image_h-45
@@ -287,6 +290,8 @@ def validChannels(set, sizeC):
     if(len(set) == 0):
         return False
     for val in set:
+        if isinstance(val, StringTypes):
+            val = int(val.split('|')[0].split('$')[0])
         if(val < 0 or val > sizeC):
             return False
     return True
@@ -499,7 +504,21 @@ def writeMovie(commandArgs, conn):
         commandArgs["Scalebar"] = 0
 
     cRange = range(0, sizeC)
-    if "Channels" in commandArgs and \
+    cWindows = None
+    cColours = None
+    if "ChannelsExtended" in commandArgs and \
+            validChannels(commandArgs["ChannelsExtended"], sizeC):
+        cRange = []
+        cWindows = []
+        cColours = []
+        for c in commandArgs["ChannelsExtended"]:
+            m = re.match('^(?P<i>\d+)(\|(?P<ws>\d+)' +
+                         '\:(?P<we>\d+))?(\$(?P<c>.+))?$', c)
+            if m is not None:
+                cRange.append(int(m.group('i'))-1)
+                cWindows.append([float(m.group('ws')), float(m.group('we'))])
+                cColours.append(m.group('c'))
+    elif "Channels" in commandArgs and \
             validChannels(commandArgs["Channels"], sizeC):
         cRange = commandArgs["Channels"]
 
@@ -513,7 +532,9 @@ def writeMovie(commandArgs, conn):
             commandArgs["Show_Time"] = False
 
     frameNo = 1
-    omeroImage.setActiveChannels(map(lambda x: x+1, cRange))
+    omeroImage.setActiveChannels(map(lambda x: x+1, cRange),
+                                 cWindows,
+                                 cColours)
     renderingEngine = omeroImage._re
 
     overlayColour = (255, 255, 255)
@@ -689,7 +710,13 @@ def runAsScript():
         scripts.List(
             "Channels",
             description="The selected channels",
-            grouping="5").ofType(rint(0)),
+            grouping="5.1").ofType(rint(0)),
+
+        scripts.List(
+            "ChannelsExtended",
+            description="The selected channels, with optional range"
+            " and colour. Takes precendence over Channels.",
+            grouping="5.2").ofType(rstring('')),
 
         scripts.Bool(
             "Show_Time",
@@ -774,11 +801,8 @@ def runAsScript():
 
     try:
         conn = BlitzGateway(client_obj=client)
-        commandArgs = {}
 
-        for key in client.getInputKeys():
-            if client.getInput(key):
-                commandArgs[key] = client.getInput(key, unwrap=True)
+        commandArgs = client.getInputs(unwrap=True)
         print commandArgs
 
         fileAnnotation, message = writeMovie(commandArgs, conn)

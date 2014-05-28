@@ -4,7 +4,7 @@
  components/tools/OmeroPy/scripts/omero/figure_scripts/Movie_Figure.py
 
 -----------------------------------------------------------------------------
-  Copyright (C) 2006-2009 University of Dundee. All rights reserved.
+  Copyright (C) 2006-2014 University of Dundee. All rights reserved.
 
 
   This program is free software; you can redistribute it and/or modify
@@ -653,13 +653,9 @@ users/client-tutorials/insight/insight-export-figures.html""",
     )
 
     try:
-        commandArgs = {}
         conn = BlitzGateway(client_obj=client)
 
-        for key in client.getInputKeys():
-            if client.getInput(key):
-                commandArgs[key] = client.getInput(key, unwrap=True)
-
+        commandArgs = client.getInputs(unwrap=True)
         print commandArgs
 
         # Makes the figure and attaches it to Image. Returns the id of the

@@ -4,7 +4,7 @@
  components/tools/OmeroPy/scripts/omero/export_scripts/Batch_Image_Export.py
 
 -----------------------------------------------------------------------------
-  Copyright (C) 2006-2011 University of Dundee. All rights reserved.
+  Copyright (C) 2006-2014 University of Dundee. All rights reserved.
 
 
   This program is free software; you can redistribute it and/or modify
@@ -589,10 +589,7 @@ users/client-tutorials/insight/insight-util-scripts.html""",
 
         conn = BlitzGateway(client_obj=client)
 
-        # process the list of args above.
-        for key in client.getInputKeys():
-            if client.getInput(key):
-                scriptParams[key] = client.getInput(key, unwrap=True)
+        scriptParams = client.getInputs(unwrap=True)
         log(scriptParams)
 
         # call the main script - returns a file annotation wrapper

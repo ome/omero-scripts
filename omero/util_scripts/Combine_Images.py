@@ -4,7 +4,7 @@
  components/tools/OmeroPy/scripts/omero/util_scripts/Combine_Images.py
 
 -----------------------------------------------------------------------------
-  Copyright (C) 2006-2010 University of Dundee. All rights reserved.
+  Copyright (C) 2006-2014 University of Dundee. All rights reserved.
 
 
   This program is free software; you can redistribute it and/or modify
@@ -627,12 +627,7 @@ client-tutorials/insight/insight-util-scripts.html""",
     )
 
     try:
-        # process the list of args above.
-        parameterMap = {}
-        for key in client.getInputKeys():
-            if client.getInput(key):
-                parameterMap[key] = client.getInput(key, unwrap=True)
-
+        parameterMap = client.getInputs(unwrap=True)
         print parameterMap
 
         conn = BlitzGateway(client_obj=client)
