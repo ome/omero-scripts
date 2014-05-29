@@ -59,6 +59,7 @@ params:
 
 import omero.scripts as scripts
 import omero.util.script_utils as scriptUtil
+import omero.util.figureUtil as figureUtil
 import omero
 import omero.min  # Constants etc.
 import os
@@ -233,7 +234,8 @@ def addPlaneInfo(z, t, pixels, image, colour):
 
 
 def addTimePoints(time, pixels, image, colour):
-    """ Displays the time-points. """
+    """ Displays the time-points as hrs:mins:secs """
+    time = figureUtil.formatTime(time, "HOURS_MINS_SECS")
     image_w, image_h = image.size
     draw = ImageDraw.Draw(image)
     textY = image_h-45
