@@ -472,7 +472,6 @@ def writeMovie(commandArgs, conn):
 
     message = ""
 
-    conn.SERVICE_OPTS.setOmeroGroup('-1')
     session = conn.c.sf
     updateService = session.getUpdateService()
     rawFileStore = session.createRawFileStore()
