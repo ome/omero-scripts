@@ -497,8 +497,7 @@ def runScript():
         'Batch_Image_Export.py',
         """Save multiple images as jpegs or pngs in a zip file available for \
 download as a batch export.
-See http://www.openmicroscopy.org/site/support/omero4/\
-users/client-tutorials/insight/insight-util-scripts.html""",
+See http://help.openmicroscopy.org/scripts.html""",
 
         scripts.String(
             "Data_Type", optional=False, grouping="1",
