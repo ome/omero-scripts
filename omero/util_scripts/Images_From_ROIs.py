@@ -284,6 +284,8 @@ def processImage(conn, imageId, parameterMap):
                 projectLink.child = omero.model.DatasetI(
                     dataset.id.val, False)
                 updateService.saveAndReturnObject(projectLink)
+        #apply the rendering settings of the source image to all generated images.
+        conn.getRenderingSettingsService().applySettingsToSet(pixels.getId(), 'Image', iIds)
         return images, dataset, link
 
 
