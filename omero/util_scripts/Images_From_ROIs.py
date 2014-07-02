@@ -191,7 +191,7 @@ def processImage(conn, imageId, parameterMap):
             link = omero.model.DatasetImageLinkI()
             link.parent = omero.model.DatasetI(parentDataset.getId(), False)
             link.child = omero.model.ImageI(image.getId(), False)
-            conn.getUpdateService().saveAndReturnObject(link)
+            updateService.saveAndReturnObject(link)
         else:
             link = None
 
