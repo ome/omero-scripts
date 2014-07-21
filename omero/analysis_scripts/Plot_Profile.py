@@ -88,7 +88,7 @@ def getLineData(pixels, x1, y1, x2, y2, lineW=2, theZ=0, theC=0, theT=0):
     sizeY = pixels.getSizeY()
 
     lineX = x2-x1
-    lineY = y2-y1
+    lineY = 1 if y2-y1 == 0 else y2-y1
 
     rads = math.atan(float(lineX) / lineY)
 
