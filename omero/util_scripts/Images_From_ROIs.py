@@ -191,7 +191,7 @@ def processImage(conn, imageId, parameterMap):
             link = omero.model.DatasetImageLinkI()
             link.parent = omero.model.DatasetI(parentDataset.getId(), False)
             link.child = omero.model.ImageI(image.getId(), False)
-            conn.getUpdateService().saveAndReturnObject(link)
+            updateService.saveAndReturnObject(link)
         else:
             link = None
 
@@ -284,6 +284,9 @@ def processImage(conn, imageId, parameterMap):
                 projectLink.child = omero.model.DatasetI(
                     dataset.id.val, False)
                 updateService.saveAndReturnObject(projectLink)
+        # Apply rnd settings of the source image to new images.
+        svc = conn.getRenderingSettingsService()
+        svc.applySettingsToSet(pixels.getId(), 'Image', iIds)
         return images, dataset, link
 
 
