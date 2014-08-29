@@ -478,8 +478,7 @@ def runAsScript():
         """Export a figure of thumbnails, optionally sorted by tag.
 NB: OMERO.insight client provides a nicer UI for this script under \
 'Publishing Options'
-See http://www.openmicroscopy.org/site/support/omero4/\
-users/client-tutorials/insight/insight-export-figures.html""",
+See http://help.openmicroscopy.org/scripts.html""",
 
         scripts.String(
             "Data_Type", optional=False, grouping="1",
