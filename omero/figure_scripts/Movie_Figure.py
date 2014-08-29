@@ -564,7 +564,7 @@ def runAsScript():
 chosen image.
 NB: OMERO.insight client provides a nicer UI for this script under \
 'Publishing Options'
-See http://help.openmicroscopy.org/utility-scripts.html""",
+See http://help.openmicroscopy.org/scripts.html""",
 
         # provide 'Data_Type' and 'IDs' parameters so that Insight
         # auto-populates with currently selected images.
