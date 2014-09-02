@@ -735,8 +735,7 @@ any ROI."""
     client = scripts.client(
         'Movie_ROI_Figure.py',
         """Create a figure of movie frames from ROI region of image.
-See http://www.openmicroscopy.org/site/support/omero4/\
-users/client-tutorials/insight/insight-export-figures.html""",
+See http://help.openmicroscopy.org/scripts.html""",
 
         scripts.String(
             "Data_Type", optional=False, grouping="01",
