@@ -203,7 +203,8 @@ def addScalebar(scalebar, image, pixels, commandArgs):
     draw = ImageDraw.Draw(image)
     if (pixels.getPhysicalSizeX() is None):
         return image
-    pixelSizeX = pixels.getPhysicalSizeX()
+    # FIXME: units ignored for now
+    pixelSizeX = pixels.getPhysicalSizeX().getValue()
     if (pixelSizeX <= 0):
         return image
     scaleBarY = image_h-30
