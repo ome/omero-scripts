@@ -419,8 +419,8 @@ def processImages(conn, scriptParams):
         # look-up the interval for each time-point
         tInterval = None
         infos = list(pixels.copyPlaneInfo(theC=0, theT=sizeT-1, theZ=0))
-        if len(infos) > 0:
-            duration = infos[0].deltaT
+        if len(infos) > 0 and infos[0].getDeltaT() is not None:
+            duration = infos[0].getDeltaT(units="SECOND").getValue()
             print "duration", duration
             if sizeT == 1:
                 tInterval = duration
@@ -458,11 +458,14 @@ def processImages(conn, scriptParams):
             # If we know pixel sizes, set them on the new image
             if pixel_size is not None or tInterval is not None:
                 px = conn.getQueryService().get("Pixels", img.getPixelsId())
+                microm = getattr(omero.model.enums.UnitsLength, "MICROMETER")
                 if pixel_size is not None:
-                    px.setPhysicalSizeX(rdouble(pixel_size))
+                    pixel_size = omero.model.LengthI(pixel_size, microm)
+                    px.setPhysicalSizeX(pixel_size)
                 if tInterval is not None:
                     t_per_pixel = tInterval / lineWidth
-                    px.setPhysicalSizeY(rdouble(t_per_pixel))
+                    t_per_pixel = omero.model.LengthI(t_per_pixel, microm)
+                    px.setPhysicalSizeY(t_per_pixel)
                 conn.getUpdateService().saveObject(px)
         newKymographs.extend(newImages)
 
