@@ -635,7 +635,7 @@ def roiFigure(conn, commandArgs):
         pdString = ", ".join(["%s/%s" % pd for pd in pdList])
         log(" Image: %s  ID: %d" % (name, iId))
         if imageDate:
-            log("  Date: %s" % date.fromtimestamp(imageDate/1000))
+            log("  Date: %s" % imageDate)
         else:
             log("  Date: not set")
         log("  Tags: %s" % tags)
