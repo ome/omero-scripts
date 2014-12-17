@@ -122,14 +122,18 @@ def createMovieFigure(conn, pixelIds, tIndexes, zStart, zEnd, width, height,
 
         if pixels.getPhysicalSizeX():
             physicalX = pixels.getPhysicalSizeX().getValue()
+            unitsX = pixels.getPhysicalSizeX().getSymbol()
         else:
             physicalX = 0
+            unitsX = ""
         if pixels.getPhysicalSizeY():
             physicalY = pixels.getPhysicalSizeY().getValue()
+            unitsY = pixels.getPhysicalSizeY().getSymbol()
         else:
             physicalY = 0
-        log("  Pixel size (um): x: %s  y: %s"
-            % (str(physicalX), str(physicalY)))
+            unitsY = ""
+        log("  Pixel size: x: %s %s  y: %s %s"
+            % (str(physicalX), unitsX, str(physicalY), unitsY))
         if row == 0:    # set values for primary image
             physicalSizeX = physicalX
             physicalSizeY = physicalY
