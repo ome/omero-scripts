@@ -40,7 +40,7 @@ sizeC as input.
 from omero.gateway import BlitzGateway
 import omero
 import omero.util.script_utils as scriptUtil
-from omero.rtypes import rlong, rstring, rdouble, robject
+from omero.rtypes import rlong, rstring, robject
 import omero.scripts as scripts
 from numpy import math, zeros, hstack, vstack
 import logging
