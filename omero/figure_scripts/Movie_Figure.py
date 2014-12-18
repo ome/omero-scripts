@@ -432,7 +432,7 @@ def movieFigure(conn, commandArgs):
         pdString = ", ".join(["%s/%s" % pd for pd in pdList])
         log(" Image: %s  ID: %d" % (name, iId))
         if imageDate:
-            log("  Date: %s" % date.fromtimestamp(imageDate/1000))
+            log("  Date: %s" % imageDate)
         else:
             log("  Date: not set")
         log("  Tags: %s" % tags)
@@ -484,8 +484,8 @@ def movieFigure(conn, commandArgs):
             stepping = s
 
     scalebar = None
-    if "Scalebar_Size" in commandArgs:
-        sb = commandArgs["Scalebar_Size"]
+    if "Scalebar" in commandArgs:
+        sb = commandArgs["Scalebar"]
         try:
             scalebar = int(sb)
             if scalebar <= 0:
@@ -625,7 +625,7 @@ See http://help.openmicroscopy.org/scripts.html""",
         scripts.Bool("Show_Scalebar", grouping="10", default=True),
 
         scripts.Int(
-            "Scalebar_Size", grouping="10.1",
+            "Scalebar", grouping="10.1",
             description="Scale bar size in microns. Only shown if image has"
             " pixel-size info.", min=1),
 
