@@ -122,14 +122,18 @@ def createMovieFigure(conn, pixelIds, tIndexes, zStart, zEnd, width, height,
 
         if pixels.getPhysicalSizeX():
             physicalX = pixels.getPhysicalSizeX().getValue()
+            unitsX = pixels.getPhysicalSizeX().getSymbol()
         else:
             physicalX = 0
+            unitsX = ""
         if pixels.getPhysicalSizeY():
             physicalY = pixels.getPhysicalSizeY().getValue()
+            unitsY = pixels.getPhysicalSizeY().getSymbol()
         else:
             physicalY = 0
-        log("  Pixel size (um): x: %s  y: %s"
-            % (str(physicalX), str(physicalY)))
+            unitsY = ""
+        log("  Pixel size: x: %s %s  y: %s %s"
+            % (str(physicalX), unitsX, str(physicalY), unitsY))
         if row == 0:    # set values for primary image
             physicalSizeX = physicalX
             physicalSizeY = physicalY
@@ -428,7 +432,7 @@ def movieFigure(conn, commandArgs):
         pdString = ", ".join(["%s/%s" % pd for pd in pdList])
         log(" Image: %s  ID: %d" % (name, iId))
         if imageDate:
-            log("  Date: %s" % date.fromtimestamp(imageDate/1000))
+            log("  Date: %s" % imageDate)
         else:
             log("  Date: not set")
         log("  Tags: %s" % tags)
@@ -480,8 +484,8 @@ def movieFigure(conn, commandArgs):
             stepping = s
 
     scalebar = None
-    if "Scalebar_Size" in commandArgs:
-        sb = commandArgs["Scalebar_Size"]
+    if "Scalebar" in commandArgs:
+        sb = commandArgs["Scalebar"]
         try:
             scalebar = int(sb)
             if scalebar <= 0:
@@ -621,7 +625,7 @@ See http://help.openmicroscopy.org/scripts.html""",
         scripts.Bool("Show_Scalebar", grouping="10", default=True),
 
         scripts.Int(
-            "Scalebar_Size", grouping="10.1",
+            "Scalebar", grouping="10.1",
             description="Scale bar size in microns. Only shown if image has"
             " pixel-size info.", min=1),
 
