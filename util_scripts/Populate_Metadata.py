@@ -34,13 +34,19 @@ from omero.util.populate_roi import DownloadingOriginalFileProvider
 from omero.util.populate_metadata import ParsingContext
 
 
-def get_original_file(conn, plate_id, file_id):
-    plate = conn.getObject("Plate", int(plate_id))
-    if plate is None:
-        sys.stderr.write("Error: Object does not exist.\n")
-        sys.exit(1)
+def get_original_file(conn, object_type, plate_id, file_id):
+    if object_type == "Plate":
+        omero_object = conn.getObject("Plate", int(plate_id))
+        if omero_object is None:
+            sys.stderr.write("Error: Plate does not exist.\n")
+            sys.exit(1)
+    else:
+        omero_object = conn.getObject("Screen", int(plate_id))
+        if omero_object is None:
+            sys.stderr.write("Error: Screen does not exist.\n")
+            sys.exit(1)
     file = None
-    for ann in plate.listAnnotations():
+    for ann in omero_object.listAnnotations():
         if isinstance(ann, omero.gateway.FileAnnotationWrapper):
             print "File ID:", ann.getFile().getId(), ann.getFile().getName(),\
                 "Size:", ann.getFile().getSize()
@@ -55,7 +61,8 @@ def get_original_file(conn, plate_id, file_id):
 def populate_metadata(client, conn, script_params):
     object_id = long(script_params["IDs"])
     file_id = long(script_params["File_ID"])
-    original_file = get_original_file(conn, object_id, file_id)
+    original_file = get_original_file(
+        conn, script_params["Data_Type"], object_id, file_id)
     provider = DownloadingOriginalFileProvider(conn)
     file_handle = provider.get_original_file_data(original_file)
     if script_params["Data_Type"] == "Plate":
