@@ -77,7 +77,7 @@ def populate_metadata(client, conn, script_params):
 if __name__ == "__main__":
     dataTypes = [rstring('Plate'), rstring('Screen')]
     client = scripts.client(
-        'Poulate_Metadata.py',
+        'Populate_Metadata.py',
         """
         """,
         scripts.String(
