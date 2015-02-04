@@ -645,8 +645,8 @@ def writeMovie(commandArgs, conn):
 
     namespace = NSCREATED + "/omero/export_scripts/Make_Movie"
     fileAnnotation, annMessage = scriptUtil.createLinkFileAnnotation(
-        conn, output, omeroImage, output="Movie", ns=namespace,
-        mimetype=mimetype)
+        conn, output, omeroImage, ns=namespace,
+        mimetype=mimetype, origFilePathAndName=movieName)
     message += annMessage
     return fileAnnotation._obj, message
 
