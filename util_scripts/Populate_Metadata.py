@@ -34,14 +34,14 @@ from omero.util.populate_roi import DownloadingOriginalFileProvider
 from omero.util.populate_metadata import ParsingContext
 
 
-def get_original_file(conn, object_type, plate_id, file_id):
+def get_original_file(conn, object_type, object_id, file_id):
     if object_type == "Plate":
-        omero_object = conn.getObject("Plate", int(plate_id))
+        omero_object = conn.getObject("Plate", int(object_id))
         if omero_object is None:
             sys.stderr.write("Error: Plate does not exist.\n")
             sys.exit(1)
     else:
-        omero_object = conn.getObject("Screen", int(plate_id))
+        omero_object = conn.getObject("Screen", int(object_id))
         if omero_object is None:
             sys.stderr.write("Error: Screen does not exist.\n")
             sys.exit(1)
