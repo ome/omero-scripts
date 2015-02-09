@@ -44,6 +44,7 @@ from omero.gateway import BlitzGateway
 import omero.constants
 from omero.rtypes import rstring, rlong, robject
 import omero.util.script_utils as scriptUtil
+import time
 
 COLOURS = scriptUtil.COLOURS
 
@@ -71,7 +72,6 @@ timeRegexes = {
     "None (single time point)": False}
 
 
-import time
 startTime = 0
 
 
