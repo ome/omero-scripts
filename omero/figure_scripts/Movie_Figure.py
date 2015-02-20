@@ -92,7 +92,7 @@ def createMovieFigure(conn, pixelIds, tIndexes, zStart, zEnd, width, height,
     @param algorithm        Projection algorithm e.g. "MAXIMUMINTENSITY"
     @param stepping         Projecttion z-step
     @param scalebar         A number of microns for scale-bar
-    @param overlayColour    Colour of the scale-bar as tuple (255,255,255)
+    @param overlayColour    Color of the scale bar as tuple (255,255,255)
     @param timeUnits        A string such as "SECS"
     @param imageLabels      A list of lists, corresponding to pixelIds, for
                             labelling each image with one or more strings.
@@ -631,7 +631,7 @@ See http://help.openmicroscopy.org/scripts.html""",
 
         scripts.String(
             "Scalebar_Colour", grouping="10.2",
-            description="The colour of the scalebar.",
+            description="The color of the scale bar.",
             default='White', values=oColours),
 
         scripts.String(

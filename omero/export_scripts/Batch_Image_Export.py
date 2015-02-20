@@ -516,7 +516,7 @@ See http://help.openmicroscopy.org/scripts.html""",
         scripts.Bool(
             "Individual_Channels_Grey", grouping="3.1",
             description="If true, all individual channel images will be"
-            " greyscale", default=False),
+            " grayscale", default=False),
 
         scripts.List(
             "Channel_Names", grouping="3.2",

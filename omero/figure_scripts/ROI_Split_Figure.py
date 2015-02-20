@@ -865,11 +865,11 @@ See http://help.openmicroscopy.org/scripts.html""",
 
         scripts.Bool(
             "Split_Panels_Grey", grouping="06",
-            description="If true, all split panels are greyscale"),
+            description="If true, all split panels are grayscale"),
 
         scripts.Map(
             "Merged_Colours", grouping="07",
-            description="Map of index:int colours for each merged channel."
+            description="Map of index:int colors for each merged channel."
             " Otherwise use existing colour settings"),
 
         scripts.Int(
@@ -910,7 +910,7 @@ See http://help.openmicroscopy.org/scripts.html""",
 
         scripts.String(
             "Overlay_Colour", grouping="16",
-            description="The colour of the scalebar.",
+            description="The color of the scale bar.",
             default='White', values=oColours),
 
         scripts.Float(

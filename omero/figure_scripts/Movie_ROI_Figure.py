@@ -797,7 +797,7 @@ See http://help.openmicroscopy.org/scripts.html""",
 
         scripts.String(
             "Scalebar_Colour", grouping="07.1",
-            description="The colour of the scalebar and ROI outline.",
+            description="The color of the scale bar and ROI outline.",
             default='White', values=oColours),
 
         scripts.String(

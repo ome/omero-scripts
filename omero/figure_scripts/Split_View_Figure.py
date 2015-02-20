@@ -706,8 +706,6 @@ def runAsScript():
     client = scripts.client(
         'Split_View_Figure.py',
         """Create a figure of split-view images.
-NB: OMERO.insight client provides a nicer UI for this script under \
-'Publishing Options'
 See http://help.openmicroscopy.org/scripts.html""",
 
         # provide 'Data_Type' and 'IDs' parameters so that Insight
@@ -747,12 +745,12 @@ See http://help.openmicroscopy.org/scripts.html""",
 
         scripts.Bool(
             "Split_Panels_Grey", grouping="6",
-            description="If true, all split panels are greyscale",
+            description="If true, all split panels are grayscale",
             default=False),
 
         scripts.Map(
             "Merged_Colours", grouping="7",
-            description="Map of index:int colours for each merged channel"),
+            description="Map of index:int colors for each merged channel"),
 
         scripts.Bool(
             "Merged_Names", grouping="8",
@@ -795,7 +793,7 @@ See http://help.openmicroscopy.org/scripts.html""",
 
         scripts.String(
             "Overlay_Colour", grouping="97",
-            description="The colour of the scalebar.",
+            description="The color of the scale bar.",
             default='White', values=oColours),
 
         version="4.3.0",

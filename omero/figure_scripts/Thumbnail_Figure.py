@@ -476,8 +476,6 @@ def runAsScript():
     client = scripts.client(
         'Thumbnail_Figure.py',
         """Export a figure of thumbnails, optionally sorted by tag.
-NB: OMERO.insight client provides a nicer UI for this script under \
-'Publishing Options'
 See http://help.openmicroscopy.org/scripts.html""",
 
         scripts.String(
