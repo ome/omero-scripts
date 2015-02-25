@@ -4,7 +4,7 @@
  components/tools/OmeroPy/scripts/omero/export_scripts/Make_Movie.py
 
 -----------------------------------------------------------------------------
-  Copyright (C) 2006-2014 University of Dundee. All rights reserved.
+  Copyright (C) 2006-2015 University of Dundee. All rights reserved.
 
 
   This program is free software; you can redistribute it and/or modify
@@ -39,10 +39,10 @@ params:
     frame.
     showPlaneInfo: Show the time and z-section of the current frame.
     fps:    The number of frames per second of the movie
-    scalebar: The scalebar size in microns, if <=0 will not show scale bar.
+    scalebar: The scale bar size in microns, if <=0 will not show scale bar.
     format:    The format of the movie to be created currently supports
     'video/mpeg', 'video/quicktime'
-    overlayColour: The colour of the overlays, scalebar, time, as int(RGB)
+    overlayColour: The color of the overlays, scale bar, time, as int(RGB)
     fileAnnotation: The fileAnnotation id of the uploaded movie.
 
 @author  Jean-Marie Burel &nbsp;&nbsp;&nbsp;&nbsp;
@@ -742,12 +742,12 @@ def runAsScript():
 
         scripts.String(
             "Overlay_Colour",
-            description="The colour of the scalebar.",
+            description="The color of the scale bar.",
             default='White', values=cOptions, grouping="11"),
 
         scripts.String(
             "Canvas_Colour",
-            description="The background colour when using minimum size.",
+            description="The background color when using minimum size.",
             default='Black', values=cOptions),
 
         scripts.Int(
