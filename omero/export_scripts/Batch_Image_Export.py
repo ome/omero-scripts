@@ -432,10 +432,14 @@ def batchImageExport(conn, scriptParams):
                 log("  %s: %d-%d"
                     % (ch.getLabel(), ch.getWindowStart(), ch.getWindowEnd()))
 
-            savePlanesForImage(
-                conn, img, sizeC, splitCs, mergedCs, channelNames, zRange,
-                tRange, greyscale, zoomPercent, projectZ=projectZ,
-                format=format, folder_name=folder_name)
+            try:
+                savePlanesForImage(
+                    conn, img, sizeC, splitCs, mergedCs, channelNames, zRange,
+                    tRange, greyscale, zoomPercent, projectZ=projectZ,
+                    format=format, folder_name=folder_name)
+            finally:
+                # Make sure we close Rendering Engine
+                img._re.close()
 
         # write log for exported images (not needed for ome-tiff)
         logFile = open(os.path.join(exp_dir, 'Batch_Image_Export.txt'), 'w')
