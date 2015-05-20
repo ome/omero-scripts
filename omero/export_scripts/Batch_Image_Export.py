@@ -59,6 +59,11 @@ def log(text):
     """
     Adds the text to a list of logs. Compiled into text file at the end.
     """
+    # Handle unicode
+    try:
+        text = text.encode('utf8')
+    except:
+        pass
     print text
     logStrings.append(str(text))
 
