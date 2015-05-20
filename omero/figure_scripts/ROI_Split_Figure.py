@@ -45,7 +45,7 @@ import omero.util.imageUtil as imgUtil
 import omero.util.figureUtil as figUtil
 import omero.util.script_utils as scriptUtil
 from omero.gateway import BlitzGateway
-from omero.rtypes import rlong, robject, rstring, wrap
+from omero.rtypes import rlong, robject, rstring, wrap, unwrap
 import os
 from omero.constants.namespaces import NSCREATED
 from omero.constants.projection import ProjectionType
@@ -332,8 +332,8 @@ def getRectangle(roiService, imageId, roiLabel):
         # go through all the shapes of the ROI
         for shape in roi.copyShapes():
             if type(shape) == omero.model.RectI:
-                t = shape.getTheT().getValue()
-                z = shape.getTheZ().getValue()
+                t = unwrap(shape.getTheT())
+                z = unwrap(shape.getTheZ())
                 x = shape.getX().getValue()
                 y = shape.getY().getValue()
                 tv = shape.getTextValue()
