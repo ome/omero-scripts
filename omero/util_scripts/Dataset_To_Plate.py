@@ -68,8 +68,8 @@ def addImageToPlate(conn, image, plateId, column, row, removeFrom=None):
     # remove from Datast
     if removeFrom is not None:
         links = list(image.getParentLinks(removeFrom.id))
-        print "     Removing image from %d Dataset: %s" \
-            % (len(links), removeFrom.name)
+        print "     Removing image from Dataset: %s" \
+            % removeFrom.id
         for l in links:
             conn.deleteObjectDirect(l._obj)
     return True
@@ -86,7 +86,7 @@ def dataset_to_plate(conn, scriptParams, datasetId, screen):
 
     # create Plate
     plate = omero.model.PlateI()
-    plate.name = rstring(str(dataset.name))
+    plate.name = omero.rtypes.RStringI(dataset.name)
     plate.columnNamingConvention = rstring(str(scriptParams["Column_Names"]))
     # 'letter' or 'number'
     plate.rowNamingConvention = rstring(str(scriptParams["Row_Names"]))
@@ -100,8 +100,8 @@ def dataset_to_plate(conn, scriptParams, datasetId, screen):
     else:
         link = None
 
-    print "Moving images from Dataset: %d %s to Plate: %d %s" \
-        % (dataset.id, dataset.name, plate.id.val, plate.name.val)
+    print "Moving images from Dataset: %d to Plate: %d" \
+        % (dataset.id, plate.id.val)
 
     row = 0
     col = 0
