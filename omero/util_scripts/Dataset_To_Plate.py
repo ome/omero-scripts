@@ -126,8 +126,8 @@ def dataset_to_plate(conn, scriptParams, datasetId, screen):
         removeFrom = dataset
 
     for image in images:
-        print "    moving image: %d %s to row: %d, column: %d" \
-            % (image.id, image.name, row, col)
+        print "    moving image: %d to row: %d, column: %d" \
+            % (image.id, row, col)
         addedCount = addImageToPlate(conn, image, plate.id.val, col, row,
                                      removeFrom)
         # update row and column index
