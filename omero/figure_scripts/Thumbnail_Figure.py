@@ -63,6 +63,10 @@ def log(text):
     Adds lines of text to the logLines list, so they can be collected into a
     figure legend.
     """
+    try:
+        text = text.encode('utf8')
+    except:
+        pass
     print text
     logLines.append(text)
 
@@ -179,7 +183,7 @@ def paintDatasetCanvas(conn, images, title, tagIds=None, showUntagged=False,
             for tag in tags:
                 tagId = tag.getId().getValue()
                 # make a dict of tag-names
-                tagNames[tagId] = tag.getTextValue().getValue()
+                tagNames[tagId] = tag.getTextValue().getValue().decode('utf8')
                 print "     Tag:", tagId, tagId in tagIds
                 imgTagIds.append(tagId)
             imgTags[imageId] = imgTagIds
@@ -403,8 +407,9 @@ def makeThumbnailFigure(conn, scriptParams):
             log("Dataset: %s     ID: %d"
                 % (dataset.getName(), dataset.getId()))
             images = list(dataset.listChildren())
+            title = dataset.getName().decode('utf8')
             dsCanvas = paintDatasetCanvas(
-                conn, images, dataset.getName(), tagIds, showUntagged,
+                conn, images, title, tagIds, showUntagged,
                 length=thumbSize, colCount=maxColumns)
             if dsCanvas is None:
                 continue

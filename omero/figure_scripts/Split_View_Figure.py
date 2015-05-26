@@ -68,6 +68,11 @@ def log(text):
     """
     Adds the text to a list of logs. Compiled into figure legend at the end.
     """
+    # Handle unicode
+    try:
+        text = text.encode('utf8')
+    except:
+        pass
     print text
     logStrings.append(text)
 
@@ -474,7 +479,7 @@ def makeSplitViewFigure(conn, pixelIds, zStart, zEnd, splitIndexes,
             rgba = (0, 0, 0, 255)
             if index in mergedColours:
                 rgba = tuple(mergedColours[index])
-                print index, channelNames[index], rgba
+                log("%s %s %s" % (index, channelNames[index], rgba))
                 if rgba == (255, 255, 255, 255):    # if white (unreadable),
                                                     # needs to be black!
                     rgba = (0, 0, 0, 255)
@@ -515,16 +520,16 @@ def splitViewFigure(conn, scriptParams):
     # function for getting image labels.
     def getImageNames(fullName, tagsList, pdList):
         name = fullName.split("/")[-1]
-        return [name]
+        return [name.decode('utf8')]
 
     # default function for getting labels is getName (or use datasets / tags)
     if scriptParams["Image_Labels"] == "Datasets":
         def getDatasets(name, tagsList, pdList):
-            return [dataset for project, dataset in pdList]
+            return [dataset.decode('utf8') for project, dataset in pdList]
         getLabels = getDatasets
     elif scriptParams["Image_Labels"] == "Tags":
         def getTags(name, tagsList, pdList):
-            return tagsList
+            return [t.decode('utf8') for t in tagsList]
         getLabels = getTags
     else:
         getLabels = getImageNames
@@ -603,7 +608,7 @@ def splitViewFigure(conn, scriptParams):
         cNameMap = scriptParams["Channel_Names"]
         for c in cNameMap:
             index = int(c)
-            channelNames[index] = cNameMap[c]
+            channelNames[index] = cNameMap[c].decode('utf8')
 
     mergedIndexes = []  # the channels in the combined image,
     mergedColours = {}
