@@ -504,7 +504,7 @@ def runScript():
 
     client = scripts.client(
         'Batch_Image_Export.py',
-        """Save multiple images as jpegs or pngs in a zip file available for \
+        """Save multiple images as JPEG, PNG, TIFF or OME-TIFF in a zip file available for \
 download as a batch export.
 See http://help.openmicroscopy.org/scripts.html""",
 
