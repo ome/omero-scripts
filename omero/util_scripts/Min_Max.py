@@ -22,6 +22,9 @@
 ------------------------------------------------------------------------------
 """
 
+import omero.all
+
+from omero import MissingPyramidException
 from omero.gateway import BlitzGateway
 from omero.model import StatsInfoI
 from omero.rtypes import rdouble, rlong, rstring
@@ -55,9 +58,14 @@ def calcStatsInfo(conn, imageId):
     sizeY = oldImage.getSizeY()
 
     # check we're not dealing with Big image.
-    rps = oldImage.getPrimaryPixels()._prepareRawPixelsStore()
-    bigImage = rps.requiresPixelsPyramid()
-    rps.close()
+    bigImage = False
+    try:
+        rps = oldImage.getPrimaryPixels()._prepareRawPixelsStore()
+        bigImage = rps.requiresPixelsPyramid()
+        rps.close()
+    except MissingPyramidException:
+        bigImage = True
+
     if bigImage:
         raise Exception((
             "This script does not support 'BIG' images such as Image ID: "
@@ -108,7 +116,7 @@ def processImages(conn, scriptParams):
     images, logMessage = script_utils.getObjects(conn, scriptParams)
     message += logMessage
     if not images:
-        return None, None, message
+        raise Exception("No images found")
     imageIds = sorted(set([i.getId() for i in images]))
 
     globalmin = defaultdict(list)
