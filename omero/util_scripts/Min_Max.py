@@ -32,12 +32,13 @@ import omero.scripts as scripts
 import omero.util.script_utils as script_utils
 
 from collections import defaultdict
+from random import shuffle
 
 from numpy import amin, amax, iinfo
 from numpy import average as avg
 
 
-def calcStatsInfo(conn, imageId):
+def calcStatsInfo(conn, imageId, choice, debug=False):
     """
     Process a single image here: creating a new StatsInfo object
     if necessary.
@@ -67,10 +68,16 @@ def calcStatsInfo(conn, imageId):
         def close(self):
             pass
 
+    only_default = (choice == "default")
+
     class Iteration(TileLoopIteration):
 
         def run(self, data, z, c, t, x, y,
                 tileWidth, tileHeight, tileCount):
+
+            if only_default:
+                if t != 0 or z != int(sizeZ/2):
+                    return
             zctMap[c].append(
                 (z, c, t, (x, y, tileWidth, tileHeight)))
 
@@ -79,7 +86,17 @@ def calcStatsInfo(conn, imageId):
         sizeZ, sizeC, sizeT,
         tileW, tileH, Iteration())
 
+    if choice == "random":
+        for c in zctMap:
+            copy = list(zctMap[c])
+            if len(copy) >= 100:
+                copy = copy[0:100]
+            shuffle(copy)
+            zctMap[c] = copy
+
     def channelGen():
+        byte_count = 0
+        tile_count = 0
         pixels = oldImage.getPrimaryPixels()
         rv = dict()
         dt = pixels.getTile(0, 0, 0, (0, 0, 16, 16)).dtype
@@ -90,12 +107,16 @@ def calcStatsInfo(conn, imageId):
                 tile = pixels.getTile(*tileInfo)
                 tile_min = min(tile_min, amin(tile))
                 tile_max = max(tile_max, amax(tile))
+                byte_count += len(tile)
+                tile_count += 1
             rv[c] = (tile_min, tile_max)
-        yield rv
+        yield rv, byte_count, tile_count
 
     statsInfos = dict()
-    for x in channelGen():
+    for x, byte_count, tile_count in channelGen():
         statsInfos.update(x)
+
+    print "Loaded %s tile(s) (%s bytes)" % (tile_count, byte_count)
     return statsInfos
 
 
@@ -113,13 +134,15 @@ def processImages(conn, scriptParams):
         raise Exception("No images found")
     imageIds = sorted(set([i.getId() for i in images]))
 
+    choice = scriptParams["Choice"]
+    debug = bool(scriptParams.get("Debug", False))
     globalmin = defaultdict(list)
     globalmax = defaultdict(list)
 
     tb = TableBuilder("Context", "Channel", "Min", "Max")
     statsInfos = dict()
     for iId in imageIds:
-        statsInfo = calcStatsInfo(conn, iId)
+        statsInfo = calcStatsInfo(conn, iId, choice, debug)
         statsInfos[iId] = statsInfo
         for c, si in sorted(statsInfo.items()):
             c_min, c_max = si
@@ -138,7 +161,7 @@ def processImages(conn, scriptParams):
     if scriptParams["DryRun"]:
         print str(tb.build())
     else:
-        method = scriptParams["Method"]
+        combine = scriptParams["Combine"]
         for iId in imageIds:
             img = conn.getObject("Image", iId)
             for c, ch in enumerate(img.getChannels(noRE=True)):
@@ -150,18 +173,20 @@ def processImages(conn, scriptParams):
                     si = si._obj
                     action = "updating"
 
-                if method == "no":
+                if combine == "no":
                     si.globalMin = rdouble(statsInfos[iId][c][0])
                     si.globalMax = rdouble(statsInfos[iId][c][1])
-                elif method == "outer":
+                elif combine == "outer":
                     si.globalMin = rdouble(min(globalmin[c]))
                     si.globalMax = rdouble(max(globalmax[c]))
-                elif method == "inner":
+                elif combine == "inner":
                     si.globalMin = rdouble(max(globalmin[c]))
                     si.globalMax = rdouble(min(globalmax[c]))
-                elif method == "average":
+                elif combine == "average":
                     si.globalMin = rdouble(avg(globalmin[c]))
                     si.globalMax = rdouble(avg(globalmax[c]))
+                else:
+                    raise Exception("unknown combine: %s" % combine)
 
                 print "Image:%s(c=%s) - %s StatsInfo(%s, %s)" % (
                     iId, c, action, si.globalMin.val, si.globalMax.val)
@@ -197,10 +222,21 @@ See http://help.openmicroscopy.org/utility-scripts.html""",
             default=True),
 
         scripts.String(
-            "Method", optional=True, grouping="4",
+            "Choice", optional=True, grouping="4",
+            description="How to choose which planes will be chosen",
+            default="default",
+            values=("default", "random", "all")),
+
+        scripts.String(
+            "Combine", optional=True, grouping="5",
             description="Whether and if so how to combine values",
             default="no",
             values=("no", "outer", "inner", "average")),
+
+        scripts.Bool(
+            "Debug", optional=True, grouping="6",
+            description="Whether to print debug statements",
+            default=False),
 
         version="5.1.3",
         authors=["Josh Moore", "OME Team"],
