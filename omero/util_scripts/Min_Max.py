@@ -22,12 +22,10 @@
 ------------------------------------------------------------------------------
 """
 
-import omero.all
-
-from omero import MissingPyramidException
 from omero.gateway import BlitzGateway
 from omero.model import StatsInfoI
 from omero.rtypes import rdouble, rlong, rstring
+from omero.util.tiles import TileLoop, TileLoopIteration
 
 import omero.scripts as scripts
 import omero.util.script_utils as script_utils
@@ -50,53 +48,48 @@ def calcStatsInfo(conn, imageId):
     if oldImage is None:
         raise Exception("Image not found for ID:" % imageId)
 
-    # these dimensions don't change
+    sizeX = oldImage.getSizeX()
+    sizeY = oldImage.getSizeY()
     sizeZ = oldImage.getSizeZ()
     sizeC = oldImage.getSizeC()
     sizeT = oldImage.getSizeT()
-    sizeX = oldImage.getSizeX()
-    sizeY = oldImage.getSizeY()
+    tileW = min(256, sizeX)
+    tileH = min(256, sizeY)
 
-    # check we're not dealing with Big image.
-    bigImage = False
-    try:
-        rps = oldImage.getPrimaryPixels()._prepareRawPixelsStore()
-        bigImage = rps.requiresPixelsPyramid()
-        rps.close()
-    except MissingPyramidException:
-        bigImage = True
-
-    if bigImage:
-        raise Exception((
-            "This script does not support 'BIG' images such as Image ID: "
-            "%s X: %d Y: %d") % (imageId, sizeX, sizeY))
-
-    # setup the (z,c,t) list of planes we need
     zctMap = defaultdict(list)
-    for c in range(sizeC):
-        for z in range(sizeZ):
-            for t in range(sizeT):
-                zctMap[c].append((z, c, t))
+
+    class Loop(TileLoop):
+
+        def createData(self):
+            return self
+
+        def close(self):
+            pass
+
+    class Iteration(TileLoopIteration):
+
+        def run(self, data, z, c, t, x, y,
+                tileWidth, tileHeight, tileCount):
+            zctMap[c].append(
+                (z, c, t, (x, y, tileWidth, tileHeight)))
+
+    Loop().forEachTile(
+        sizeX, sizeY,
+        sizeZ, sizeC, sizeT,
+        tileW, tileH, Iteration())
 
     def channelGen():
         pixels = oldImage.getPrimaryPixels()
         rv = dict()
-        first = pixels.getPlane(0, 0, 0)
-        dt = first.dtype
-        # hack! TODO: add method to pixels to supply dtype
-        # get the planes one at a time - exceptions on getPlane() don't affect
-        # subsequent calls (new RawPixelsStore)
-        for c, zctList in zctMap.items():
-            plane_min = iinfo(dt).max  # Everything is less
-            plane_max = iinfo(dt).min  # Everything is more
-            for i in range(len(zctList)):
-                if (0, 0, 0) == zctList[i]:
-                    plane = first
-                else:
-                    plane = pixels.getPlane(*zctList[i])
-                plane_min = amin(plane)
-                plane_max = amax(plane)
-            rv[c] = (plane_min, plane_max)
+        dt = pixels.getTile(0, 0, 0, (0, 0, 16, 16)).dtype
+        tile_min = iinfo(dt).max  # Everything is less
+        tile_max = iinfo(dt).min  # Everything is more
+        for c, zctTileList in zctMap.items():
+            for tileInfo in zctTileList:
+                tile = pixels.getTile(*tileInfo)
+                tile_min = min(tile_min, amin(tile))
+                tile_max = max(tile_max, amax(tile))
+            rv[c] = (tile_min, tile_max)
         yield rv
 
     statsInfos = dict()
