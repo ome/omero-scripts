@@ -25,6 +25,7 @@
 from omero.gateway import BlitzGateway
 from omero.model import StatsInfoI
 from omero.rtypes import rdouble, rlong, rstring
+from omero.util.text import TableBuilder
 from omero.util.tiles import TileLoop, TileLoopIteration
 
 import omero.scripts as scripts
@@ -115,29 +116,27 @@ def processImages(conn, scriptParams):
     globalmin = defaultdict(list)
     globalmax = defaultdict(list)
 
+    tb = TableBuilder("Context", "Channel", "Min", "Max")
     statsInfos = dict()
     for iId in imageIds:
         statsInfo = calcStatsInfo(conn, iId)
         statsInfos[iId] = statsInfo
-        if scriptParams["DryRun"]:
-            print "Image:%s" % iId
         for c, si in sorted(statsInfo.items()):
             c_min, c_max = si
             globalmin[c].append(c_min)
             globalmax[c].append(c_max)
-            if scriptParams["DryRun"]:
-                print "  c=%s, min=%s, max=%s" % (c, c_min, c_max)
+            tb.row("Image:%s" % iId, c, c_min, c_max)
+
+    tb.row("", "", "", "")
+    for c in globalmin:
+        c_min = globalmin[c]
+        c_max = globalmax[c]
+        tb.row("Total: outer  ", c, min(c_min), max(c_max))
+        tb.row("Total: inner  ", c, max(c_min), min(c_max))
+        tb.row("Total: average", c, avg(c_min), avg(c_max))
 
     if scriptParams["DryRun"]:
-        for c in globalmin:
-            print "="*30
-            print "Channel %s" % c
-            c_min = globalmin[c]
-            c_max = globalmax[c]
-            print "Max window: min=%s, max=%s" % (min(c_min), max(c_max))
-            print "Min window: min=%s, max=%s" % (max(c_min), min(c_max))
-            print "Avg window: min=%s, max=%s" % (avg(c_min), avg(c_max))
-            print "="*30
+        print str(tb.build())
     else:
         method = scriptParams["Method"]
         for iId in imageIds:
