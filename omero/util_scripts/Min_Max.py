@@ -107,7 +107,7 @@ def calcStatsInfo(conn, imageId, choice, debug=False):
                 tile = pixels.getTile(*tileInfo)
                 tile_min = min(tile_min, amin(tile))
                 tile_max = max(tile_max, amax(tile))
-                byte_count += len(tile)
+                byte_count += tile.nbytes
                 tile_count += 1
             rv[c] = (tile_min, tile_max)
         yield rv, byte_count, tile_count
@@ -116,7 +116,8 @@ def calcStatsInfo(conn, imageId, choice, debug=False):
     for x, byte_count, tile_count in channelGen():
         statsInfos.update(x)
 
-    print "Loaded %s tile(s) (%s bytes)" % (tile_count, byte_count)
+    if debug:
+        print "Loaded %s tile(s) (%s bytes)" % (tile_count, byte_count)
     return statsInfos
 
 
@@ -156,7 +157,7 @@ def processImages(conn, scriptParams):
         c_max = globalmax[c]
         tb.row("Total: outer  ", c, min(c_min), max(c_max))
         tb.row("Total: inner  ", c, max(c_min), min(c_max))
-        tb.row("Total: average", c, avg(c_min), avg(c_max))
+        tb.row("Total: average", c, int(avg(c_min)), int(avg(c_max)))
 
     if scriptParams["DryRun"]:
         print str(tb.build())
@@ -188,8 +189,9 @@ def processImages(conn, scriptParams):
                 else:
                     raise Exception("unknown combine: %s" % combine)
 
-                print "Image:%s(c=%s) - %s StatsInfo(%s, %s)" % (
-                    iId, c, action, si.globalMin.val, si.globalMax.val)
+                if debug:
+                    print "Image:%s(c=%s) - %s StatsInfo(%s, %s)" % (
+                        iId, c, action, si.globalMin.val, si.globalMax.val)
                 ch._obj.statsInfo = si
                 ch.save()
 
