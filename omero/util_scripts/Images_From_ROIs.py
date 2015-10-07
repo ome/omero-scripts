@@ -73,7 +73,7 @@ def getRectangles(conn, imageId):
         tEnd = 0
         x = None
         for shape in roi.copyShapes():
-            if type(shape) == omero.model.RectI:
+            if type(shape) == omero.model.RectangleI:
                 # check t range and z range for every rectangle
                 t = shape.getTheT().getValue()
                 z = shape.getTheZ().getValue()
@@ -316,7 +316,7 @@ def makeImagesFromRois(conn, parameterMap):
             images += ds.listChildren()
 
     # Check for rectangular ROIs and filter images list
-    images = [image for image in images if image.getROICount("Rect") > 0]
+    images = [image for image in images if image.getROICount("Rectangle") > 0]
     if not images:
         message += "No rectangle ROI found."
         return None, message

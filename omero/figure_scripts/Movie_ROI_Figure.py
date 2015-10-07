@@ -274,7 +274,7 @@ def getRectangle(roiService, imageId, roiLabel):
 
     for roi in result.rois:
         rectangles = [shape for shape in roi.copyShapes()
-                      if isinstance(shape, omero.model.RectI)]
+                      if isinstance(shape, omero.model.RectangleI)]
         if len(rectangles) == 0:
             continue
 
@@ -532,7 +532,7 @@ def roiFigure(conn, commandArgs):
         return None, message
 
     # Check for rectangular ROIs and filter images list
-    images = [image for image in images if image.getROICount("Rect") > 0]
+    images = [image for image in images if image.getROICount("Rectangle") > 0]
     if not images:
         message += "No rectangle ROI found."
         return None, message
