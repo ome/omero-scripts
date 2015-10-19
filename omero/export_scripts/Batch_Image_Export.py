@@ -384,11 +384,22 @@ def batchImageExport(conn, scriptParams):
         os.mkdir(exp_dir)
     except:
         pass
+    # max size (default 12kx12k)
+    size = 144000000
+    try:
+        size = self.getConfigService().getConfigValue(
+            "omero.client.download_as.max_size")
+        size = int(size)
+    except:
+        pass
 
     # do the saving to disk
 
     for img in images:
-        if img._prepareRE().requiresPixelsPyramid():
+        pixels = image.getPrimaryPixels()
+        sizeX = pixels.getSizeX()
+        sizeY = pixels.getSizeY()
+        if sizeX*sizeY > size:
             log("  ** Can't export a 'Big' image to %s. **" % format)
             if len(images) == 1:
                 return None, "Can't export a 'Big' image to %s." % format
