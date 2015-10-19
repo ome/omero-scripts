@@ -28,9 +28,6 @@ zip file for download.
 @author Will Moore
 <a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
 @version 4.3
-<small>
-(<b>Internal version:</b> $Revision: $Date: $)
-</small>
 @since 3.0-Beta4.3
 """
 
