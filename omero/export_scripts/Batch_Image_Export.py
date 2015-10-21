@@ -387,8 +387,7 @@ def batchImageExport(conn, scriptParams):
     # max size (default 12kx12k)
     size = 144000000
     try:
-        size = conn.getConfigService().getConfigValue(
-            "omero.client.download_as.max_size")
+        size = conn.getDownloadAsMaxSizeSetting()
         size = int(size)
     except:
         pass
