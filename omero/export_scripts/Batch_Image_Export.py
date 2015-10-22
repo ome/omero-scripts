@@ -394,8 +394,13 @@ def batchImageExport(conn, scriptParams):
 
     # do the saving to disk
 
-    for img in images:
+    ids = []
+    for img in images: 
         pixels = img.getPrimaryPixels()
+        if (pixels.getId().getValue() in ids)
+            continue
+        ids.append(pixels.getId().getValue())
+
         sizeX = pixels.getSizeX()
         sizeY = pixels.getSizeY()
         if sizeX*sizeY > size:
