@@ -385,12 +385,8 @@ def batchImageExport(conn, scriptParams):
     except:
         pass
     # max size (default 12kx12k)
-    size = 144000000
-    try:
-        size = conn.getDownloadAsMaxSizeSetting()
-        size = int(size)
-    except:
-        pass
+    size = conn.getDownloadAsMaxSizeSetting()
+    size = int(size)
 
     ids = []
     # do the saving to disk
