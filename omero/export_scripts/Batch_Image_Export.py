@@ -28,9 +28,6 @@ zip file for download.
 @author Will Moore
 <a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
 @version 4.3
-<small>
-(<b>Internal version:</b> $Revision: $Date: $)
-</small>
 @since 3.0-Beta4.3
 """
 
@@ -387,11 +384,21 @@ def batchImageExport(conn, scriptParams):
         os.mkdir(exp_dir)
     except:
         pass
+    # max size (default 12kx12k)
+    size = conn.getDownloadAsMaxSizeSetting()
+    size = int(size)
 
+    ids = []
     # do the saving to disk
 
     for img in images:
-        if img._prepareRE().requiresPixelsPyramid():
+        pixels = img.getPrimaryPixels()
+        if (pixels.getId() in ids):
+            continue
+        ids.append(pixels.getId())
+        sizeX = pixels.getSizeX()
+        sizeY = pixels.getSizeY()
+        if sizeX*sizeY > size:
             log("  ** Can't export a 'Big' image to %s. **" % format)
             if len(images) == 1:
                 return None, "Can't export a 'Big' image to %s." % format
