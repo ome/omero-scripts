@@ -327,7 +327,7 @@ See http://help.openmicroscopy.org/utility-scripts.html""",
             " screen or ID of existing screen"""),
 
         scripts.Bool(
-            "Remove_From_Dataset", grouping="7", default=True,
+            "Remove_From_Dataset", grouping="7", default=False,
             description="Remove Images from Dataset as they are added to"
             " Plate"),
 
