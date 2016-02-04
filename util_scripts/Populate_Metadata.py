@@ -34,7 +34,7 @@ from omero.util.populate_roi import DownloadingOriginalFileProvider
 from omero.util.populate_metadata import ParsingContext
 
 
-def get_original_file(conn, object_type, object_id, fileAnn_id):
+def get_original_file(conn, object_type, object_id, fileAnn_id=None):
     if object_type == "Plate":
         omero_object = conn.getObject("Plate", int(object_id))
         if omero_object is None:
@@ -45,22 +45,30 @@ def get_original_file(conn, object_type, object_id, fileAnn_id):
         if omero_object is None:
             sys.stderr.write("Error: Screen does not exist.\n")
             sys.exit(1)
-    file = None
+    fileAnn = None
+    print "Listing files on %s %s..." % (object_type, object_id)
     for ann in omero_object.listAnnotations():
         if isinstance(ann, omero.gateway.FileAnnotationWrapper):
-            print "FileAnnotation ID:", ann.getId(), ann.getFile().getName(),\
+            fileName = ann.getFile().getName()
+            print "   FileAnnotation ID:", ann.getId(), fileName,\
                 "Size:", ann.getFile().getSize()
-            if (ann.getId() == int(fileAnn_id)):
-                file = ann.getFile()._obj
-    if file is None:
+            # Pick file by Ann ID (or name if ID is None)
+            if (fileAnn_id is None and fileName.endswith(".csv")) or (
+                    ann.getId() == fileAnn_id):
+                fileAnn = ann
+    if fileAnn is None:
         sys.stderr.write("Error: File does not exist.\n")
         sys.exit(1)
-    return file
+    print "Picked file annotation: %s %s" % (fileAnn.getId(),
+                                             fileAnn.getFile().getName())
+    return fileAnn.getFile()._obj
 
 
 def populate_metadata(client, conn, script_params):
     object_id = long(script_params["IDs"])
-    fileAnn_id = long(script_params["File_Annotation"])
+    fileAnn_id = None
+    if "File_Annotation" in script_params:
+        fileAnn_id = long(script_params["File_Annotation"])
     original_file = get_original_file(
         conn, script_params["Data_Type"], object_id, fileAnn_id)
     provider = DownloadingOriginalFileProvider(conn)
@@ -99,7 +107,7 @@ if __name__ == "__main__":
             description="List of Image IDs to process."),
 
         scripts.String(
-            "File_Annotation", grouping="3", default='',
+            "File_Annotation", grouping="3",
             description="File ID containing metadata to populate."),
 
         version="0.2",
