@@ -79,6 +79,15 @@ if __name__ == "__main__":
     client = scripts.client(
         'Populate_Metadata.py',
         """
+        Attach a file in csv (comma separated values) format to a Screen or Plate.
+        Use a 'Well' column to specify wells via 'A1' etc.
+        Other columns contain values for each well. For example:
+
+        Well, Reagent, Volume
+        A1,   DMSO, 10 ul
+        A2,   Drug, 5 ul
+
+        Then select the Screen or Plate and run this script.
         """,
         scripts.String(
             "Data_Type", optional=False, grouping="1",
