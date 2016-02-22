@@ -96,7 +96,8 @@ if __name__ == "__main__":
     This script processes a csv file, attached to a Screen or Plate,
     converting it to an OMERO.table, with one row per Well.
     The table data can then be displayed in the OMERO clients.
-    For full details, see http://help.openmicroscopy.org/scripts.html
+    For full details, see
+    http://help.openmicroscopy.org/scripts.html#metadata
         """,
         scripts.String(
             "Data_Type", optional=False, grouping="1",
