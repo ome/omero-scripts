@@ -24,7 +24,7 @@ Populate metadata from CSV.
 
 import omero
 from omero.gateway import BlitzGateway
-from omero.rtypes import rstring
+from omero.rtypes import rstring, rlong
 import omero.scripts as scripts
 from omero.model import PlateI, ScreenI
 
@@ -65,21 +65,27 @@ def get_original_file(conn, object_type, object_id, fileAnn_id=None):
 
 
 def populate_metadata(client, conn, script_params):
-    object_id = long(script_params["IDs"])
+    object_ids = script_params["IDs"]
+    if len(object_ids) > 1:
+        print "WARNING: Multiple IDs not currently supported"
+        print "    Only using the first ID: %s" % object_ids[0]
+    object_id = object_ids[0]
     fileAnn_id = None
     if "File_Annotation" in script_params:
         fileAnn_id = long(script_params["File_Annotation"])
+    dataType = script_params["Data_Type"]
     original_file = get_original_file(
-        conn, script_params["Data_Type"], object_id, fileAnn_id)
+        conn, dataType, object_id, fileAnn_id)
     provider = DownloadingOriginalFileProvider(conn)
     file_handle = provider.get_original_file_data(original_file)
-    if script_params["Data_Type"] == "Plate":
+    if dataType == "Plate":
         omero_object = PlateI(long(object_id), False)
     else:
         omero_object = ScreenI(long(object_id), False)
     ctx = ParsingContext(client, omero_object, "")
     ctx.parse_from_handle(file_handle)
     ctx.write_to_omero()
+    return "Table data populated for %s: %s" % (dataType, object_id)
 
 
 if __name__ == "__main__":
@@ -87,33 +93,27 @@ if __name__ == "__main__":
     client = scripts.client(
         'Populate_Metadata.py',
         """
-    Attach a file in csv (comma separated values) format to a Screen or Plate.
-    Use a 'Well' column to specify wells via 'A1' etc.
-    Other columns contain values for each well. For example:
-
-    Well, Reagent, Volume
-    A1,   DMSO, 10 ul
-    A2,   Drug, 5 ul
-
-    Then select the Screen or Plate and run this script.
+    This script processes a csv file, attached to a Screen or Plate,
+    converting it to an OMERO.table, with one row per Well.
+    The table data can then be displayed in the OMERO clients.
+    For full details, see http://help.openmicroscopy.org/scripts.html
         """,
         scripts.String(
             "Data_Type", optional=False, grouping="1",
             description="Choose source of images",
             values=dataTypes, default="Plate"),
 
-        scripts.String(
+        scripts.List(
             "IDs", optional=False, grouping="2",
-            description="List of Image IDs to process."),
+            description="Plate or Screen ID.").ofType(rlong(0)),
 
         scripts.String(
             "File_Annotation", grouping="3",
             description="File ID containing metadata to populate."),
 
-        version="0.2",
-        authors=["Emil Rozbicki"],
+        authors=["Emil Rozbicki", "OME Team"],
         institutions=["Glencoe Software Inc."],
-        contact="emil@glencoesoftware.com",
+        contact="ome-users@lists.openmicroscopy.org.uk",
     )
 
     try:
