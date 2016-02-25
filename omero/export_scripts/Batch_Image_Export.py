@@ -513,7 +513,7 @@ def runScript():
         'Batch_Image_Export.py',
         """Save multiple images as JPEG, PNG, TIFF or OME-TIFF \
         in a zip file available for download as a batch export. \
-See http://help.openmicroscopy.org/scripts.html""",
+See http://help.openmicroscopy.org/export.html#batch""",
 
         scripts.String(
             "Data_Type", optional=False, grouping="1",
