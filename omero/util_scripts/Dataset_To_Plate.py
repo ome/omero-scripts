@@ -284,7 +284,7 @@ def runAsScript():
         """Take a Dataset of Images and put them in a new Plate, \
 arranging them into rows or columns as desired.
 Optionally add the Plate to a new or existing Screen.
-See http://help.openmicroscopy.org/utility-scripts.html""",
+See http://help.openmicroscopy.org/scripts.html""",
 
         scripts.String(
             "Data_Type", optional=False, grouping="1",

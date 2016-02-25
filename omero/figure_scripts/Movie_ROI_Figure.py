@@ -734,8 +734,7 @@ any ROI."""
 
     client = scripts.client(
         'Movie_ROI_Figure.py',
-        """Create a figure of movie frames from ROI region of image.
-See http://help.openmicroscopy.org/scripts.html""",
+        """Create a figure of movie frames from ROI region of image.""",
 
         scripts.String(
             "Data_Type", optional=False, grouping="01",

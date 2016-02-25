@@ -837,7 +837,7 @@ any ROI."""
 panels.
 NB: OMERO.insight client provides a nicer UI for this script under \
 'Publishing Options'
-See http://help.openmicroscopy.org/scripts.html""",
+See http://help.openmicroscopy.org/publish.html#figures""",
 
         # provide 'Data_Type' and 'IDs' parameters so that Insight
         # auto-populates with currently selected images.

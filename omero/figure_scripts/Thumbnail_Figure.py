@@ -481,7 +481,7 @@ def runAsScript():
     client = scripts.client(
         'Thumbnail_Figure.py',
         """Export a figure of thumbnails, optionally sorted by tag.
-See http://help.openmicroscopy.org/scripts.html""",
+See http://help.openmicroscopy.org/publish.html#figures""",
 
         scripts.String(
             "Data_Type", optional=False, grouping="1",
