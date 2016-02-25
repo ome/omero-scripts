@@ -543,7 +543,7 @@ def runAsScript():
         'Combine_Images.py',
         """Combine several single-plane images (or Z-stacks) into one with \
 greater Z, C, T dimensions.
-See http://help.openmicroscopy.org/utility-scripts.html""",
+See http://help.openmicroscopy.org/scripts.html""",
 
         scripts.String(
             "Data_Type", optional=False, grouping="1",

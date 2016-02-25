@@ -711,7 +711,7 @@ def runAsScript():
     client = scripts.client(
         'Split_View_Figure.py',
         """Create a figure of split-view images.
-See http://help.openmicroscopy.org/scripts.html""",
+See http://help.openmicroscopy.org/publish.html#figures""",
 
         # provide 'Data_Type' and 'IDs' parameters so that Insight
         # auto-populates with currently selected images.
