@@ -365,7 +365,7 @@ def processImages(conn, scriptParams):
         sizeT = image.getSizeT()
         pixels = image.getPrimaryPixels()
 
-        dataset = image.getDataset()
+        dataset = image.getParent()
         if dataset is not None and not dataset.canLink():
             dataset = None
 
