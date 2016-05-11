@@ -23,7 +23,7 @@
 ------------------------------------------------------------------------------
 
 This script processes Images which have Line or PolyLine ROIs,
-saving the intensity of chosen channels to excell (csv) files.
+saving the intensity of chosen channels to Excel (csv) files.
 
 @author Will Moore
 <a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
