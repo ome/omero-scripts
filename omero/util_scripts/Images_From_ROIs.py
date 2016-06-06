@@ -133,7 +133,8 @@ def create_image_from_tiles(conn, source, image_name, description, box):
     loop.forEachTile(tileWidth, tileHeight, Iteration())
 
     for theC in range(sizeC):
-        pixelsService.setChannelGlobalMinMax(pid, theC, float(0), float(255), conn.SERVICE_OPTS)
+        pixelsService.setChannelGlobalMinMax(pid, theC, float(0),
+                                             float(255), conn.SERVICE_OPTS)
 
     return new_image
 
@@ -311,7 +312,8 @@ def processImage(conn, imageId, parameterMap):
                         yield t
 
                 print "sizeZ, sizeC, sizeT", sizeZ, sizeC, sizeT
-                description = "Created from image:\n  Name: %s\n  Image ID: %d"\
+                description = "Created from image:"\
+                    " \n  Name: %s\n  Image ID: %d"\
                     " \n x: %d y: %d" % (imageName, imageId, x, y)
                 newImg = conn.createImageFromNumpySeq(
                     tileGen(), newName,
@@ -319,7 +321,8 @@ def processImage(conn, imageId, parameterMap):
                     description=description, sourceImageId=imageId)
             else:
                 s = time.time()
-                newImg = create_image_from_tiles(conn, image, newName, description, r)
+                newImg = create_image_from_tiles(conn, image, newName,
+                                                 description, r)
                 print 'Tiled image creation took:', time.time()-s, 'seconds'
 
             print "New Image Id = %s" % newImg.getId()
