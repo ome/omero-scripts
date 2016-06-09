@@ -294,6 +294,9 @@ def processImage(conn, imageId, parameterMap):
             print "  ROI x: %s y: %s w: %s h: %s z1: %s z2: %s t1: %s t2: %s"\
                 % (x, y, w, h, z1, z2, t1, t2)
 
+            description = "Created from image:"\
+                " \n  Name: %s\n  Image ID: %d"\
+                " \n x: %d y: %d" % (imageName, imageId, x, y)
             if (h * w < bigImagePixelCount):
                 # need a tile generator to get all the planes within the ROI
                 sizeZ = z2-z1 + 1
@@ -310,11 +313,7 @@ def processImage(conn, imageId, parameterMap):
                 def tileGen():
                     for i, t in enumerate(pixels.getTiles(zctTileList)):
                         yield t
-
                 print "sizeZ, sizeC, sizeT", sizeZ, sizeC, sizeT
-                description = "Created from image:"\
-                    " \n  Name: %s\n  Image ID: %d"\
-                    " \n x: %d y: %d" % (imageName, imageId, x, y)
                 newImg = conn.createImageFromNumpySeq(
                     tileGen(), newName,
                     sizeZ=sizeZ, sizeC=sizeC, sizeT=sizeT,
