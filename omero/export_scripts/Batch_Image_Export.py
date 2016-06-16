@@ -132,7 +132,8 @@ def savePlane(image, format, cName, zRange, projectZ, t=0, channel=None,
     if zoomPercent:
         w, h = plane.size
         fraction = (float(zoomPercent) / 100)
-        plane = plane.resize((w * fraction, h * fraction), Image.ANTIALIAS)
+        plane = plane.resize((int(w * fraction), int(h * fraction)),
+                             Image.ANTIALIAS)
 
     if format == "PNG":
         imgName = makeImageName(
