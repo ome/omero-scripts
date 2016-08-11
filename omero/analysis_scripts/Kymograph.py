@@ -432,7 +432,8 @@ def processImages(conn, scriptParams):
         elif "Time_Increment" in scriptParams:
             tInterval = scriptParams["Time_Increment"]
         else:
-            print "Metadata does not contain Time Increment parameter: Please manually set this value to get accurate estimate of the kinetics"
+            print "Metadata does not contain Time Increment parameter:
+            print Please manually set this value to get accurate estimate of the kinetics"
             print "Default value set : Time_Increment = 1 sec/frame"
             tInterval = 1.0
 
