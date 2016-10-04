@@ -309,6 +309,7 @@ def pickPixelSizes(pixelSizes):
             # compare - if different, return None
             if (pixSize.getValue() != px.getValue() or
                     pixSize.getUnit() != px.getUnit()):
+                print "Pixel size mismatch! Won't be set: ", pixSize, px
                 return None
     return pixSize
 
@@ -441,7 +442,7 @@ def makeSingleImage(services, parameterMap, imageIds, dataset, colourMap):
     # Set pixel sizes if known
     pixSizeX = pickPixelSizes(pixelSizes['x'])
     pixSizeY = pickPixelSizes(pixelSizes['y'])
-    print pixSizeX, pixSizeY
+    print "Setting pixel sizes... X: %s Y: %s" % (pixSizeX, pixSizeY)
     if pixSizeX is not None or pixSizeY is not None:
         # reload to avoid OptimisticLockException
         pixels = services["queryService"].get('Pixels', pixels.id.val)
