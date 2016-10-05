@@ -393,25 +393,33 @@ def batchImageExport(conn, scriptParams):
     # do the saving to disk
 
     for img in images:
+        log("Processing image: ID %s: %s" % (img.id, img.getName()))
         pixels = img.getPrimaryPixels()
         if (pixels.getId() in ids):
             continue
         ids.append(pixels.getId())
-        sizeX = pixels.getSizeX()
-        sizeY = pixels.getSizeY()
-        if sizeX*sizeY > size:
-            log("  ** Can't export a 'Big' image to %s. **" % format)
-            if len(images) == 1:
-                return None, "Can't export a 'Big' image to %s." % format
-            continue
-        else:
-            log("Exporting image as %s: %s" % (format, img.getName()))
 
         if format == 'OME-TIFF':
-            saveAsOmeTiff(conn, img, folder_name)
-        else:
             if img._prepareRE().requiresPixelsPyramid():
                 log("  ** Can't export a 'Big' image to OME-TIFF. **")
+                if len(images) == 1:
+                    return None, "Can't export a 'Big' image to %s." % format
+                continue
+            else:
+                saveAsOmeTiff(conn, img, folder_name)
+        else:
+            sizeX = pixels.getSizeX()
+            sizeY = pixels.getSizeY()
+            if sizeX*sizeY > size:
+                msg = "Can't export image over %s pixels. " \
+                      "See 'omero.client.download_as.max_size'" % size
+                log("  ** %s. **" % msg)
+                if len(images) == 1:
+                    return None, msg
+                continue
+            else:
+                log("Exporting image as %s: %s" % (format, img.getName()))
+
             log("\n----------- Saving planes from image: '%s' ------------"
                 % img.getName())
             sizeC = img.getSizeC()
