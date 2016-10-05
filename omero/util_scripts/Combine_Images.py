@@ -309,7 +309,8 @@ def pickPixelSizes(pixelSizes):
             # compare - if different, return None
             if (pixSize.getValue() != px.getValue() or
                     pixSize.getUnit() != px.getUnit()):
-                print "Pixel size mismatch! Won't be set: ", pixSize, px
+                print ("Pixel size mismatch! The mismatched dimension(s)"
+                       " will not be set: "), pixSize, px
                 return None
     return pixSize
 
