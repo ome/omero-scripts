@@ -57,7 +57,7 @@ def printDuration(output=True):
         print "Script timer = %s secs" % (time.time() - startTime)
 
 
-def create_image_from_tiles(conn, source, image_name, description, box):
+def create_image_from_tiles(conn, source, image_name, description, box, tileSize):
 
     pixelsService = conn.getPixelsService()
     queryService = conn.getQueryService()
@@ -67,8 +67,8 @@ def create_image_from_tiles(conn, source, image_name, description, box):
     sizeZ = source.getSizeZ()
     sizeT = source.getSizeT()
     sizeC = source.getSizeC()
-    tileWidth = 1024
-    tileHeight = 1024
+    tileWidth = tileSize
+    tileHeight = tileSize
     primary_pixels = source.getPrimaryPixels()
 
     def create_image():
@@ -108,7 +108,7 @@ def create_image_from_tiles(conn, source, image_name, description, box):
                         h = tileHeight
                         if (h + y > sizeY):
                             h = sizeY - y
-                        tile_xywh = (box[0] + x, box[1] + y, w, h)
+                        tile_xywh = (xbox + x, ybox + y, w, h)
                         zctTileList.append((z, c, t, tile_xywh))
 
     # This is a generator that will return tiles in the sequence above
@@ -320,8 +320,9 @@ def processImage(conn, imageId, parameterMap):
                     description=description, sourceImageId=imageId)
             else:
                 s = time.time()
+                tileSize = parameterMap['Tile_Size']
                 newImg = create_image_from_tiles(conn, image, newName,
-                                                 description, r)
+                                                 description, r, tileSize)
                 print 'Tiled image creation took:', time.time()-s, 'seconds'
 
             print "New Image Id = %s" % newImg.getId()
@@ -466,12 +467,14 @@ def runAsScript():
 
     client = scripts.client(
         'Images_From_ROIs.py',
-        """Create new Images from the regions defined by Rectangle ROIs on \
-other Images.
-Designed to work with single-plane images (Z=1 T=1) with multiple ROIs per \
-image.
-If you choose to make an image stack from all the ROIs, this script \
-assumes that all the ROIs on each Image are the same size.""",
+        """Crop an Image using Rectangular ROIs, to create new Images.
+ROIs that extend across Z and T will crop according to the Z and T limits
+of each ROI.
+If you choose to 'make an image stack' from all the ROIs, the script \
+will create a single new Z-stack image with a single plane from each ROI.
+ROIs that are 'Big', typically over 3k x 3k pixels will create 'tiled'
+images using the specified tile size.
+""",
 
         scripts.String(
             "Data_Type", optional=False, grouping="1",
@@ -493,6 +496,12 @@ assumes that all the ROIs on each Image are the same size.""",
             "Make_Image_Stack", grouping="4", default=False,
             description="If true, make a single Image (stack) from all the"
             " ROIs of each parent Image"),
+
+        scripts.Int(
+            "Tile_Size", optional=False, grouping="5",
+            min=50, max=2500,
+            description="If the new image is large and tiled, "
+            "create tiles of this width & height", default=1024),
 
         version="5.3.0",
         authors=["William Moore", "OME Team"],
