@@ -57,7 +57,8 @@ def printDuration(output=True):
         print "Script timer = %s secs" % (time.time() - startTime)
 
 
-def create_image_from_tiles(conn, source, image_name, description, box, tileSize):
+def create_image_from_tiles(conn, source, image_name, description,
+                            box, tileSize):
 
     pixelsService = conn.getPixelsService()
     queryService = conn.getQueryService()
