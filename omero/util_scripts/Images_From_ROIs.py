@@ -123,8 +123,6 @@ def create_image_from_tiles(conn, source, image_name, description,
     class Iteration(TileLoopIteration):
 
         def run(self, data, z, c, t, x, y, tileWidth, tileHeight, tileCount):
-            # tile2d = mktile(z, c, t, x, y,tileWidth, tileHeight)
-            # tile2d = faketile(tileWidth, tileHeight)
             tile2d = nextTile()
             data.setTile(tile2d, z, c, t, x, y, tileWidth, tileHeight)
 
