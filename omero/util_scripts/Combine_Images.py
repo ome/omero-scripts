@@ -294,6 +294,27 @@ def getImageNames(queryService, imageIds):
     return idMap
 
 
+def pickPixelSizes(pixelSizes):
+    """
+    Process a list of pixel sizes and pick sizes to set for new image.
+    If we have different sizes from different images, return None
+    """
+    pixSize = None
+    for px in pixelSizes:
+        if px is None:
+            continue
+        if pixSize is None:
+            pixSize = px
+        else:
+            # compare - if different, return None
+            if (pixSize.getValue() != px.getValue() or
+                    pixSize.getUnit() != px.getUnit()):
+                print ("Pixel size mismatch! The mismatched dimension(s)"
+                       " will not be set: "), pixSize, px
+                return None
+    return pixSize
+
+
 def makeSingleImage(services, parameterMap, imageIds, dataset, colourMap):
     """
     This takes the images specified by imageIds, sorts them in to Z,C,T
@@ -369,6 +390,7 @@ def makeSingleImage(services, parameterMap, imageIds, dataset, colourMap):
     pixelsId = image.getPrimaryPixels().getId().getValue()
     rawPixelStoreUpload.setPixelsId(pixelsId, True)
 
+    pixelSizes = {'x': [], 'y': []}
     for theC in range(sizeC):
         minValue = 0
         maxValue = 0
@@ -382,6 +404,9 @@ def makeSingleImage(services, parameterMap, imageIds, dataset, colourMap):
                         "i.id='%d'" % imageId
                     pixels = queryService.findByQuery(query_string, None)
                     plane2D = getPlane(rawPixelStore, pixels, planeZ, 0, 0)
+                    # Note pixels sizes (may be None)
+                    pixelSizes['x'].append(pixels.getPhysicalSizeX())
+                    pixelSizes['y'].append(pixels.getPhysicalSizeY())
                 else:
                     print "Creating blank plane for theZ, theC, theT",\
                         theZ, theC, theT
@@ -414,6 +439,19 @@ def makeSingleImage(services, parameterMap, imageIds, dataset, colourMap):
         lc.setName(rstring(cNames[i]))
         updateService.saveObject(lc)
         i += 1
+
+    # Set pixel sizes if known
+    pixSizeX = pickPixelSizes(pixelSizes['x'])
+    pixSizeY = pickPixelSizes(pixelSizes['y'])
+    print "Setting pixel sizes... X: %s Y: %s" % (pixSizeX, pixSizeY)
+    if pixSizeX is not None or pixSizeY is not None:
+        # reload to avoid OptimisticLockException
+        pixels = services["queryService"].get('Pixels', pixels.id.val)
+        if pixSizeX is not None:
+            pixels.setPhysicalSizeX(pixSizeX)
+        if pixSizeY is not None:
+            pixels.setPhysicalSizeY(pixSizeY)
+        services["updateService"].saveObject(pixels)
 
     # put the image in dataset, if specified.
     if dataset and dataset.canLink():
