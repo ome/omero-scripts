@@ -41,6 +41,7 @@ import omero.scripts as scripts
 import omero.util.script_utils as scriptUtil
 from numpy import math, zeros, hstack, vstack, average
 import logging
+import io
 try:
     from PIL import Image
 except ImportError:
@@ -55,15 +56,17 @@ def numpyToImage(plane):
     """
 
     from numpy import int32
+    from matplotlib.image import imsave
 
+    buf = io.BytesIO()
     if plane.dtype.name not in ('uint8', 'int8'):
         # int32 is handled by PIL (not uint32 etc). TODO: support floats
         convArray = zeros(plane.shape, dtype=int32)
         convArray += plane
-        # Trac#11912 PIL < 1.1.7 fromarray doesn't handle 16 bit images
-        return Image.fromstring(
-            'I', (plane.shape[1], plane.shape[0]), convArray)
-    return Image.fromarray(plane)
+        imsave(buf, convArray)
+    else:
+        imsave(buf, plane)
+    return Image.open(buf)
 
 
 def getLineData(pixels, x1, y1, x2, y2, lineW=2, theZ=0, theC=0, theT=0):
