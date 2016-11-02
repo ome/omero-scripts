@@ -47,7 +47,7 @@ from omero.gateway import BlitzGateway
 import omero
 from omero.rtypes import rint, rlong, rstring, robject, wrap
 import os
-import StringIO
+import io
 from omero.constants.namespaces import NSCREATED
 from omero.constants.projection import ProjectionType
 from datetime import date
@@ -191,7 +191,7 @@ def createMovieFigure(conn, pixelIds, tIndexes, zStart, zEnd, width, height,
                     planeDef.t = time
                     renderedImg = re.renderCompressed(planeDef)
                 # create images and resize, add to list
-                image = Image.open(StringIO.StringIO(renderedImg))
+                image = Image.open(io.BytesIO(renderedImg))
                 resizedImage = imgUtil.resizeImage(image, width, height)
                 renderedImages.append(resizedImage)
 

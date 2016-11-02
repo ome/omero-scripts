@@ -49,7 +49,7 @@ from omero.constants.namespaces import NSCREATED
 import omero.model
 from omero.constants.projection import ProjectionType
 import os
-import StringIO
+import io
 from datetime import date
 
 try:
@@ -186,7 +186,7 @@ def getROImovieView(re, queryService, pixels, timeShapeMap, mergedIndexes,
 
         merged = re.renderProjectedCompressed(
             algorithm, timepoint, stepping, proStart, proEnd)
-        fullMergedImage = Image.open(StringIO.StringIO(merged))
+        fullMergedImage = Image.open(io.BytesIO(merged))
         if fullFirstFrame is None:
             fullFirstFrame = fullMergedImage
         roiMergedImage = fullMergedImage.crop(box)
