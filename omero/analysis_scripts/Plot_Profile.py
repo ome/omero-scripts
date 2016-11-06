@@ -45,8 +45,7 @@ import logging
 logger = logging.getLogger('plot_profile')
 
 
-def getLineData(pixels, minMax, x1, y1, x2, y2, lineW=2, theZ=0, theC=0,
-                theT=0):
+def getLineData(pixels, x1, y1, x2, y2, lineW=2, theZ=0, theC=0, theT=0):
     """
     Grabs pixel data covering the specified line, and rotates it horizontally
     so that x1,y1 is to the left,
@@ -55,7 +54,6 @@ def getLineData(pixels, minMax, x1, y1, x2, y2, lineW=2, theZ=0, theC=0,
     to PIL and back (may change dtype.)
 
     @param pixels:          PixelsWrapper object
-    @param minMax:          The min, max values for the specified plane
     @param x1, y1, x2, y2:  Coordinates of line
     @param lineW:           Width of the line we want
     @param theZ:            Z index within pixels
@@ -124,7 +122,7 @@ def getLineData(pixels, minMax, x1, y1, x2, y2, lineW=2, theZ=0, theC=0,
         pad_data = zeros((pad_bottom, data_w), dtype=plane.dtype)
         plane = vstack((plane, pad_data))
 
-    pil = scriptUtil.numpyToImage(plane, minMax, int32)
+    pil = scriptUtil.numpyToImage(plane, (plane.min(), plane.max()), int32)
     # pil.show()
 
     # Now need to rotate so that x1,y1 is horizontally to the left of x2,y2
@@ -176,13 +174,6 @@ def processPolyLines(conn, scriptParams, image, polylines, lineWidth, fout):
     @param polylines:       list of theT:T, theZ:Z, points: list of (x,y)}
     """
     pixels = image.getPrimaryPixels()
-
-    channelMinMax = []
-    for c in image.getChannels():
-        minC = c.getWindowMin()
-        maxC = c.getWindowMax()
-        channelMinMax.append((minC, maxC))
-
     theCs = scriptParams['Channels']
 
     for pl in polylines:
@@ -196,7 +187,7 @@ def processPolyLines(conn, scriptParams, image, polylines, lineWidth, fout):
                 x1, y1 = points[l]
                 x2, y2 = points[l+1]
                 ld = getLineData(
-                    pixels, channelMinMax[theC], x1, y1, x2, y2, lineWidth,
+                    pixels, x1, y1, x2, y2, lineWidth,
                     theZ, theC, theT)
                 lData.append(ld)
             lineData = hstack(lData)
@@ -239,12 +230,6 @@ def processLines(conn, scriptParams, image, lines, lineWidth, fout):
     """
 
     pixels = image.getPrimaryPixels()
-    channelMinMax = []
-    for c in image.getChannels():
-        minC = c.getWindowMin()
-        maxC = c.getWindowMax()
-        channelMinMax.append((minC, maxC))
-
     theCs = scriptParams['Channels']
 
     for l in lines:
@@ -253,7 +238,7 @@ def processLines(conn, scriptParams, image, lines, lineWidth, fout):
         roiId = l['id']
         for theC in theCs:
             lineData = []
-            lineData = getLineData(pixels, channelMinMax[theC], l['x1'],
+            lineData = getLineData(pixels, l['x1'],
                                    l['y1'], l['x2'], l['y2'], lineWidth,
                                    theZ, theC, theT)
 

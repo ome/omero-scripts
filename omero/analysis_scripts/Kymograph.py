@@ -48,8 +48,7 @@ import logging
 logger = logging.getLogger('kymograph')
 
 
-def getLineData(pixels, minMax, x1, y1, x2, y2, lineW=2, theZ=0, theC=0,
-                theT=0):
+def getLineData(pixels, x1, y1, x2, y2, lineW=2, theZ=0, theC=0, theT=0):
     """
     Grabs pixel data covering the specified line, and rotates it horizontally
     so that x1,y1 is to the left,
@@ -58,7 +57,6 @@ def getLineData(pixels, minMax, x1, y1, x2, y2, lineW=2, theZ=0, theC=0,
     to PIL and back (may change dtype.)
 
     @param pixels:          PixelsWrapper object
-    @param minMax:          The min, max values for the specified plane
     @param x1, y1, x2, y2:  Coordinates of line
     @param lineW:           Width of the line we want
     @param theZ:            Z index within pixels
@@ -127,7 +125,7 @@ def getLineData(pixels, minMax, x1, y1, x2, y2, lineW=2, theZ=0, theC=0,
         pad_data = zeros((pad_bottom, data_w), dtype=plane.dtype)
         plane = vstack((plane, pad_data))
 
-    pil = scriptUtil.numpyToImage(plane, minMax, int32)
+    pil = scriptUtil.numpyToImage(plane, (plane.min(), plane.max()), int32)
     # pil.show()
 
     # Now need to rotate so that x1,y1 is horizontally to the left of x2,y2
@@ -183,12 +181,6 @@ def polyLineKymograph(conn, scriptParams, image, polylines, lineWidth,
     sizeC = image.getSizeC()
     sizeT = image.getSizeT()
 
-    channelMinMax = []
-    for c in image.getChannels():
-        minC = c.getWindowMin()
-        maxC = c.getWindowMax()
-        channelMinMax.append((minC, maxC))
-
     use_all_times = "Use_All_Timepoints" in scriptParams and \
         scriptParams['Use_All_Timepoints'] is True
     if len(polylines) == 1:
@@ -222,7 +214,7 @@ def polyLineKymograph(conn, scriptParams, image, polylines, lineWidth,
                 for l in range(len(points)-1):
                     x1, y1 = points[l]
                     x2, y2 = points[l+1]
-                    ld = getLineData(pixels, channelMinMax[theC], x1, y1, x2,
+                    ld = getLineData(pixels, x1, y1, x2,
                                      y2, lineWidth, theZ, theC, theT)
                     lineData.append(ld)
                 rowData = hstack(lineData)
@@ -264,12 +256,6 @@ def linesKymograph(conn, scriptParams, image, lines, lineWidth, dataset):
     sizeC = image.getSizeC()
     sizeT = image.getSizeT()
 
-    channelMinMax = []
-    for c in image.getChannels():
-        minC = c.getWindowMin()
-        maxC = c.getWindowMax()
-        channelMinMax.append((minC, maxC))
-
     use_all_times = "Use_All_Timepoints" in scriptParams and \
         scriptParams['Use_All_Timepoints'] is True
     if len(lines) == 1:
@@ -299,7 +285,7 @@ def linesKymograph(conn, scriptParams, image, lines, lineWidth, dataset):
                 x1, y1, x2, y2 = shape['x1'], shape['y1'], shape['x2'], \
                     shape['y2']
                 rowData = getLineData(
-                    pixels, channelMinMax[theC], x1, y1, x2, y2, lineWidth,
+                    pixels, x1, y1, x2, y2, lineWidth,
                     theZ, theC, theT)
                 # if the row is too long, crop - if it's too short, pad
                 row_height, row_length = rowData.shape
