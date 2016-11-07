@@ -198,7 +198,9 @@ def processImage(conn, imageId, parameterMap):
         return
 
     parentDataset = image.getParent()
-    parentProject = parentDataset.getParent()
+    parentProject = None
+    if parentDataset is not None:
+        parentProject = parentDataset.getParent()
 
     imageName = image.getName()
     updateService = conn.getUpdateService()
