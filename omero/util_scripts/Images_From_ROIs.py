@@ -158,8 +158,16 @@ def getRectangles(conn, imageId):
         for shape in roi.copyShapes():
             if type(shape) == omero.model.RectangleI:
                 # check t range and z range for every rectangle
-                t = shape.getTheT().getValue()
-                z = shape.getTheZ().getValue()
+                # t and z (and c) for shape is optional
+                # https://www.openmicroscopy.org/site/support/omero5.2/developers/Model/EveryObject.html#shape
+                try:
+                    t = shape.getTheT().getValue()
+                except:
+                    t = 0
+                try:
+                    z = shape.getTheZ().getValue()
+                except:
+                    z = 0
                 if tStart is None:
                     tStart = t
                 if zStart is None:
