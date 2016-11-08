@@ -287,7 +287,7 @@ def inRange(low, high, max):
 
 
 def validChannels(set, sizeC):
-    """ Determines the channels are valid """
+    """ Determines if the channels are valid """
     if(len(set) == 0):
         return False
     for val in set:
@@ -466,7 +466,7 @@ def writeMovie(commandArgs, conn):
     """
     Makes the movie.
 
-    @ returns        Returns the file annotation
+    @return        Returns the file annotation
     """
     log("Movie created by OMERO")
     log("")
@@ -659,7 +659,7 @@ def runAsScript():
     def __init__(self, name, optional = False, out = False, description =
                  None, type = None, min = None, max = None, values = None)
     """
-    formats = wrap(formatMap.keys())    # wrap each key in it's rtype
+    formats = wrap(formatMap.keys())    # wrap each key in its rtype
     ckeys = COLOURS.keys()
     ckeys = ckeys
     ckeys.sort()
@@ -715,7 +715,7 @@ def runAsScript():
         scripts.List(
             "ChannelsExtended",
             description="The selected channels, with optional range"
-            " and colour. Takes precendence over Channels.",
+            " and color. Takes precedence over Channels.",
             grouping="5.2").ofType(rstring('')),
 
         scripts.Bool(
@@ -765,12 +765,12 @@ def runAsScript():
 
         scripts.Object(
             "Watermark",
-            description="Specifiy a watermark as an Original File (png or"
+            description="Specify a watermark as an Original File (png or"
             " jpeg)", default=omero.model.OriginalFileI()),
 
         scripts.Object(
             "Intro_Slide",
-            description="Specifiy an Intro slide as an Original File (png or"
+            description="Specify an Intro slide as an Original File (png or"
             " jpeg)", default=omero.model.OriginalFileI()),
 
         scripts.Int(
@@ -779,7 +779,7 @@ def runAsScript():
 
         scripts.Object(
             "Ending_Slide",
-            description="Specifiy a finishing slide as an Original File, "
+            description="Specify a finishing slide as an Original File, "
             "(png or jpeg)", default=omero.model.OriginalFileI()),
 
         scripts.Int(
