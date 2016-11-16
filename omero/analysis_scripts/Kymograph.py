@@ -529,4 +529,4 @@ same sizeC as input.""",
         client.setOutput("Message", rstring(message))
 
     finally:
-        client.closeSession()
+        conn.close()
