@@ -354,5 +354,6 @@ See http://help.openmicroscopy.org/scripts.html""",
     finally:
         client.closeSession()
 
+
 if __name__ == "__main__":
     runAsScript()

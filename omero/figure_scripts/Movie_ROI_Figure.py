@@ -841,5 +841,6 @@ any ROI."""
     finally:
         client.closeSession()
 
+
 if __name__ == "__main__":
     runAsScript()
