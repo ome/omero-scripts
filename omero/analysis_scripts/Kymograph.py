@@ -466,6 +466,7 @@ def processImages(conn, scriptParams):
 
     return newKymographs, message
 
+
 if __name__ == "__main__":
 
     dataTypes = [rstring('Image')]

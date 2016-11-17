@@ -380,6 +380,7 @@ def processImages(conn, scriptParams):
 
     return fileAnns, message
 
+
 if __name__ == "__main__":
 
     dataTypes = [rstring('Image')]

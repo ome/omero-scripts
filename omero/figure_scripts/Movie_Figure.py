@@ -675,5 +675,6 @@ See http://help.openmicroscopy.org/publish.html#movies""",
     finally:
         client.closeSession()
 
+
 if __name__ == "__main__":
     runAsScript()

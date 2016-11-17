@@ -825,5 +825,6 @@ See http://help.openmicroscopy.org/publish.html#figures""",
     finally:
         client.closeSession()
 
+
 if __name__ == "__main__":
     runAsScript()

@@ -158,8 +158,16 @@ def getRectangles(conn, imageId):
         for shape in roi.copyShapes():
             if type(shape) == omero.model.RectangleI:
                 # check t range and z range for every rectangle
-                t = shape.getTheT().getValue()
-                z = shape.getTheZ().getValue()
+                # t and z (and c) for shape is optional
+                # https://www.openmicroscopy.org/site/support/omero5.2/developers/Model/EveryObject.html#shape
+                try:
+                    t = shape.getTheT().getValue()
+                except AttributeError:
+                    t = 0
+                try:
+                    z = shape.getTheZ().getValue()
+                except AttributeError:
+                    z = 0
                 if tStart is None:
                     tStart = t
                 if zStart is None:
@@ -198,7 +206,9 @@ def processImage(conn, imageId, parameterMap):
         return
 
     parentDataset = image.getParent()
-    parentProject = parentDataset.getParent()
+    parentProject = None
+    if parentDataset is not None:
+        parentProject = parentDataset.getParent()
 
     imageName = image.getName()
     updateService = conn.getUpdateService()
@@ -524,6 +534,7 @@ images using the specified tile size.
     finally:
         client.closeSession()
         printDuration()
+
 
 if __name__ == "__main__":
     runAsScript()
