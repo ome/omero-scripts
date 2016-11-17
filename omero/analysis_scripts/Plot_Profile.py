@@ -121,7 +121,7 @@ def getLineData(pixels, x1, y1, x2, y2, lineW=2, theZ=0, theC=0, theT=0):
         pad_data = zeros((pad_bottom, data_w), dtype=plane.dtype)
         plane = vstack((plane, pad_data))
 
-    pil = scriptUtil.numpyToImage(plane, (plane.min(), plane.max()), int32)
+    pil = scriptUtil.numpy_to_image(plane, (plane.min(), plane.max()), int32)
     # pil.show()
 
     # Now need to rotate so that x1,y1 is horizontally to the left of x2,y2
