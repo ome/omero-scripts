@@ -386,7 +386,7 @@ See http://help.openmicroscopy.org/scripts.html""",
             client.setOutput("New Dataset", robject(dataset._obj))
 
     finally:
-        client.closeSession()
+        conn.close()
 
 
 if __name__ == "__main__":

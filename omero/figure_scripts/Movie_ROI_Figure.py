@@ -839,7 +839,7 @@ any ROI."""
             client.setOutput("File_Annotation", robject(fileAnnotation._obj))
 
     finally:
-        client.closeSession()
+        conn.close()
 
 
 if __name__ == "__main__":

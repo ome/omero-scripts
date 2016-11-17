@@ -240,4 +240,4 @@ of movement, saved as an Excel / CSV file.""",
         client.setOutput("Message", rstring(message))
 
     finally:
-        client.closeSession()
+        conn.close()

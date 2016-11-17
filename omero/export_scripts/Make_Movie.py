@@ -812,7 +812,7 @@ def runAsScript():
         if fileAnnotation is not None:
             client.setOutput("File_Annotation", robject(fileAnnotation))
     finally:
-        client.closeSession()
+        conn.close()
 
 
 if __name__ == "__main__":

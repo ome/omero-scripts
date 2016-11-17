@@ -548,7 +548,7 @@ See http://help.openmicroscopy.org/publish.html#figures""",
         if fileAnnotation is not None:
             client.setOutput("File_Annotation", robject(fileAnnotation._obj))
     finally:
-        client.closeSession()
+        conn.close()
 
 
 if __name__ == "__main__":

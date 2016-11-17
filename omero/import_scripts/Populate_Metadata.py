@@ -131,4 +131,4 @@ if __name__ == "__main__":
         client.setOutput("Message", rstring(message))
 
     finally:
-        client.closeSession()
+        cconn.close()

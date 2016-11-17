@@ -532,7 +532,7 @@ images using the specified tile size.
             client.setOutput("Result", robject(robj))
 
     finally:
-        client.closeSession()
+        conn.close()
         printDuration()
 
 

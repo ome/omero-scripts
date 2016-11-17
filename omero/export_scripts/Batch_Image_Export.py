@@ -629,7 +629,7 @@ See http://help.openmicroscopy.org/export.html#batch""",
                                  robject(fileAnnotation._obj))
 
     finally:
-        client.closeSession()
+        conn.close()
 
 
 if __name__ == "__main__":

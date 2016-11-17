@@ -680,7 +680,7 @@ See http://help.openmicroscopy.org/scripts.html""",
                 client.setOutput("First_Image", robject(images[0]))
 
     finally:
-        client.closeSession()
+        conn.close()
         printDuration()
 
 

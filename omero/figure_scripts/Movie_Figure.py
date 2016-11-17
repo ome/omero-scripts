@@ -673,7 +673,7 @@ See http://help.openmicroscopy.org/publish.html#movies""",
         if fileAnnotation:
             client.setOutput("File_Annotation", robject(fileAnnotation._obj))
     finally:
-        client.closeSession()
+        conn.close()
 
 
 if __name__ == "__main__":

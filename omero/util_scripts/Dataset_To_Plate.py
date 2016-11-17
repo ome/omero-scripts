@@ -352,7 +352,7 @@ See http://help.openmicroscopy.org/scripts.html""",
             client.setOutput("New_Object", robject(newObj))
 
     finally:
-        client.closeSession()
+        conn.close()
 
 
 if __name__ == "__main__":
