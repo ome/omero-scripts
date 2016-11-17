@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
- components/tools/OmeroPy/scripts/omero/export_scripts/Make_Movie.py
 
 -----------------------------------------------------------------------------
   Copyright (C) 2006-2015 University of Dundee. All rights reserved.

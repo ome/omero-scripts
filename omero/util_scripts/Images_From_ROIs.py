@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
- components/tools/OmeroPy/scripts/omero/util_scripts/Images_From_ROIs.py
 
 -----------------------------------------------------------------------------
   Copyright (C) 2006-2016 University of Dundee. All rights reserved.
