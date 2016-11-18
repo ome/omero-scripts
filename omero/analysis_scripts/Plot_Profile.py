@@ -437,4 +437,4 @@ and outputs the data as CSV files, for plotting in e.g. Excel.""",
         client.setOutput("Message", rstring(message))
 
     finally:
-        conn.close()
+        client.closeSession()
