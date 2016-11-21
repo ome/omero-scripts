@@ -346,7 +346,7 @@ def processImages(conn, scriptParams):
                 the_t = unwrap(s.getTheT())
                 the_z = unwrap(s.getTheZ())
                 z = 0
-                z = 0
+                t = 0
                 if the_t is not None:
                     t = the_t
                 if the_z is not None:
