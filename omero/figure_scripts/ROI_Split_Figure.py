@@ -332,8 +332,14 @@ def getRectangle(roiService, imageId, roiLabel):
         # go through all the shapes of the ROI
         for shape in roi.copyShapes():
             if type(shape) == omero.model.RectangleI:
-                t = unwrap(shape.getTheT())
-                z = unwrap(shape.getTheZ())
+                the_t = unwrap(shape.getTheT())
+                the_z = unwrap(shape.getTheZ())
+                t = 0
+                z = 0
+                if the_t is not None:
+                    t = the_t
+                if the_z is not None:
+                    z = the_z
                 x = shape.getX().getValue()
                 y = shape.getY().getValue()
                 tv = shape.getTextValue()

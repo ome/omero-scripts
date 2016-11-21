@@ -36,7 +36,7 @@ saving the intensity of chosen channels to Excel (csv) files.
 
 from omero.gateway import BlitzGateway
 import omero
-from omero.rtypes import rstring, rlong, robject
+from omero.rtypes import rstring, rlong, robject, unwrap
 import omero.scripts as scripts
 import omero.util.script_utils as scriptUtil
 from numpy import math, zeros, hstack, vstack, average
@@ -343,8 +343,14 @@ def processImages(conn, scriptParams):
         for roi in result.rois:
             roiId = roi.getId().getValue()
             for s in roi.copyShapes():
-                theZ = s.getTheZ() and s.getTheZ().getValue() or 0
-                theT = s.getTheT() and s.getTheT().getValue() or 0
+                the_t = unwrap(s.getTheT())
+                the_z = unwrap(s.getTheZ())
+                z = 0
+                z = 0
+                if the_t is not None:
+                    t = the_t
+                if the_z is not None:
+                    z = the_z
                 # TODO: Add some filter of shapes. E.g. text? / 'lines' only
                 # etc.
                 if type(s) == omero.model.LineI:
@@ -352,12 +358,12 @@ def processImages(conn, scriptParams):
                     x2 = s.getX2().getValue()
                     y1 = s.getY1().getValue()
                     y2 = s.getY2().getValue()
-                    lines.append({'id': roiId, 'theT': theT, 'theZ': theZ,
+                    lines.append({'id': roiId, 'theT': t, 'theZ': z,
                                   'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2})
 
                 elif type(s) == omero.model.PolylineI:
                     points = pointsStringToXYlist(s.getPoints().getValue())
-                    polylines.append({'id': roiId, 'theT': theT, 'theZ': theZ,
+                    polylines.append({'id': roiId, 'theT': t, 'theZ': z,
                                       'points': points})
 
         if len(lines) == 0 and len(polylines) == 0:

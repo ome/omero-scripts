@@ -38,7 +38,7 @@ images with the regions within the ROIs, and saves them back to the server.
 import omero
 import omero.scripts as scripts
 from omero.gateway import BlitzGateway
-from omero.rtypes import rstring, rlong, robject
+from omero.rtypes import rstring, rlong, robject, unwrap
 import omero.util.script_utils as script_utils
 from omero.util.tiles import TileLoopIteration, RPSTileLoop
 from omero.model import PixelsI
@@ -157,9 +157,14 @@ def getRectangles(conn, imageId):
         x = None
         for shape in roi.copyShapes():
             if type(shape) == omero.model.RectangleI:
-                # check t range and z range for every rectangle
-                t = shape.getTheT().getValue()
-                z = shape.getTheZ().getValue()
+                the_t = unwrap(shape.getTheT())
+                the_z = unwrap(shape.getTheZ())
+                t = 0
+                z = 0
+                if the_t is not None:
+                    t = the_t
+                if the_z is not None:
+                    z = the_z
                 if tStart is None:
                     tStart = t
                 if zStart is None:
