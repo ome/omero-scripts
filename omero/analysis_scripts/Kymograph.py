@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
- components/tools/OmeroPy/scripts/omero/analysis_scripts/Kymograph.py
 
 -----------------------------------------------------------------------------
-  Copyright (C) 2006-2014 University of Dundee. All rights reserved.
+  Copyright (C) 2006-2016 University of Dundee. All rights reserved.
 
 
   This program is free software; you can redistribute it and/or modify
@@ -44,29 +43,8 @@ from omero.rtypes import rlong, rstring, robject
 import omero.scripts as scripts
 from numpy import math, zeros, hstack, vstack
 import logging
-try:
-    from PIL import Image
-except ImportError:
-    import Image
 
 logger = logging.getLogger('kymograph')
-
-
-def numpyToImage(plane):
-    """
-    Converts the numpy plane to a PIL Image, converting data type if necessary.
-    """
-
-    from numpy import int32
-
-    if plane.dtype.name not in ('uint8', 'int8'):
-        # int32 is handled by PIL (not uint32 etc). TODO: support floats
-        convArray = zeros(plane.shape, dtype=int32)
-        convArray += plane
-        # Trac#11912 PIL < 1.1.7 fromarray doesn't handle 16 bit images
-        return Image.fromstring(
-            'I', (plane.shape[1], plane.shape[0]), convArray)
-    return Image.fromarray(plane)
 
 
 def getLineData(pixels, x1, y1, x2, y2, lineW=2, theZ=0, theC=0, theT=0):
@@ -85,7 +63,7 @@ def getLineData(pixels, x1, y1, x2, y2, lineW=2, theZ=0, theC=0, theT=0):
     @param theT:            Time index
     """
 
-    from numpy import asarray
+    from numpy import asarray, int32
 
     sizeX = pixels.getSizeX()
     sizeY = pixels.getSizeY()
@@ -146,7 +124,7 @@ def getLineData(pixels, x1, y1, x2, y2, lineW=2, theZ=0, theC=0, theT=0):
         pad_data = zeros((pad_bottom, data_w), dtype=plane.dtype)
         plane = vstack((plane, pad_data))
 
-    pil = numpyToImage(plane)
+    pil = scriptUtil.numpy_to_image(plane, (plane.min(), plane.max()), int32)
     # pil.show()
 
     # Now need to rotate so that x1,y1 is horizontally to the left of x2,y2
@@ -235,8 +213,8 @@ def polyLineKymograph(conn, scriptParams, image, polylines, lineWidth,
                 for l in range(len(points)-1):
                     x1, y1 = points[l]
                     x2, y2 = points[l+1]
-                    ld = getLineData(pixels, x1, y1, x2, y2, lineWidth, theZ,
-                                     theC, theT)
+                    ld = getLineData(pixels, x1, y1, x2,
+                                     y2, lineWidth, theZ, theC, theT)
                     lineData.append(ld)
                 rowData = hstack(lineData)
                 tRows.append(rowData)
@@ -306,7 +284,8 @@ def linesKymograph(conn, scriptParams, image, lines, lineWidth, dataset):
                 x1, y1, x2, y2 = shape['x1'], shape['y1'], shape['x2'], \
                     shape['y2']
                 rowData = getLineData(
-                    pixels, x1, y1, x2, y2, lineWidth, theZ, theC, theT)
+                    pixels, x1, y1, x2, y2, lineWidth,
+                    theZ, theC, theT)
                 # if the row is too long, crop - if it's too short, pad
                 row_height, row_length = rowData.shape
                 if r_length is None:

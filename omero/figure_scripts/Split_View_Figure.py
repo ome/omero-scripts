@@ -47,7 +47,7 @@ from omero.rtypes import rint, rlong, rstring, robject, wrap
 from omero.constants.namespaces import NSCREATED
 from omero.constants.projection import ProjectionType
 import os
-import StringIO
+import io
 from datetime import date
 
 try:
@@ -286,14 +286,14 @@ def getSplitView(conn, pixelIds, zStart, zEnd, splitIndexes, channelNames,
             if img is None:
                 im = Image.new(mode, (sizeX, sizeY), (0, 0, 0))
             else:
-                im = Image.open(StringIO.StringIO(img))
+                im = Image.open(io.BytesIO(img))
             i = imgUtil.resizeImage(im, width, height)
             imgUtil.pasteImage(i, canvas, px, py)
             px = px + width + spacer
             col = col + 1
 
         # add combined image, after resizing and adding scale bar
-        i = Image.open(StringIO.StringIO(overlay))
+        i = Image.open(io.BytesIO(overlay))
         scaledImage = imgUtil.resizeImage(i, width, height)
         if scalebar:
             xIndent = spacer

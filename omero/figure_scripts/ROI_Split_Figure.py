@@ -49,7 +49,7 @@ from omero.rtypes import rlong, robject, rstring, wrap, unwrap
 import os
 from omero.constants.namespaces import NSCREATED
 from omero.constants.projection import ProjectionType
-import StringIO
+import io
 from datetime import date
 
 try:
@@ -179,11 +179,11 @@ def getROIsplitView(re, pixels, zStart, zEnd, splitIndexes, channelNames,
                 regionDef.height = roiHeight
                 planeDef.region = regionDef
                 rPlane = re.renderCompressed(planeDef)
-                roiImage = Image.open(StringIO.StringIO(rPlane))
+                roiImage = Image.open(io.BytesIO(rPlane))
             else:
                 projection = re.renderProjectedCompressed(
                     algorithm, tIndex, stepping, proStart, proEnd)
-                fullImage = Image.open(StringIO.StringIO(projection))
+                fullImage = Image.open(io.BytesIO(projection))
                 roiImage = fullImage.crop(box)
                 roiImage.load()
                 # hoping that when we zoom, don't zoom fullImage
@@ -215,7 +215,7 @@ def getROIsplitView(re, pixels, zStart, zEnd, splitIndexes, channelNames,
         planeDef.z = proStart
         planeDef.t = tIndex
         merged = re.renderCompressed(planeDef)
-    fullMergedImage = Image.open(StringIO.StringIO(merged))
+    fullMergedImage = Image.open(io.BytesIO(merged))
     roiMergedImage = fullMergedImage.crop(box)
     # make sure this is not just a lazy copy of the full image
     roiMergedImage.load()
