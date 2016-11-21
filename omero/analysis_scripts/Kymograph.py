@@ -382,7 +382,7 @@ def processImages(conn, scriptParams):
                     y1 = s.getY1().getValue()
                     y2 = s.getY2().getValue()
                     lines[t] = {'theZ': z, 'x1': x1, 'y1': y1, 'x2': x2,
-                                   'y2': y2}
+                                'y2': y2}
 
                 elif type(s) == omero.model.PolylineI:
                     points = pointsStringToXYlist(s.getPoints().getValue())
