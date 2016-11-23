@@ -404,18 +404,23 @@ def processImages(conn, scriptParams):
         # look-up the interval for each time-point
         tInterval = None
         infos = list(pixels.copyPlaneInfo(theC=0, theT=sizeT-1, theZ=0))
-        if len(infos) > 0 and infos[0].getDeltaT() is not None:
+        if pixels.timeIncrement is not None:
+            print "pixels.timeIncrement", pixels.timeIncrement
+            tInterval = pixels.timeIncrement
+        elif len(infos) > 0 and infos[0].getDeltaT() is not None:
             duration = infos[0].getDeltaT(units="SECOND").getValue()
             print "duration", duration
             if sizeT == 1:
                 tInterval = duration
             else:
                 tInterval = duration/(sizeT-1)
-        elif pixels.timeIncrement is not None:
-            print "pixels.timeIncrement", pixels.timeIncrement
-            tInterval = pixels.timeIncrement
         elif "Time_Increment" in scriptParams:
             tInterval = scriptParams["Time_Increment"]
+        else:
+            print "Metadata does not contain Time Increment parameter:
+            print Please manually set this value to get accurate estimate of the kinetics"
+            print "Default value set : Time_Increment = 1 sec/frame"
+            tInterval = 1.0
 
         pixel_size = None
         if pixels.physicalSizeX is not None:
