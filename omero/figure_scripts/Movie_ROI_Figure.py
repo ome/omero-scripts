@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
- components/tools/OmeroPy/scripts/Movie_ROI_Figure.py
 
 -----------------------------------------------------------------------------
   Copyright (C) 2006-2014 University of Dundee. All rights reserved.
@@ -845,7 +844,7 @@ any ROI."""
             client.setOutput("File_Annotation", robject(fileAnnotation._obj))
 
     finally:
-        client.closeSession()
+        conn.close()
 
 
 if __name__ == "__main__":

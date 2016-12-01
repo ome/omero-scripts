@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
- components/tools/OmeroPy/scripts/omero/util_scripts/Combine_Images.py
 
 -----------------------------------------------------------------------------
   Copyright (C) 2006-2014 University of Dundee. All rights reserved.
@@ -680,7 +679,7 @@ See http://help.openmicroscopy.org/scripts.html""",
                 client.setOutput("First_Image", robject(images[0]))
 
     finally:
-        client.closeSession()
+        conn.close()
         printDuration()
 
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-components/tools/OmeroPy/scripts/omero/import_scripts/Populate_Plate_Roi.py
 
 Uses the omero.util.populate_roi functionality to parse all the measurement
 files attached to a plate, and generate server-side rois.
