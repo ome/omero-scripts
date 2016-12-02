@@ -287,9 +287,6 @@ def process_images(conn, script_params):
         if 'Channels' in script_params:
             script_params['Channels'] = [i-1 for i in
                                          script_params['Channels']]
-            # Convert user input from 1-based to 0-based
-            for i in script_params['Channels']:
-                print i, type(i)
         else:
             script_params['Channels'] = range(size_c)
 
