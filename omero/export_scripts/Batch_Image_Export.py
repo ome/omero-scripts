@@ -294,7 +294,7 @@ def batch_image_export(conn, script_params):
         zoom_percent = int(script_params["Zoom"][:-1])
 
     # functions used below for each imaage.
-    def getZrange(size_z, script_params):
+    def get_zrange(size_z, script_params):
         z_range = None
         if "Choose_Z_Section" in script_params:
             z_choice = script_params["Choose_Z_Section"]
@@ -320,7 +320,7 @@ def batch_image_export(conn, script_params):
                     z_range = (z_start, z_end+1)
         return z_range
 
-    def getTrange(size_t, script_params):
+    def get_trange(size_t, script_params):
         t_range = None
         if "Choose_T_Section" in script_params:
             t_choice = script_params["Choose_T_Section"]
@@ -415,8 +415,8 @@ def batch_image_export(conn, script_params):
             size_c = img.getSizeC()
             size_z = img.getSizeZ()
             size_t = img.getSizeT()
-            z_range = getZrange(size_z, script_params)
-            t_range = getTrange(size_t, script_params)
+            z_range = get_zrange(size_z, script_params)
+            t_range = get_trange(size_t, script_params)
             log("Using:")
             if z_range is None:
                 log("  Z-index: Last-viewed")
@@ -468,17 +468,17 @@ def batch_image_export(conn, script_params):
         conn.deleteObjects("Annotation", ometiff_ids)
         export_file = os.path.join(folder_name, os.listdir(exp_dir)[0])
         namespace = NSOMETIFF
-        output_displayName = "OME-TIFF"
+        output_displayname = "OME-TIFF"
         mimetype = 'image/tiff'
     else:
         export_file = "%s.zip" % folder_name
         compress(export_file, folder_name)
         mimetype = 'application/zip'
-        output_displayName = "Batch export zip"
+        output_displayname = "Batch export zip"
         namespace = NSCREATED + "/omero/export_scripts/Batch_Image_Export"
 
     file_annotation, ann_message = script_utils.createLinkFileAnnotation(
-        conn, export_file, parent, output=output_displayName, ns=namespace,
+        conn, export_file, parent, output=output_displayname, ns=namespace,
         mimetype=mimetype)
     message += ann_message
     return file_annotation, message
