@@ -179,13 +179,13 @@ def save_as_ome_tiff(conn, image, folder_name=None):
         img_name = os.path.join(folder_name, img_name)
     # check we don't overwrite existing file
     i = 1
-    pathName = img_name[:-(len(extension)+1)]
+    path_name = img_name[:-(len(extension)+1)]
     while os.path.exists(img_name):
-        img_name = "%s_(%d).%s" % (pathName, i, extension)
+        img_name = "%s_(%d).%s" % (path_name, i, extension)
         i += 1
 
     log("  Saving file as: %s" % img_name)
-    fileSize, block_gen = image.exportOmeTiff(bufsize=65536)
+    file_size, block_gen = image.exportOmeTiff(bufsize=65536)
     with open(str(img_name), "wb") as f:
         for piece in block_gen:
             f.write(piece)
