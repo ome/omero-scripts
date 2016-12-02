@@ -81,8 +81,8 @@ def compress(target, base):
         zip_file.close()
 
 
-def savePlane(image, format, c_name, z_range, project_z, t=0, channel=None,
-              greyscale=False, zoom_percent=None, folder_name=None):
+def save_plane(image, format, c_name, z_range, project_z, t=0, channel=None,
+               greyscale=False, zoom_percent=None, folder_name=None):
     """
     Renders and saves an image to disk.
 
@@ -102,7 +102,7 @@ def savePlane(image, format, c_name, z_range, project_z, t=0, channel=None,
 
     original_name = image.getName()
     log("")
-    log("savePlane..")
+    log("save_plane..")
     log("channel: %s" % c_name)
     log("z: %s" % z_range)
     log("t: %s" % t)
@@ -129,23 +129,23 @@ def savePlane(image, format, c_name, z_range, project_z, t=0, channel=None,
                              Image.ANTIALIAS)
 
     if format == "PNG":
-        img_name = makeImageName(
+        img_name = make_image_name(
             original_name, c_name, z_range, t, "png", folder_name)
         log("Saving image: %s" % img_name)
         plane.save(img_name, "PNG")
     elif format == 'TIFF':
-        img_name = makeImageName(
+        img_name = make_image_name(
             original_name, c_name, z_range, t, "tiff", folder_name)
         log("Saving image: %s" % img_name)
         plane.save(img_name, 'TIFF')
     else:
-        img_name = makeImageName(
+        img_name = make_image_name(
             original_name, c_name, z_range, t, "jpg", folder_name)
         log("Saving image: %s" % img_name)
         plane.save(img_name)
 
 
-def makeImageName(original_name, c_name, z_range, t, extension, folder_name):
+def make_image_name(original_name, c_name, z_range, t, extension, folder_name):
     """
     Produces the name for the saved image.
     E.g. imported/myImage.dv -> myImage_DAPI_z13_t01.png
@@ -168,7 +168,7 @@ def makeImageName(original_name, c_name, z_range, t, extension, folder_name):
     return img_name
 
 
-def saveAsOmeTiff(conn, image, folder_name=None):
+def save_as_ome_tiff(conn, image, folder_name=None):
     """
     Saves the image as an ome.tif in the specified folder
     """
@@ -194,10 +194,10 @@ def saveAsOmeTiff(conn, image, folder_name=None):
     f.close()
 
 
-def savePlanesForImage(conn, image, size_c, split_cs, merged_cs,
-                       channel_names=None, z_range=None, t_range=None,
-                       greyscale=False, zoom_percent=None, project_z=False,
-                       format="PNG", folder_name=None):
+def save_planes_for_image(conn, image, size_c, split_cs, merged_cs,
+                          channel_names=None, z_range=None, t_range=None,
+                          greyscale=False, zoom_percent=None, project_z=False,
+                          format="PNG", folder_name=None):
     """
     Saves all the required planes for a single image, either as individual
     planes or projection.
@@ -256,22 +256,22 @@ def savePlanesForImage(conn, image, size_c, split_cs, merged_cs,
         for t in t_indexes:
             if z_range is None:
                 default_z = image.getDefaultZ()+1
-                savePlane(image, format, c_name, (default_z,), project_z, t, c,
-                          g_scale, zoom_percent, folder_name)
+                save_plane(image, format, c_name, (default_z,), project_z, t,
+                           c, g_scale, zoom_percent, folder_name)
             elif project_z:
-                savePlane(image, format, c_name, z_range, project_z, t, c,
-                          g_scale, zoom_percent, folder_name)
+                save_plane(image, format, c_name, z_range, project_z, t, c,
+                           g_scale, zoom_percent, folder_name)
             else:
                 if len(z_range) > 1:
                     for z in range(z_range[0], z_range[1]):
-                        savePlane(image, format, c_name, (z,), project_z, t, c,
-                                  g_scale, zoom_percent, folder_name)
+                        save_plane(image, format, c_name, (z,), project_z, t,
+                                   c, g_scale, zoom_percent, folder_name)
                 else:
-                    savePlane(image, format, c_name, z_range, project_z, t, c,
-                              g_scale, zoom_percent, folder_name)
+                    save_plane(image, format, c_name, z_range, project_z, t,
+                               c, g_scale, zoom_percent, folder_name)
 
 
-def batchImageExport(conn, script_params):
+def batch_image_export(conn, script_params):
 
     # for params with default values, we can get the value directly
     split_cs = script_params["Export_Individual_Channels"]
@@ -399,7 +399,7 @@ def batchImageExport(conn, script_params):
                     return None, "Can't export a 'Big' image to %s." % format
                 continue
             else:
-                saveAsOmeTiff(conn, img, folder_name)
+                save_as_ome_tiff(conn, img, folder_name)
         else:
             size_x = pixels.getSizeX()
             size_y = pixels.getSizeY()
@@ -447,10 +447,11 @@ def batchImageExport(conn, script_params):
                     % (ch.getLabel(), ch.getWindowStart(), ch.getWindowEnd()))
 
             try:
-                savePlanesForImage(conn, img, size_c, split_cs, merged_cs,
-                                   channel_names, z_range, t_range, greyscale,
-                                   zoom_percent, project_z=project_z,
-                                   format=format, folder_name=folder_name)
+                save_planes_for_image(conn, img, size_c, split_cs, merged_cs,
+                                      channel_names, z_range, t_range,
+                                      greyscale, zoom_percent,
+                                      project_z=project_z, format=format,
+                                      folder_name=folder_name)
             finally:
                 # Make sure we close Rendering Engine
                 img._re.close()
@@ -489,7 +490,7 @@ def batchImageExport(conn, script_params):
     return file_annotation, message
 
 
-def runScript():
+def run_script():
     """
     The main entry point of the script, as called by the client via the
     scripting service, passing the required parameters.
@@ -500,14 +501,14 @@ def runScript():
                rstring('OME-TIFF')]
     default_z_option = 'Default-Z (last-viewed)'
     z_choices = [rstring(default_z_option),
-                rstring('ALL Z planes'),
-                # currently ImageWrapper only allows full Z-stack projection
-                rstring('Max projection'),
-                rstring('Other (see below)')]
+                 rstring('ALL Z planes'),
+                 # currently ImageWrapper only allows full Z-stack projection
+                 rstring('Max projection'),
+                 rstring('Other (see below)')]
     default_t_option = 'Default-T (last-viewed)'
     t_choices = [rstring(default_t_option),
-                rstring('ALL T planes'),
-                rstring('Other (see below)')]
+                 rstring('ALL T planes'),
+                 rstring('Other (see below)')]
     zoom_percents = omero.rtypes.wrap(["25%", "50%", "100%", "200%",
                                       "300%", "400%"])
 
@@ -610,7 +611,7 @@ See http://help.openmicroscopy.org/export.html#batch""",
         log(script_params)
 
         # call the main script - returns a file annotation wrapper
-        file_annotation, message = batchImageExport(conn, script_params)
+        file_annotation, message = batch_image_export(conn, script_params)
 
         stop_time = datetime.now()
         log("Duration: %s" % str(stop_time-start_time))
@@ -626,4 +627,4 @@ See http://help.openmicroscopy.org/export.html#batch""",
 
 
 if __name__ == "__main__":
-    runScript()
+    run_script()
