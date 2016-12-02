@@ -468,7 +468,11 @@ def processImages(conn, script_params):
     return new_kymographs, message
 
 
-if __name__ == "__main__":
+def run_script():
+    """
+    The main entry point of the script, as called by the client via the
+    scripting service, passing the required parameters.
+    """
 
     data_types = [rstring('Image')]
 
@@ -532,3 +536,7 @@ same sizeC as input.""",
 
     finally:
         client.closeSession()
+
+
+if __name__ == "__main__":
+    run_script()
