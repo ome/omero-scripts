@@ -49,7 +49,7 @@ except ImportError:
     import Image
 
 # keep track of log strings.
-logStrings = []
+log_strings = []
 
 
 def log(text):
@@ -62,7 +62,7 @@ def log(text):
     except:
         pass
     print text
-    logStrings.append(str(text))
+    log_strings.append(str(text))
 
 
 def compress(target, base):
@@ -83,36 +83,31 @@ def compress(target, base):
         zip_file.close()
 
 
-def savePlane(image, format, cName, zRange, projectZ, t=0, channel=None,
-              greyscale=False, zoomPercent=None, folder_name=None):
+def savePlane(image, format, c_name, z_range, project_z, t=0, channel=None,
+              greyscale=False, zoom_percent=None, folder_name=None):
     """
     Renders and saves an image to disk.
 
-    @param renderingEngine: Rendering Engine should already be initialised wi
-                            with the correct pixels etc
-    @param imgName:         The name or path to save to disk, with extension
-                            E.g. imgDir/image01_DAPI_T01_Z01.png
-    @param zRange:          Tuple of (zIndex,) OR (zStart, zStop) for
+    @param image:           The image to render
+    @param format:          The format to save as
+    @param c_name:          The name to use
+    @param z_range:         Tuple of (zIndex,) OR (zStart, zStop) for
                             projection
     @param t:               T index
     @param channel:         Active channel index. If None, use current
                             rendering settings
     @param greyscale:       If true, all visible channels will be
                             greyscale
-    @param zoomPercent:     Resize image by this percent if specified.
+    @param zoom_percent:    Resize image by this percent if specified
+    @param folder_name:     Indicate where to save the plane
     """
 
-    originalName = image.getName()
+    original_name = image.getName()
     log("")
     log("savePlane..")
-    # log("originalName %s" % originalName)
-    # log("format %s" % format)
-    log("channel: %s" % cName)
-    log("z: %s" % zRange)
+    log("channel: %s" % c_name)
+    log("z: %s" % z_range)
     log("t: %s" % t)
-    # log("channel %s" % channel)
-    # log("greyscale %s" % greyscale)
-    # log("zoomPercent %s" % zoomPercent)
 
     # if channel == None: use current rendering settings
     if channel is not None:
@@ -121,58 +116,58 @@ def savePlane(image, format, cName, zRange, projectZ, t=0, channel=None,
             image.setGreyscaleRenderingModel()
         else:
             image.setColorRenderingModel()
-    if projectZ:
+    if project_z:
         # imageWrapper only supports projection of full Z range (can't
         # specify)
         image.setProjection('intmax')
 
     # All Z and T indices in this script are 1-based, but this method uses
     # 0-based.
-    plane = image.renderImage(zRange[0]-1, t-1)
-    if zoomPercent:
+    plane = image.renderImage(z_range[0]-1, t-1)
+    if zoom_percent:
         w, h = plane.size
-        fraction = (float(zoomPercent) / 100)
+        fraction = (float(zoom_percent) / 100)
         plane = plane.resize((int(w * fraction), int(h * fraction)),
                              Image.ANTIALIAS)
 
     if format == "PNG":
-        imgName = makeImageName(
-            originalName, cName, zRange, t, "png", folder_name)
-        log("Saving image: %s" % imgName)
-        plane.save(imgName, "PNG")
+        img_name = makeImageName(
+            original_name, c_name, z_range, t, "png", folder_name)
+        log("Saving image: %s" % img_name)
+        plane.save(img_name, "PNG")
     elif format == 'TIFF':
-        imgName = makeImageName(
-            originalName, cName, zRange, t, "tiff", folder_name)
-        log("Saving image: %s" % imgName)
-        plane.save(imgName, 'TIFF')
+        img_name = makeImageName(
+            original_name, c_name, z_range, t, "tiff", folder_name)
+        log("Saving image: %s" % img_name)
+        plane.save(img_name, 'TIFF')
     else:
-        imgName = makeImageName(
-            originalName, cName, zRange, t, "jpg", folder_name)
-        log("Saving image: %s" % imgName)
-        plane.save(imgName)
+        img_name = makeImageName(
+            original_name, c_name, z_range, t, "jpg", folder_name)
+        log("Saving image: %s" % img_name)
+        plane.save(img_name)
 
 
-def makeImageName(originalName, cName, zRange, t, extension, folder_name):
+def makeImageName(original_name, c_name, z_range, t, extension, folder_name):
     """
     Produces the name for the saved image.
     E.g. imported/myImage.dv -> myImage_DAPI_z13_t01.png
     """
-    name = os.path.basename(originalName)
+    name = os.path.basename(original_name)
     # name = name.rsplit(".",1)[0]  # remove extension
-    if len(zRange) == 2:
-        z = "%02d-%02d" % (zRange[0], zRange[1])
+    if len(z_range) == 2:
+        z = "%02d-%02d" % (z_range[0], z_range[1])
     else:
-        z = "%02d" % zRange[0]
-    imgName = "%s_%s_z%s_t%02d.%s" % (name, cName, z, t, extension)
+        z = "%02d" % z_range[0]
+    img_name = "%s_%s_z%s_t%02d.%s" % (name, c_name, z, t, extension)
     if folder_name is not None:
-        imgName = os.path.join(folder_name, imgName)
+        img_name = os.path.join(folder_name, img_name)
     # check we don't overwrite existing file
     i = 1
-    name = imgName[:-(len(extension)+1)]
-    while os.path.exists(imgName):
-        imgName = "%s_(%d).%s" % (name, i, extension)
+    name = img_name[:-(len(extension)+1)]
+    while os.path.exists(img_name):
+        img_name = "%s_(%d).%s" % (name, i, extension)
         i += 1
-    return imgName
+    return img_name
 
 
 def saveAsOmeTiff(conn, image, folder_name=None):
@@ -182,28 +177,28 @@ def saveAsOmeTiff(conn, image, folder_name=None):
 
     extension = "ome.tif"
     name = os.path.basename(image.getName())
-    imgName = "%s.%s" % (name, extension)
+    img_name = "%s.%s" % (name, extension)
     if folder_name is not None:
-        imgName = os.path.join(folder_name, imgName)
+        img_name = os.path.join(folder_name, img_name)
     # check we don't overwrite existing file
     i = 1
-    pathName = imgName[:-(len(extension)+1)]
-    while os.path.exists(imgName):
-        imgName = "%s_(%d).%s" % (pathName, i, extension)
+    pathName = img_name[:-(len(extension)+1)]
+    while os.path.exists(img_name):
+        img_name = "%s_(%d).%s" % (pathName, i, extension)
         i += 1
 
-    log("  Saving file as: %s" % imgName)
+    log("  Saving file as: %s" % img_name)
     fileSize, block_gen = image.exportOmeTiff(bufsize=65536)
-    f = open(str(imgName), "wb")
+    f = open(str(img_name), "wb")
     for piece in block_gen:
         f.write(piece)
-    # f.seek(0)
+
     f.close()
 
 
-def savePlanesForImage(conn, image, sizeC, splitCs, mergedCs,
-                       channelNames=None, zRange=None, tRange=None,
-                       greyscale=False, zoomPercent=None, projectZ=False,
+def savePlanesForImage(conn, image, size_c, split_cs, merged_cs,
+                       channel_names=None, z_range=None, t_range=None,
+                       greyscale=False, zoom_percent=None, project_z=False,
                        format="PNG", folder_name=None):
     """
     Saves all the required planes for a single image, either as individual
@@ -223,11 +218,11 @@ def savePlanesForImage(conn, image, sizeC, splitCs, mergedCs,
     """
 
     channels = []
-    if mergedCs:
+    if merged_cs:
         # render merged first with current rendering settings
         channels.append(None)
-    if splitCs:
-        for i in range(sizeC):
+    if split_cs:
+        for i in range(size_c):
             channels.append(i)
 
     # set up rendering engine with the pixels
@@ -240,133 +235,133 @@ def savePlanesForImage(conn, image, sizeC, splitCs, mergedCs,
     renderingEngine.load()
     """
 
-    if tRange is None:
+    if t_range is None:
         # use 1-based indices throughout script
-        tIndexes = [image.getDefaultT()+1]
+        t_indexes = [image.getDefaultT()+1]
     else:
-        if len(tRange) > 1:
-            tIndexes = range(tRange[0], tRange[1])
+        if len(t_range) > 1:
+            t_indexes = range(t_range[0], t_range[1])
         else:
-            tIndexes = [tRange[0]]
+            t_indexes = [t_range[0]]
 
-    cName = 'merged'
+    c_name = 'merged'
     for c in channels:
         if c is not None:
-            gScale = greyscale
-            if c < len(channelNames):
-                cName = channelNames[c].replace(" ", "_")
+            g_scale = greyscale
+            if c < len(channel_names):
+                c_name = channel_names[c].replace(" ", "_")
             else:
-                cName = "c%02d" % c
+                c_name = "c%02d" % c
         else:
             # if we're rendering 'merged' image - don't want grey!
-            gScale = False
-        for t in tIndexes:
-            if zRange is None:
-                defaultZ = image.getDefaultZ()+1
-                savePlane(image, format, cName, (defaultZ,), projectZ, t, c,
-                          gScale, zoomPercent, folder_name)
-            elif projectZ:
-                savePlane(image, format, cName, zRange, projectZ, t, c,
-                          gScale, zoomPercent, folder_name)
+            g_scale = False
+        for t in t_indexes:
+            if z_range is None:
+                default_z = image.getDefaultZ()+1
+                savePlane(image, format, c_name, (default_z,), project_z, t, c,
+                          g_scale, zoom_percent, folder_name)
+            elif project_z:
+                savePlane(image, format, c_name, z_range, project_z, t, c,
+                          g_scale, zoom_percent, folder_name)
             else:
-                if len(zRange) > 1:
-                    for z in range(zRange[0], zRange[1]):
-                        savePlane(image, format, cName, (z,), projectZ, t, c,
-                                  gScale, zoomPercent, folder_name)
+                if len(z_range) > 1:
+                    for z in range(z_range[0], z_range[1]):
+                        savePlane(image, format, c_name, (z,), project_z, t, c,
+                                  g_scale, zoom_percent, folder_name)
                 else:
-                    savePlane(image, format, cName, zRange, projectZ, t, c,
-                              gScale, zoomPercent, folder_name)
+                    savePlane(image, format, c_name, z_range, project_z, t, c,
+                              g_scale, zoom_percent, folder_name)
 
 
-def batchImageExport(conn, scriptParams):
+def batchImageExport(conn, script_params):
 
     # for params with default values, we can get the value directly
-    splitCs = scriptParams["Export_Individual_Channels"]
-    mergedCs = scriptParams["Export_Merged_Image"]
-    greyscale = scriptParams["Individual_Channels_Grey"]
-    dataType = scriptParams["Data_Type"]
-    folder_name = scriptParams["Folder_Name"]
+    split_cs = script_params["Export_Individual_Channels"]
+    merged_cs = script_params["Export_Merged_Image"]
+    greyscale = script_params["Individual_Channels_Grey"]
+    data_type = script_params["Data_Type"]
+    folder_name = script_params["Folder_Name"]
     folder_name = os.path.basename(folder_name)
-    format = scriptParams["Format"]
-    projectZ = "Choose_Z_Section" in scriptParams and \
-        scriptParams["Choose_Z_Section"] == 'Max projection'
+    format = script_params["Format"]
+    project_z = "Choose_Z_Section" in script_params and \
+        script_params["Choose_Z_Section"] == 'Max projection'
 
-    if (not splitCs) and (not mergedCs):
+    if (not split_cs) and (not merged_cs):
         log("Not chosen to save Individual Channels OR Merged Image")
         return
 
     # check if we have these params
-    channelNames = []
-    if "Channel_Names" in scriptParams:
-        channelNames = scriptParams["Channel_Names"]
-    zoomPercent = None
-    if "Zoom" in scriptParams and scriptParams["Zoom"] != "100%":
-        zoomPercent = int(scriptParams["Zoom"][:-1])
+    channel_names = []
+    if "Channel_Names" in script_params:
+        channel_names = script_params["Channel_Names"]
+    zoom_percent = None
+    if "Zoom" in script_params and script_params["Zoom"] != "100%":
+        zoom_percent = int(script_params["Zoom"][:-1])
 
     # functions used below for each imaage.
-    def getZrange(sizeZ, scriptParams):
-        zRange = None
-        if "Choose_Z_Section" in scriptParams:
-            zChoice = scriptParams["Choose_Z_Section"]
+    def getZrange(size_z, script_params):
+        z_range = None
+        if "Choose_Z_Section" in script_params:
+            z_choice = script_params["Choose_Z_Section"]
             # NB: all Z indices in this script are 1-based
-            if zChoice == 'ALL Z planes':
-                zRange = (1, sizeZ+1)
-            elif "OR_specify_Z_index" in scriptParams:
-                zIndex = scriptParams["OR_specify_Z_index"]
-                zIndex = min(zIndex, sizeZ)
-                zRange = (zIndex,)
-            elif "OR_specify_Z_start_AND..." in scriptParams and \
-                    "...specify_Z_end" in scriptParams:
-                start = scriptParams["OR_specify_Z_start_AND..."]
-                start = min(start, sizeZ)
-                end = scriptParams["...specify_Z_end"]
-                end = min(end, sizeZ)
-                # in case user got zStart and zEnd mixed up
-                zStart = min(start, end)
-                zEnd = max(start, end)
-                if zStart == zEnd:
-                    zRange = (zStart,)
+            if z_choice == 'ALL Z planes':
+                z_range = (1, size_z+1)
+            elif "OR_specify_Z_index" in script_params:
+                z_index = script_params["OR_specify_Z_index"]
+                z_index = min(z_index, size_z)
+                z_range = (z_index,)
+            elif "OR_specify_Z_start_AND..." in script_params and \
+                    "...specify_Z_end" in script_params:
+                start = script_params["OR_specify_Z_start_AND..."]
+                start = min(start, size_z)
+                end = script_params["...specify_Z_end"]
+                end = min(end, size_z)
+                # in case user got z_start and z_end mixed up
+                z_start = min(start, end)
+                z_end = max(start, end)
+                if z_start == z_end:
+                    z_range = (z_start,)
                 else:
-                    zRange = (zStart, zEnd+1)
-        return zRange
+                    z_range = (z_start, z_end+1)
+        return z_range
 
-    def getTrange(sizeT, scriptParams):
-        tRange = None
-        if "Choose_T_Section" in scriptParams:
-            tChoice = scriptParams["Choose_T_Section"]
+    def getTrange(size_t, script_params):
+        t_range = None
+        if "Choose_T_Section" in script_params:
+            t_choice = script_params["Choose_T_Section"]
             # NB: all T indices in this script are 1-based
-            if tChoice == 'ALL T planes':
-                tRange = (1, sizeT+1)
-            elif "OR_specify_T_index" in scriptParams:
-                tIndex = scriptParams["OR_specify_T_index"]
-                tIndex = min(tIndex, sizeT)
-                tRange = (tIndex,)
-            elif "OR_specify_T_start_AND..." in scriptParams and \
-                    "...specify_T_end" in scriptParams:
-                start = scriptParams["OR_specify_T_start_AND..."]
-                start = min(start, sizeT)
-                end = scriptParams["...specify_T_end"]
-                end = min(end, sizeT)
-                # in case user got zStart and zEnd mixed up
-                tStart = min(start, end)
-                tEnd = max(start, end)
-                if tStart == tEnd:
-                    tRange = (tStart,)
+            if t_choice == 'ALL T planes':
+                t_range = (1, size_t+1)
+            elif "OR_specify_T_index" in script_params:
+                t_index = script_params["OR_specify_T_index"]
+                t_index = min(t_index, size_t)
+                t_range = (t_index,)
+            elif "OR_specify_T_start_AND..." in script_params and \
+                    "...specify_T_end" in script_params:
+                start = script_params["OR_specify_T_start_AND..."]
+                start = min(start, size_t)
+                end = script_params["...specify_T_end"]
+                end = min(end, size_t)
+                # in case user got t_start and t_end mixed up
+                t_start = min(start, end)
+                t_end = max(start, end)
+                if t_start == t_end:
+                    t_range = (t_start,)
                 else:
-                    tRange = (tStart, tEnd+1)
-        return tRange
+                    t_range = (t_start, t_end+1)
+        return t_range
 
     # Get the images or datasets
     message = ""
-    objects, logMessage = script_utils.getObjects(conn, scriptParams)
-    message += logMessage
+    objects, log_message = script_utils.getObjects(conn, script_params)
+    message += log_message
     if not objects:
         return None, message
 
     # Attach figure to the first image
     parent = objects[0]
 
-    if dataType == 'Dataset':
+    if data_type == 'Dataset':
         images = []
         for ds in objects:
             images.extend(list(ds.listChildren()))
@@ -408,9 +403,9 @@ def batchImageExport(conn, scriptParams):
             else:
                 saveAsOmeTiff(conn, img, folder_name)
         else:
-            sizeX = pixels.getSizeX()
-            sizeY = pixels.getSizeY()
-            if sizeX*sizeY > size:
+            size_x = pixels.getSizeX()
+            size_y = pixels.getSizeY()
+            if size_x*size_y > size:
                 msg = "Can't export image over %s pixels. " \
                       "See 'omero.client.download_as.max_size'" % size
                 log("  ** %s. **" % msg)
@@ -422,31 +417,31 @@ def batchImageExport(conn, scriptParams):
 
             log("\n----------- Saving planes from image: '%s' ------------"
                 % img.getName())
-            sizeC = img.getSizeC()
-            sizeZ = img.getSizeZ()
-            sizeT = img.getSizeT()
-            zRange = getZrange(sizeZ, scriptParams)
-            tRange = getTrange(sizeT, scriptParams)
+            size_c = img.getSizeC()
+            size_z = img.getSizeZ()
+            size_t = img.getSizeT()
+            z_range = getZrange(size_z, script_params)
+            t_range = getTrange(size_t, script_params)
             log("Using:")
-            if zRange is None:
+            if z_range is None:
                 log("  Z-index: Last-viewed")
-            elif len(zRange) == 1:
-                log("  Z-index: %d" % zRange[0])
+            elif len(z_range) == 1:
+                log("  Z-index: %d" % z_range[0])
             else:
-                log("  Z-range: %s-%s" % (zRange[0], zRange[1]-1))
-            if projectZ:
+                log("  Z-range: %s-%s" % (z_range[0], z_range[1]-1))
+            if project_z:
                 log("  Z-projection: ON")
-            if tRange is None:
+            if t_range is None:
                 log("  T-index: Last-viewed")
-            elif len(tRange) == 1:
-                log("  T-index: %d" % tRange[0])
+            elif len(t_range) == 1:
+                log("  T-index: %d" % t_range[0])
             else:
-                log("  T-range: %s-%s" % (tRange[0], tRange[1]-1))
+                log("  T-range: %s-%s" % (t_range[0], t_range[1]-1))
             log("  Format: %s" % format)
-            if zoomPercent is None:
+            if zoom_percent is None:
                 log("  Image Zoom: 100%")
             else:
-                log("  Image Zoom: %s" % zoomPercent)
+                log("  Image Zoom: %s" % zoom_percent)
             log("  Greyscale: %s" % greyscale)
             log("Channel Rendering Settings:")
             for ch in img.getChannels():
@@ -454,46 +449,46 @@ def batchImageExport(conn, scriptParams):
                     % (ch.getLabel(), ch.getWindowStart(), ch.getWindowEnd()))
 
             try:
-                savePlanesForImage(
-                    conn, img, sizeC, splitCs, mergedCs, channelNames, zRange,
-                    tRange, greyscale, zoomPercent, projectZ=projectZ,
-                    format=format, folder_name=folder_name)
+                savePlanesForImage(conn, img, size_c, split_cs, merged_cs,
+                                   channel_names, z_range, t_range, greyscale,
+                                   zoom_percent, project_z=project_z,
+                                   format=format, folder_name=folder_name)
             finally:
                 # Make sure we close Rendering Engine
                 img._re.close()
 
         # write log for exported images (not needed for ome-tiff)
-        logFile = open(os.path.join(exp_dir, 'Batch_Image_Export.txt'), 'w')
+        log_file = open(os.path.join(exp_dir, 'Batch_Image_Export.txt'), 'w')
         try:
-            for s in logStrings:
-                logFile.write(s)
-                logFile.write("\n")
+            for s in log_strings:
+                log_file.write(s)
+                log_file.write("\n")
         finally:
-            logFile.close()
+            log_file.close()
 
     if len(os.listdir(exp_dir)) == 0:
         return None, "No files exported. See 'info' for more details"
     # zip everything up (unless we've only got a single ome-tiff)
     if format == 'OME-TIFF' and len(os.listdir(exp_dir)) == 1:
-        ometiffIds = [t.id for t in parent.listAnnotations(ns=NSOMETIFF)]
-        print "Deleting OLD ome-tiffs: %s" % ometiffIds
-        conn.deleteObjects("Annotation", ometiffIds)
+        ometiff_ids = [t.id for t in parent.listAnnotations(ns=NSOMETIFF)]
+        print "Deleting OLD ome-tiffs: %s" % ometiff_ids
+        conn.deleteObjects("Annotation", ometiff_ids)
         export_file = os.path.join(folder_name, os.listdir(exp_dir)[0])
         namespace = NSOMETIFF
-        outputDisplayName = "OME-TIFF"
+        output_displayName = "OME-TIFF"
         mimetype = 'image/tiff'
     else:
         export_file = "%s.zip" % folder_name
         compress(export_file, folder_name)
         mimetype = 'application/zip'
-        outputDisplayName = "Batch export zip"
+        output_displayName = "Batch export zip"
         namespace = NSCREATED + "/omero/export_scripts/Batch_Image_Export"
 
-    fileAnnotation, annMessage = script_utils.createLinkFileAnnotation(
-        conn, export_file, parent, output=outputDisplayName, ns=namespace,
+    file_annotation, ann_message = script_utils.createLinkFileAnnotation(
+        conn, export_file, parent, output=output_displayName, ns=namespace,
         mimetype=mimetype)
-    message += annMessage
-    return fileAnnotation, message
+    message += ann_message
+    return file_annotation, message
 
 
 def runScript():
@@ -502,20 +497,20 @@ def runScript():
     scripting service, passing the required parameters.
     """
 
-    dataTypes = [rstring('Dataset'), rstring('Image')]
+    data_types = [rstring('Dataset'), rstring('Image')]
     formats = [rstring('JPEG'), rstring('PNG'), rstring('TIFF'),
                rstring('OME-TIFF')]
-    defaultZoption = 'Default-Z (last-viewed)'
-    zChoices = [rstring(defaultZoption),
+    default_z_option = 'Default-Z (last-viewed)'
+    z_choices = [rstring(default_z_option),
                 rstring('ALL Z planes'),
                 # currently ImageWrapper only allows full Z-stack projection
                 rstring('Max projection'),
                 rstring('Other (see below)')]
-    defaultToption = 'Default-T (last-viewed)'
-    tChoices = [rstring(defaultToption),
+    default_t_option = 'Default-T (last-viewed)'
+    t_choices = [rstring(default_t_option),
                 rstring('ALL T planes'),
                 rstring('Other (see below)')]
-    zoomPercents = omero.rtypes.wrap(["25%", "50%", "100%", "200%",
+    zoom_percents = omero.rtypes.wrap(["25%", "50%", "100%", "200%",
                                       "300%", "400%"])
 
     client = scripts.client(
@@ -526,7 +521,7 @@ See http://help.openmicroscopy.org/export.html#batch""",
 
         scripts.String(
             "Data_Type", optional=False, grouping="1",
-            description="The data you want to work with.", values=dataTypes,
+            description="The data you want to work with.", values=data_types,
             default="Image"),
 
         scripts.List(
@@ -555,7 +550,7 @@ See http://help.openmicroscopy.org/export.html#batch""",
         scripts.String(
             "Choose_Z_Section", grouping="5",
             description="Default Z is last viewed Z for each image, OR choose"
-            " Z below.", values=zChoices, default=defaultZoption),
+            " Z below.", values=z_choices, default=default_z_option),
 
         scripts.Int(
             "OR_specify_Z_index", grouping="5.1",
@@ -572,7 +567,7 @@ See http://help.openmicroscopy.org/export.html#batch""",
         scripts.String(
             "Choose_T_Section", grouping="6",
             description="Default T is last viewed T for each image, OR choose"
-            " T below.", values=tChoices, default=defaultToption),
+            " T below.", values=t_choices, default=default_t_option),
 
         scripts.Int(
             "OR_specify_T_index", grouping="6.1",
@@ -587,7 +582,7 @@ See http://help.openmicroscopy.org/export.html#batch""",
             description="Choose a specific T-index to export", min=1),
 
         scripts.String(
-            "Zoom", grouping="7", values=zoomPercents,
+            "Zoom", grouping="7", values=zoom_percents,
             description="Zoom (jpeg, png or tiff) before saving with"
             " ANTIALIAS interpolation", default="100%"),
 
@@ -608,25 +603,25 @@ See http://help.openmicroscopy.org/export.html#batch""",
     )
 
     try:
-        startTime = datetime.now()
-        scriptParams = {}
+        start_time = datetime.now()
+        script_params = {}
 
         conn = BlitzGateway(client_obj=client)
 
-        scriptParams = client.getInputs(unwrap=True)
-        log(scriptParams)
+        script_params = client.getInputs(unwrap=True)
+        log(script_params)
 
         # call the main script - returns a file annotation wrapper
-        fileAnnotation, message = batchImageExport(conn, scriptParams)
+        file_annotation, message = batchImageExport(conn, script_params)
 
-        stopTime = datetime.now()
-        log("Duration: %s" % str(stopTime-startTime))
+        stop_time = datetime.now()
+        log("Duration: %s" % str(stop_time-start_time))
 
         # return this fileAnnotation to the client.
         client.setOutput("Message", rstring(message))
-        if fileAnnotation is not None:
+        if file_annotation is not None:
                 client.setOutput("File_Annotation",
-                                 robject(fileAnnotation._obj))
+                                 robject(file_annotation._obj))
 
     finally:
         client.closeSession()
