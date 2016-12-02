@@ -371,8 +371,11 @@ def process_images(conn, script_params):
     return file_anns, message
 
 
-if __name__ == "__main__":
-
+def run_script():
+    """
+    The main entry point of the script, as called by the client via the
+    scripting service, passing the required parameters.
+    """
     data_types = [rstring('Image')]
     sum_avg_options = [rstring('Average'),
                        rstring('Sum'),
@@ -428,3 +431,7 @@ and outputs the data as CSV files, for plotting in e.g. Excel.""",
 
     finally:
         client.closeSession()
+
+
+if __name__ == "__main__":
+    run_script()
