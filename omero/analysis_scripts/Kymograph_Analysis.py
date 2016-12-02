@@ -160,11 +160,8 @@ def process_images(conn, script_params):
     iids = [str(i.getId()) for i in images]
     to_link_csv = [i.getId() for i in images if i.canAnnotate()]
     csv_file_name = 'kymograph_velocities_%s.csv' % "-".join(iids)
-    csv_file = open(csv_file_name, 'w')
-    try:
+    with open(csv_file_name, 'w') as csv_file:
         csv_file.write("\n \n".join(csv_data))
-    finally:
-        csv_file.close()
 
     file_ann = conn.createFileAnnfromLocalFile(csv_file, mimetype="text/csv")
     fa_message = "Created Line Plot csv (Excel) file"
