@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
- components/tools/OmeroPy/scripts/omero/analysis_scripts/Kymograph_Analysis.py
-
 -----------------------------------------------------------------------------
   Copyright (C) 2006-2014 University of Dundee. All rights reserved.
 
@@ -53,25 +51,25 @@ def pointsStringToXYlist(string):
     E.g: "points[309,427, 366,503, 190,491] points1[309,427, 366,503, 190,491]
     points2[309,427, 366,503, 190,491]"
     """
-    pointLists = string.strip().split("points")
-    if len(pointLists) < 2:
+    point_lists = string.strip().split("points")
+    if len(point_lists) < 2:
         logger.error("Unrecognised ROI shape 'points' string: %s" % string)
         return ""
-    firstList = pointLists[1]
-    xyList = []
-    for xy in firstList.strip(" []").split(", "):
+    first_list = point_lists[1]
+    xy_list = []
+    for xy in first_list.strip(" []").split(", "):
         x, y = xy.split(",")
-        xyList.append((int(x.strip()), int(y.strip())))
-    return xyList
+        xy_list.append((int(x.strip()), int(y.strip())))
+    return xy_list
 
 
-def processImages(conn, scriptParams):
+def processImages(conn, script_params):
 
-    fileAnns = []
+    file_anns = []
     message = ""
     # Get the images
-    images, logMessage = scriptUtil.getObjects(conn, scriptParams)
-    message += logMessage
+    images, log_message = scriptUtil.getObjects(conn, script_params)
+    message += log_message
     if not images:
         return None, message
     # Check for line and polyline ROIs and filter images list
@@ -81,128 +79,122 @@ def processImages(conn, scriptParams):
         message += "No ROI containing line or polyline was found."
         return None, message
 
-    csvData = []
+    csv_data = []
 
     for image in images:
-        print "\nAnalysing Image: %s ID: %s" \
-            % (image.getName(), image.getId())
 
         if image.getSizeT() > 1:
             message += "%s ID: %s appears to be a time-lapse Image," \
                 " not a kymograph." % (image.getName(), image.getId())
             continue
 
-        roiService = conn.getRoiService()
-        result = roiService.findByImage(image.getId(), None)
+        roi_service = conn.getRoiService()
+        result = roi_service.findByImage(image.getId(), None)
 
-        secsPerPixelY = image.getPixelSizeY()
-        micronsPerPixelX = image.getPixelSizeX()
-        if secsPerPixelY and micronsPerPixelX:
-            micronsPerSec = micronsPerPixelX / secsPerPixelY
+        secs_per_pixel_y = image.getPixelSizeY()
+        microns_per_pixel_x = image.getPixelSizeX()
+        if secs_per_pixel_y and microns_per_pixel_x:
+            microns_per_sec = microns_per_pixel_x / secs_per_pixel_y
         else:
-            micronsPerSec = None
+            microns_per_sec = None
 
         # for each line or polyline, create a row in csv table: y(t), x,
         # dy(dt), dx, x/t (line), x/t (average)
-        colNames = "\nt_start (pixels), x_start (pixels), t_end (pixels)," \
+        col_names = "\nt_start (pixels), x_start (pixels), t_end (pixels)," \
             " x_end (pixels), dt (pixels), dx (pixels), x/t, speed(um/sec)," \
             "avg x/t, avg speed(um/sec)"
-        tableData = ""
+        table_data = ""
         for roi in result.rois:
             for s in roi.copyShapes():
                 if s is None:
                     continue    # seems possible in some situations
                 if type(s) == omero.model.LineI:
-                    tableData += "\nLine ID: %s" % s.getId().getValue()
+                    table_data += "\nLine ID: %s" % s.getId().getValue()
                     x1 = s.getX1().getValue()
                     x2 = s.getX2().getValue()
                     y1 = s.getY1().getValue()
                     y2 = s.getY2().getValue()
                     dx = abs(x1-x2)
                     dy = abs(y1-y2)
-                    dxPerY = float(dx)/dy
+                    dx_per_y = float(dx)/dy
                     speed = ""
-                    if micronsPerSec:
-                        speed = dxPerY * micronsPerSec
-                    tableData += "\n"
-                    tableData += ",".join(
-                        [str(x) for x in (y1, x1, y2, x2, dy, dx, dxPerY,
+                    if microns_per_sec:
+                        speed = dx_per_y * microns_per_sec
+                    table_data += "\n"
+                    table_data += ",".join(
+                        [str(x) for x in (y1, x1, y2, x2, dy, dx, dx_per_y,
                                           speed)])
 
                 elif type(s) == omero.model.PolylineI:
-                    tableData += "\nPolyline ID: %s" % s.getId().getValue()
+                    table_data += "\nPolyline ID: %s" % s.getId().getValue()
                     points = pointsStringToXYlist(s.getPoints().getValue())
-                    xStart, yStart = points[0]
+                    x_start, y_start = points[0]
                     for i in range(1, len(points)):
                         x1, y1 = points[i-1]
                         x2, y2 = points[i]
                         dx = abs(x1-x2)
                         dy = abs(y1-y2)
-                        dxPerY = float(dx)/dy
-                        avXperY = abs(float(x2-xStart)/(y2-yStart))
+                        dx_per_y = float(dx)/dy
+                        av_x_per_y = abs(float(x2-x_start)/(y2-y_start))
                         speed = ""
-                        avgSpeed = ""
-                        if micronsPerSec:
-                            speed = dxPerY * micronsPerSec
-                            avgSpeed = avXperY * micronsPerSec
-                        tableData += "\n"
-                        tableData += ",".join(
-                            [str(x) for x in (y1, x1, y2, x2, dy, dx, dxPerY,
-                                              speed, avXperY, avgSpeed)])
+                        avg_speed = ""
+                        if microns_per_sec:
+                            speed = dx_per_y * microns_per_sec
+                            avg_speed = av_x_per_y * microns_per_sec
+                        table_data += "\n"
+                        table_data += ",".join(
+                            [str(x) for x in (y1, x1, y2, x2, dy, dx, dx_per_y,
+                                              speed, av_x_per_y, avg_speed)])
 
         # write table data to csv...
-        if len(tableData) > 0:
-            tableString = "Image ID:, %s," % image.getId()
-            tableString += "Name:, %s" % image.getName()
-            tableString += "\nsecsPerPixelY: %s" % secsPerPixelY
-            tableString += '\nmicronsPerPixelX: %s' % micronsPerPixelX
-            tableString += "\n"
-            tableString += colNames
-            tableString += tableData
-            print tableString
-            csvData.append(tableString)
-        else:
-            print "Found NO lines or polylines to analyze for Image"
+        if len(table_data) > 0:
+            table_string = "Image ID:, %s," % image.getId()
+            table_string += "Name:, %s" % image.getName()
+            table_string += "\nsecsPerPixelY: %s" % secs_per_pixel_y
+            table_string += '\nmicronsPerPixelX: %s' % microns_per_pixel_x
+            table_string += "\n"
+            table_string += col_names
+            table_string += table_data
+            csv_data.append(table_string)
 
     iids = [str(i.getId()) for i in images]
-    toLinkCsv = [i.getId() for i in images if i.canAnnotate()]
-    csvFileName = 'kymograph_velocities_%s.csv' % "-".join(iids)
-    csvFile = open(csvFileName, 'w')
+    to_link_csv = [i.getId() for i in images if i.canAnnotate()]
+    csv_file_name = 'kymograph_velocities_%s.csv' % "-".join(iids)
+    csv_file = open(csv_file_name, 'w')
     try:
-        csvFile.write("\n \n".join(csvData))
+        csv_file.write("\n \n".join(csv_data))
     finally:
-        csvFile.close()
+        csv_file.close()
 
-    fileAnn = conn.createFileAnnfromLocalFile(csvFileName, mimetype="text/csv")
-    faMessage = "Created Line Plot csv (Excel) file"
+    file_ann = conn.createFileAnnfromLocalFile(csv_file, mimetype="text/csv")
+    fa_message = "Created Line Plot csv (Excel) file"
 
     links = []
-    if len(toLinkCsv) == 0:
-        faMessage += " but could not attach to images."
-    for iid in toLinkCsv:
-        print "linking csv to Image: ", iid
+    if len(to_link_csv) == 0:
+        fa_message += " but could not attach to images."
+    for iid in to_link_csv:
         link = ImageAnnotationLinkI()
         link.parent = ImageI(iid, False)
-        link.child = fileAnn._obj
+        link.child = file_ann._obj
         links.append(link)
     if len(links) > 0:
         links = conn.getUpdateService().saveAndReturnArray(links)
 
-    if fileAnn:
-        fileAnns.append(fileAnn)
+    if file_ann:
+        file_anns.append(file_ann)
 
-    if not fileAnns:
-        faMessage = "No Analysis files created. See 'Info' or 'Error'" \
+    if not file_anns:
+        fa_message = "No Analysis files created. See 'Info' or 'Error'" \
             " for more details"
-    elif len(fileAnns) > 1:
-        faMessage = "Created %s csv (Excel) files" % len(fileAnns)
-    message += faMessage
-    return fileAnns, message
+    elif len(file_anns) > 1:
+        fa_message = "Created %s csv (Excel) files" % len(file_anns)
+    message += fa_message
+    return file_anns, message
 
 
 if __name__ == "__main__":
 
-    dataTypes = [rstring('Image')]
+    data_types = [rstring('Image')]
 
     client = scripts.client(
         'Kymograph_Analysis.py',
@@ -213,7 +205,7 @@ of movement, saved as an Excel / CSV file.""",
         scripts.String(
             "Data_Type", optional=False, grouping="1",
             description="Choose source of images (only Image supported)",
-            values=dataTypes, default="Image"),
+            values=data_types, default="Image"),
 
         scripts.List(
             "IDs", optional=False, grouping="2",
@@ -226,17 +218,16 @@ of movement, saved as an Excel / CSV file.""",
     )
 
     try:
-        scriptParams = client.getInputs(unwrap=True)
-        print scriptParams
+        script_params = client.getInputs(unwrap=True)
 
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
 
-        fileAnns, message = processImages(conn, scriptParams)
+        file_anns, message = processImages(conn, script_params)
 
-        if fileAnns:
-            if len(fileAnns) == 1:
-                client.setOutput("Line_Data", robject(fileAnns[0]._obj))
+        if file_anns:
+            if len(file_anns) == 1:
+                client.setOutput("Line_Data", robject(file_anns[0]._obj))
         client.setOutput("Message", rstring(message))
 
     finally:
