@@ -59,7 +59,6 @@ def log(text):
         text = text.encode('utf8')
     except:
         pass
-    print text
     log_strings.append(str(text))
 
 
@@ -470,7 +469,6 @@ def batch_image_export(conn, script_params):
     # zip everything up (unless we've only got a single ome-tiff)
     if format == 'OME-TIFF' and len(os.listdir(exp_dir)) == 1:
         ometiff_ids = [t.id for t in parent.listAnnotations(ns=NSOMETIFF)]
-        print "Deleting OLD ome-tiffs: %s" % ometiff_ids
         conn.deleteObjects("Annotation", ometiff_ids)
         export_file = os.path.join(folder_name, os.listdir(exp_dir)[0])
         namespace = NSOMETIFF
