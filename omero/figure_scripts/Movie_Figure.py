@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
- components/tools/OmeroPy/scripts/omero/figure_scripts/Movie_Figure.py
-
 -----------------------------------------------------------------------------
   Copyright (C) 2006-2014 University of Dundee. All rights reserved.
 
@@ -59,42 +57,41 @@ except ImportError:
     import Image
     import ImageDraw  # see ticket:2597
 
-WHITE = (255, 255, 255)
 COLOURS = scriptUtil.COLOURS    # name:(rgba) map
 OVERLAY_COLOURS = dict(COLOURS, **scriptUtil.EXTRA_COLOURS)
 
-logLines = []    # make a log / legend of the figure
+log_lines = []    # make a log / legend of the figure
 
 
 def log(text):
-    print text
-    logLines.append(text)
+    log_lines.append(text)
 
 
-def createMovieFigure(conn, pixelIds, tIndexes, zStart, zEnd, width, height,
-                      spacer, algorithm, stepping, scalebar, overlayColour,
-                      timeUnits, imageLabels, maxColCount):
+def createmovie_figure(conn, pixel_ids, t_indexes, z_start, z_end, width,
+                       height, spacer, algorithm, stepping, scalebar,
+                       overlay_colour, time_units, image_labels,
+                       max_col_count):
     """
     Makes the complete Movie figure: A canvas showing an image per row with
     multiple columns showing frames from each image/movie. Labels obove each
     frame to show the time-stamp of that frame in the specified units and
     labels on the left name each image.
 
-    @param session          The OMERO session
-    @param pixelIds         A list of the Pixel IDs for the images in the
+    @param conn             The OMERO session
+    @param pixel_ids        A list of the Pixel IDs for the images in the
                             figure
-    @param tIndexes         A list of tIndexes to display frames from
-    @param zStart           Projection Z-start
-    @param zEnd             Projection Z-end
+    @param t_indexes        A list of tIndexes to display frames from
+    @param z_start          Projection Z-start
+    @param z_end            Projection Z-end
     @param width            Maximum width of panels
     @param height           Max height of panels
     @param spacer           Space between panels
     @param algorithm        Projection algorithm e.g. "MAXIMUMINTENSITY"
     @param stepping         Projecttion z-step
     @param scalebar         A number of microns for scale-bar
-    @param overlayColour    Color of the scale bar as tuple (255,255,255)
-    @param timeUnits        A string such as "SECS"
-    @param imageLabels      A list of lists, corresponding to pixelIds, for
+    @param overlay_colour   Color of the scale bar as tuple (255,255,255)
+    @param time_units       A string such as "SECS"
+    @param image_labels     A list of lists, corresponding to pixelIds, for
                             labelling each image with one or more strings.
     """
 
@@ -103,184 +100,184 @@ def createMovieFigure(conn, pixelIds, tIndexes, zStart, zEnd, width, height,
 
     # create a rendering engine
     re = conn.createRenderingEngine()
-    queryService = conn.getQueryService()
+    query_service = conn.getQueryService()
 
-    rowPanels = []
-    totalHeight = 0
-    totalWidth = 0
-    maxImageWidth = 0
-    physicalSizeX = 0
+    row_panels = []
+    total_height = 0
+    total_width = 0
+    max_image_width = 0
+    physical_size_x = 0
 
-    for row, pixelsId in enumerate(pixelIds):
+    for row, pixels_id in enumerate(pixel_ids):
         log("Rendering row %d" % (row))
 
-        pixels = queryService.get("Pixels", pixelsId)
-        sizeX = pixels.getSizeX().getValue()
-        sizeY = pixels.getSizeY().getValue()
-        sizeZ = pixels.getSizeZ().getValue()
-        sizeT = pixels.getSizeT().getValue()
+        pixels = query_service.get("Pixels", pixels_id)
+        size_x = pixels.getSizeX().getValue()
+        size_y = pixels.getSizeY().getValue()
+        size_z = pixels.getSizeZ().getValue()
+        size_t = pixels.getSizeT().getValue()
 
         if pixels.getPhysicalSizeX():
-            physicalX = pixels.getPhysicalSizeX().getValue()
-            unitsX = pixels.getPhysicalSizeX().getSymbol()
+            physical_x = pixels.getPhysicalSizeX().getValue()
+            units_x = pixels.getPhysicalSizeX().getSymbol()
         else:
-            physicalX = 0
-            unitsX = ""
+            physical_x = 0
+            units_x = ""
         if pixels.getPhysicalSizeY():
-            physicalY = pixels.getPhysicalSizeY().getValue()
-            unitsY = pixels.getPhysicalSizeY().getSymbol()
+            physical_y = pixels.getPhysicalSizeY().getValue()
+            units_y = pixels.getPhysicalSizeY().getSymbol()
         else:
-            physicalY = 0
-            unitsY = ""
+            physical_y = 0
+            units_y = ""
         log("  Pixel size: x: %s %s  y: %s %s"
-            % (str(physicalX), unitsX, str(physicalY), unitsY))
+            % (str(physical_x), units_x, str(physical_y), units_y))
         if row == 0:    # set values for primary image
-            physicalSizeX = physicalX
-            physicalSizeY = physicalY
+            physical_size_x = physical_x
+            physical_size_y = physical_y
         else:            # compare primary image with current one
-            if physicalSizeX != physicalX or physicalSizeY != physicalY:
+            if physical_size_x != physical_x or physical_size_y != physical_y:
                 log(" WARNING: Images have different pixel lengths. Scales"
                     " are not comparable.")
 
-        log("  Image dimensions (pixels): x: %d  y: %d" % (sizeX, sizeY))
-        maxImageWidth = max(maxImageWidth, sizeX)
+        log("  Image dimensions (pixels): x: %d  y: %d" % (size_x, size_y))
+        max_image_width = max(max_image_width, size_x)
 
         # set up rendering engine with the pixels
-        re.lookupPixels(pixelsId)
-        if not re.lookupRenderingDef(pixelsId):
+        re.lookupPixels(pixels_id)
+        if not re.lookupRenderingDef(pixels_id):
             re.resetDefaults()
-        if not re.lookupRenderingDef(pixelsId):
+        if not re.lookupRenderingDef(pixels_id):
             raise "Failed to lookup Rendering Def"
         re.load()
 
-        proStart = zStart
-        proEnd = zEnd
+        pro_start = z_start
+        pro_end = z_end
         # make sure we're within Z range for projection.
-        if proEnd >= sizeZ:
-            proEnd = sizeZ - 1
-            if proStart > sizeZ:
-                proStart = 0
+        if pro_end >= size_z:
+            pro_end = size_z - 1
+            if pro_start > size_z:
+                pro_start = 0
             log(" WARNING: Current image has fewer Z-sections than the"
                 " primary image.")
 
         # if we have an invalid z-range (start or end less than 0), show
         # default Z only
-        if proStart < 0 or proEnd < 0:
-            proStart = re.getDefaultZ()
-            proEnd = proStart
-            log("  Display Z-section: %d" % (proEnd+1))
+        if pro_start < 0 or pro_end < 0:
+            pro_start = re.getDefaultZ()
+            pro_end = pro_start
+            log("  Display Z-section: %d" % (pro_end+1))
         else:
             log("  Projecting z range: %d - %d   (max Z is %d)"
-                % (proStart+1, proEnd+1, sizeZ))
+                % (pro_start+1, pro_end+1, size_z))
 
         # now get each channel in greyscale (or colour)
         # a list of renderedImages (data as Strings) for the split-view row
-        renderedImages = []
+        rendered_images = []
 
-        for time in tIndexes:
-            if time >= sizeT:
+        for time in t_indexes:
+            if time >= size_t:
                 log(" WARNING: This image does not have Time frame: %d. "
-                    "(max is %d)" % (time+1, sizeT))
+                    "(max is %d)" % (time+1, size_t))
             else:
-                if proStart != proEnd:
-                    renderedImg = re.renderProjectedCompressed(
-                        algorithm, time, stepping, proStart, proEnd)
+                if pro_start != pro_end:
+                    rendered_img = re.renderProjectedCompressed(
+                        algorithm, time, stepping, pro_start, pro_end)
                 else:
-                    planeDef = omero.romio.PlaneDef()
-                    planeDef.z = proStart
-                    planeDef.t = time
-                    renderedImg = re.renderCompressed(planeDef)
+                    plane_def = omero.romio.PlaneDef()
+                    plane_def.z = pro_start
+                    plane_def.t = time
+                    plane_def = re.renderCompressed(plane_def)
                 # create images and resize, add to list
-                image = Image.open(io.BytesIO(renderedImg))
-                resizedImage = imgUtil.resizeImage(image, width, height)
-                renderedImages.append(resizedImage)
+                image = Image.open(io.BytesIO(rendered_img))
+                resized_image = imgUtil.resizeImage(image, width, height)
+                rendered_images.append(resized_image)
 
         # make a canvas for the row of splitview images...
         # (will add time labels above each row)
-        colCount = min(maxColCount, len(renderedImages))
-        rowCount = int(math.ceil(float(len(renderedImages)) / colCount))
+        col_count = min(max_col_count, len(rendered_images))
+        row_count = int(math.ceil(float(len(rendered_images)) / col_count))
         font = imgUtil.getFont(width/12)
-        fontHeight = font.getsize("Textq")[1]
-        canvasWidth = ((width + spacer) * colCount) + spacer
-        canvasHeight = rowCount * (spacer/2 + fontHeight + spacer + height)
-        size = (canvasWidth, canvasHeight)
+        font_height = font.getsize("Textq")[1]
+        canvas_width = ((width + spacer) * col_count) + spacer
+        canvas_height = row_count * (spacer/2 + font_height + spacer + height)
+        size = (canvas_width, canvas_height)
         # create a canvas of appropriate width, height
         canvas = Image.new(mode, size, white)
 
         # add text labels
-        queryService = conn.getQueryService()
-        textX = spacer
-        textY = spacer/4
-        colIndex = 0
-        timeLabels = figUtil.getTimeLabels(
-            queryService, pixelsId, tIndexes, sizeT, timeUnits)
-        for t, tIndex in enumerate(tIndexes):
-            if tIndex >= sizeT:
+        query_service = conn.getQueryService()
+        text_x = spacer
+        text_y = spacer/4
+        col_index = 0
+        time_labels = figUtil.getTimeLabels(
+            query_service, pixels_id, t_indexes, size_t, time_units)
+        for t, t_index in enumerate(t_indexes):
+            if t_index >= size_t:
                 continue
-            time = timeLabels[t]
-            textW = font.getsize(time)[0]
-            inset = (width - textW) / 2
+            time = time_labels[t]
+            text_w = font.getsize(time)[0]
+            inset = (width - text_w) / 2
             textdraw = ImageDraw.Draw(canvas)
-            textdraw.text((textX+inset, textY), time, font=font,
+            textdraw.text((text_x+inset, text_y), time, font=font,
                           fill=(0, 0, 0))
-            textX += width + spacer
-            colIndex += 1
-            if colIndex >= maxColCount:
-                colIndex = 0
-                textX = spacer
-                textY += (spacer/2 + fontHeight + spacer + height)
+            text_x += width + spacer
+            col_index += 1
+            if col_index >= max_col_count:
+                col_index = 0
+                text_x = spacer
+                text_y += (spacer/2 + font_height + spacer + height)
 
         # add scale bar to last frame...
         if scalebar:
-            scaledImage = renderedImages[-1]
-            xIndent = spacer
-            yIndent = xIndent
+            scaled_image = rendered_images[-1]
+            x_indent = spacer
+            y_indent = x_indent
             # if we've scaled to half size, zoom = 2
-            zoom = imgUtil.getZoomFactor(scaledImage.size, width, height)
+            zoom = imgUtil.getZoomFactor(scaled_image.size, width, height)
             # and the scale bar will be half size
             sbar = float(scalebar) / zoom
-            status, logMsg = figUtil.addScalebar(
-                sbar, xIndent, yIndent, scaledImage, pixels, overlayColour)
-            log(logMsg)
+            status, log_msg = figUtil.addScalebar(
+                sbar, x_indent, y_indent, scaled_image, pixels, overlay_colour)
+            log(log_msg)
 
         px = spacer
-        py = spacer + fontHeight
-        colIndex = 0
+        py = spacer + font_height
+        col_index = 0
         # paste the images in
-        for i, img in enumerate(renderedImages):
+        for i, img in enumerate(rendered_images):
             imgUtil.pasteImage(img, canvas, px, py)
             px = px + width + spacer
-            colIndex += 1
-            if colIndex >= maxColCount:
-                colIndex = 0
+            col_index += 1
+            if col_index >= max_col_count:
+                col_index = 0
                 px = spacer
-                py += (spacer/2 + fontHeight + spacer + height)
+                py += (spacer/2 + font_height + spacer + height)
 
         # Add labels to the left of the panel
-        canvas = addLeftLabels(canvas, imageLabels, row, width, spacer)
+        canvas = add_left_labels(canvas, image_labels, row, width, spacer)
 
         # most should be same width anyway
-        totalWidth = max(totalWidth, canvas.size[0])
+        total_width = max(total_width, canvas.size[0])
         # add together the heights of each row
-        totalHeight = totalHeight + canvas.size[1]
+        total_height = total_height + canvas.size[1]
 
-        rowPanels.append(canvas)
+        row_panels.append(canvas)
 
     # make a figure to combine all split-view rows
     # each row has 1/2 spacer above and below the panels. Need extra 1/2
     # spacer top and bottom
-    figureSize = (totalWidth, totalHeight+spacer)
-    figureCanvas = Image.new(mode, figureSize, white)
+    figure_size = (total_width, total_height+spacer)
+    figure_canvas = Image.new(mode, figure_size, white)
 
-    rowY = spacer / 2
-    for row in rowPanels:
-        imgUtil.pasteImage(row, figureCanvas, 0, rowY)
-        rowY = rowY + row.size[1]
+    row_y = spacer / 2
+    for row in row_panels:
+        imgUtil.pasteImage(row, figure_canvas, 0, row_y)
+        row_y = row_y + row.size[1]
 
-    return figureCanvas
+    return figure_canvas
 
 
-def addLeftLabels(panelCanvas, imageLabels, rowIndex, width, spacer):
+def add_left_labels(panel_canvas, image_labels, row_index, width, spacer):
     """
     Takes a canvas of panels and adds one or more labels to the left,
     with the text aligned vertically.
@@ -301,59 +298,58 @@ def addLeftLabels(panelCanvas, imageLabels, rowIndex, width, spacer):
     mode = "RGB"
     white = (255, 255, 255)
     font = imgUtil.getFont(width/12)
-    textHeight = font.getsize("Sampleq")[1]
-    textGap = spacer / 2
-    # rowSpacing = panelCanvas.size[1]/len(pixelIds)
+    text_height = font.getsize("Sampleq")[1]
+    text_gap = spacer / 2
 
     # find max number of labels
-    maxCount = 0
-    for row in imageLabels:
-        maxCount = max(maxCount, len(row))
-    leftTextHeight = (textHeight + textGap) * maxCount
+    max_count = 0
+    for row in image_labels:
+        max_count = max(max_count, len(row))
+    left_text_height = (text_height + text_gap) * max_count
     # make the canvas as wide as the panels height
-    leftTextWidth = panelCanvas.size[1]
-    size = (leftTextWidth, leftTextHeight)
-    textCanvas = Image.new(mode, size, white)
-    textdraw = ImageDraw.Draw(textCanvas)
+    left_text_width = panel_canvas.size[1]
+    size = (left_text_width, left_text_height)
+    text_canvas = Image.new(mode, size, white)
+    textdraw = ImageDraw.Draw(text_canvas)
 
-    labels = imageLabels[rowIndex]
-    py = leftTextHeight - textGap  # start at bottom
+    labels = image_labels[row_index]
+    py = left_text_height - text_gap  # start at bottom
     for l, label in enumerate(labels):
-        py = py - textHeight    # find the top of this row
+        py = py - text_height    # find the top of this row
         w = textdraw.textsize(label, font=font)[0]
-        inset = int((leftTextWidth - w) / 2)
+        inset = int((left_text_width - w) / 2)
         textdraw.text((inset, py), label, font=font, fill=(0, 0, 0))
-        py = py - textGap    # add space between rows
+        py = py - text_gap    # add space between rows
 
     # make a canvas big-enough to add text to the images.
-    canvasWidth = leftTextHeight + panelCanvas.size[0]
+    canvas_width = left_text_height + panel_canvas.size[0]
     # TextHeight will be width once rotated
-    canvasHeight = panelCanvas.size[1]
-    size = (canvasWidth, canvasHeight)
+    canvas_height = panel_canvas.size[1]
+    size = (canvas_width, canvas_height)
     # create a canvas of appropriate width, height
     canvas = Image.new(mode, size, white)
 
     # add the panels to the canvas
-    pasteX = leftTextHeight
-    pasteY = 0
-    imgUtil.pasteImage(panelCanvas, canvas, pasteX, pasteY)
+    paste_x = left_text_height
+    paste_y = 0
+    imgUtil.pasteImage(panel_canvas, canvas, paste_x, paste_y)
 
     # add text to rows
     # want it to be vertical. Rotate and paste the text canvas from above
-    if imageLabels:
-        textV = textCanvas.rotate(90)
-        imgUtil.pasteImage(textV, canvas, spacer/2, 0)
+    if image_labels:
+        text_v = text_canvas.rotate(90)
+        imgUtil.pasteImage(text_v, canvas, spacer/2, 0)
 
     return canvas
 
 
-def movieFigure(conn, commandArgs):
+def movie_figure(conn, command_args):
     """
-    Makes the figure using the parameters in @commandArgs, attaches the figure
+    Makes the figure using the parameters in @command_args, attaches the figure
     to the parent Project/Dataset, and returns the file-annotation ID
 
     @param session      The OMERO session
-    @param commandArgs  Map of parameters for the script
+    @param command_args Map of parameters for the script
     @ returns           Returns the id of the originalFileLink child. (ID
                         object, not value)
     """
@@ -361,131 +357,130 @@ def movieFigure(conn, commandArgs):
     log("Movie figure created by OMERO on %s" % date.today())
     log("")
 
-    timeLabels = {"SECS_MILLIS": "seconds",
-                  "SECS": "seconds",
-                  "MINS": "minutes",
-                  "HOURS": "hours",
-                  "MINS_SECS": "mins:secs",
-                  "HOURS_MINS": "hours:mins"}
-    timeUnits = "SECS"
-    if "Time_Units" in commandArgs:
-        timeUnits = commandArgs["Time_Units"]
-        # convert from UI name to timeLabels key
-        timeUnits = timeUnits.replace(" ", "_")
-    if timeUnits not in timeLabels.keys():
-        timeUnits = "SECS"
-    log("Time units are in %s" % timeLabels[timeUnits])
+    time_labels = {"SECS_MILLIS": "seconds",
+                   "SECS": "seconds",
+                   "MINS": "minutes",
+                   "HOURS": "hours",
+                   "MINS_SECS": "mins:secs",
+                   "HOURS_MINS": "hours:mins"}
+    time_units = "SECS"
+    if "Time_Units" in command_args:
+        time_units = command_args["Time_Units"]
+        # convert from UI name to time_labels key
+        time_units = time_units.replace(" ", "_")
+    if time_units not in time_labels.keys():
+        time_units = "SECS"
+    log("Time units are in %s" % time_labels[time_units])
 
-    pixelIds = []
-    imageIds = []
-    imageLabels = []
+    pixel_ids = []
+    image_ids = []
+    image_labels = []
     message = ""  # message to be returned to the client
 
     # function for getting image labels.
-    def getImageNames(fullName, tagsList, pdList):
-        name = fullName.split("/")[-1]
+    def get_image_names(full_name, tags_list, pd_list):
+        name = full_name.split("/")[-1]
         return [name]
 
     # default function for getting labels is getName (or use datasets / tags)
-    if "Image_Labels" in commandArgs:
-        if commandArgs["Image_Labels"] == "Datasets":
-            def getDatasets(name, tagsList, pdList):
-                return [dataset for project, dataset in pdList]
-            getLabels = getDatasets
-        elif commandArgs["Image_Labels"] == "Tags":
-            def getTags(name, tagsList, pdList):
-                return tagsList
-            getLabels = getTags
+    if "Image_Labels" in command_args:
+        if command_args["Image_Labels"] == "Datasets":
+            def get_datasets(name, tags_list, pd_list):
+                return [dataset for project, dataset in pd_list]
+            get_labels = get_datasets
+        elif command_args["Image_Labels"] == "Tags":
+            def get_tags(name, tags_list, pd_list):
+                return tags_list
+            get_labels = get_tags
         else:
-            getLabels = getImageNames
+            get_labels = get_image_names
     else:
-        getLabels = getImageNames
+        get_labels = get_image_names
 
     # Get the images
-    images, logMessage = scriptUtil.getObjects(conn, commandArgs)
-    message += logMessage
+    images, log_message = scriptUtil.getObjects(conn, command_args)
+    message += log_message
     if not images:
         return None, message
 
     # Attach figure to the first image
-    omeroImage = images[0]
+    omero_image = images[0]
 
     # process the list of images
     log("Image details:")
     for image in images:
-        imageIds.append(image.getId())
-        pixelIds.append(image.getPrimaryPixels().getId())
+        image_ids.append(image.getId())
+        pixel_ids.append(image.getPrimaryPixels().getId())
 
     # a map of imageId : list of (project, dataset) names.
-    pdMap = figUtil.getDatasetsProjectsFromImages(
-        conn.getQueryService(), imageIds)
-    tagMap = figUtil.getTagsFromImages(conn.getMetadataService(), imageIds)
+    pd_map = figUtil.get_datasetsProjectsFromImages(
+        conn.getQueryService(), image_ids)
+    tag_map = figUtil.get_tagsFromImages(conn.getMetadataService(), image_ids)
     # Build a legend entry for each image
     for image in images:
         name = image.getName()
-        iId = image.getId()
-        imageDate = image.getAcquisitionDate()
-        tagsList = tagMap[iId]
-        pdList = pdMap[iId]
+        iid = image.getId()
+        image_date = image.getAcquisitionDate()
+        tags_list = tag_map[iid]
+        pd_list = pd_map[iid]
 
-        tags = ", ".join(tagsList)
-        pdString = ", ".join(["%s/%s" % pd for pd in pdList])
-        log(" Image: %s  ID: %d" % (name, iId))
-        if imageDate:
-            log("  Date: %s" % imageDate)
+        tags = ", ".join(tags_list)
+        pd_string = ", ".join(["%s/%s" % pd for pd in pd_list])
+        log(" Image: %s  ID: %d" % (name, iid))
+        if image_date:
+            log("  Date: %s" % image_date)
         else:
             log("  Date: not set")
         log("  Tags: %s" % tags)
-        log("  Project/Datasets: %s" % pdString)
+        log("  Project/Datasets: %s" % pd_string)
 
-        imageLabels.append(getLabels(name, tagsList, pdList))
+        image_labels.append(get_labels(name, tags_list, pd_list))
 
     # use the first image to define dimensions, channel colours etc.
-    sizeX = omeroImage.getSizeX()
-    sizeY = omeroImage.getSizeY()
-    sizeZ = omeroImage.getSizeZ()
-    sizeT = omeroImage.getSizeT()
+    size_x = omero_image.getSizeX()
+    size_y = omero_image.getSizeY()
+    size_z = omero_image.getSizeZ()
+    size_t = omero_image.getSizeT()
 
-    tIndexes = []
-    if "T_Indexes" in commandArgs:
-        for t in commandArgs["T_Indexes"]:
-            tIndexes.append(t)
-        print "T_Indexes", tIndexes
-    if len(tIndexes) == 0:      # if no t-indexes given, use all t-indices
-        tIndexes = range(sizeT)
+    t_indexes = []
+    if "T_Indexes" in command_args:
+        for t in command_args["T_Indexes"]:
+            t_indexes.append(t)
+    if len(t_indexes) == 0:      # if no t-indexes given, use all t-indices
+        t_indexes = range(size_t)
 
-    zStart = -1
-    zEnd = -1
-    if "Z_Start" in commandArgs:
-        zStart = commandArgs["Z_Start"]
-    if "Z_End" in commandArgs:
-        zEnd = commandArgs["Z_End"]
+    z_start = -1
+    z_end = -1
+    if "Z_Start" in command_args:
+        z_start = command_args["Z_Start"]
+    if "Z_End" in command_args:
+        z_end = command_args["Z_End"]
 
-    width = sizeX
-    if "Width" in commandArgs:
-        width = commandArgs["Width"]
+    width = size_x
+    if "Width" in command_args:
+        width = command_args["Width"]
 
-    height = sizeY
-    if "Height" in commandArgs:
-        height = commandArgs["Height"]
+    height = size_y
+    if "Height" in command_args:
+        height = command_args["Height"]
 
     spacer = (width/25) + 2
 
     algorithm = ProjectionType.MAXIMUMINTENSITY
-    if "Algorithm" in commandArgs:
-        a = commandArgs["Algorithm"]
+    if "Algorithm" in command_args:
+        a = command_args["Algorithm"]
         if (a == "Mean Intensity"):
             algorithm = ProjectionType.MEANINTENSITY
 
     stepping = 1
-    if "Stepping" in commandArgs:
-        s = commandArgs["Stepping"]
-        if (0 < s < sizeZ):
+    if "Stepping" in command_args:
+        s = command_args["Stepping"]
+        if (0 < s < size_z):
             stepping = s
 
     scalebar = None
-    if "Scalebar" in commandArgs:
-        sb = commandArgs["Scalebar"]
+    if "Scalebar" in command_args:
+        sb = command_args["Scalebar"]
         try:
             scalebar = int(sb)
             if scalebar <= 0:
@@ -496,71 +491,71 @@ def movieFigure(conn, commandArgs):
             log("Invalid value for scalebar: %s" % str(sb))
             scalebar = None
 
-    overlayColour = (255, 255, 255)
-    if "Scalebar_Colour" in commandArgs:
-        r, g, b, a = OVERLAY_COLOURS[commandArgs["Scalebar_Colour"]]
-        overlayColour = (r, g, b)
+    overlay_colour = (255, 255, 255)
+    if "Scalebar_Colour" in command_args:
+        r, g, b, a = OVERLAY_COLOURS[command_args["Scalebar_Colour"]]
+        overlay_colour = (r, g, b)
 
-    maxColCount = 10
-    if "Max_Columns" in commandArgs:
-        maxColCount = commandArgs["Max_Columns"]
+    max_col_count = 10
+    if "Max_Columns" in command_args:
+        max_col_count = command_args["Max_Columns"]
 
-    figure = createMovieFigure(
-        conn, pixelIds, tIndexes, zStart, zEnd, width, height, spacer,
-        algorithm, stepping, scalebar, overlayColour, timeUnits, imageLabels,
-        maxColCount)
+    figure = createmovie_figure(
+        conn, pixel_ids, t_indexes, z_start, z_end, width, height, spacer,
+        algorithm, stepping, scalebar, overlay_colour, time_units,
+        image_labels, max_col_count)
 
     log("")
-    figLegend = "\n".join(logLines)
+    fig_legend = "\n".join(log_lines)
 
     # print figLegend    # bug fixing only
-    format = commandArgs["Format"]
+    format = command_args["Format"]
 
-    figureName = "movieFigure"
-    if "Figure_Name" in commandArgs:
-        figureName = str(commandArgs["Figure_Name"])
-        figureName = os.path.basename(figureName)
+    figure_name = "movie_figure"
+    if "Figure_Name" in command_args:
+        figure_name = str(command_args["Figure_Name"])
+        figure_name = os.path.basename(figure_name)
     output = "localfile"
     if format == 'PNG':
         output = output + ".png"
-        figureName = figureName + ".png"
+        figure_name = figure_name + ".png"
         figure.save(output, "PNG")
         mimetype = "image/png"
     elif format == 'TIFF':
         output = output + ".tiff"
-        figureName = figureName + ".tiff"
+        figure_name = figure_name + ".tiff"
         figure.save(output, "TIFF")
         mimetype = "image/tiff"
     else:
         output = output + ".jpg"
-        figureName = figureName + ".jpg"
+        figure_name = figure_name + ".jpg"
         figure.save(output)
         mimetype = "image/jpeg"
 
     namespace = NSCREATED + "/omero/figure_scripts/Movie_Figure"
-    fileAnnotation, faMessage = scriptUtil.createLinkFileAnnotation(
-        conn, output, omeroImage, output="Movie figure", mimetype=mimetype,
-        ns=namespace, desc=figLegend, origFilePathAndName=figureName)
-    message += faMessage
+    file_annotation, fa_message = scriptUtil.createLinkFileAnnotation(
+        conn, output, omero_image, output="Movie figure", mimetype=mimetype,
+        ns=namespace, desc=fig_legend, origFilePathAndName=figure_name)
+    message += fa_message
 
-    return fileAnnotation, message
+    return file_annotation, message
 
 
-def runAsScript():
+def run_script():
     """
     The main entry point of the script. Gets the parameters from the scripting
     service, makes the figure and returns the output to the client.
     """
 
-    dataTypes = [rstring('Image')]
+    data_types = [rstring('Image')]
     labels = [rstring('Image Name'), rstring('Datasets'), rstring('Tags')]
-    algorithums = [rstring('Maximum Intensity'), rstring('Mean Intensity')]
+    algorithms = [rstring('Maximum Intensity'), rstring('Mean Intensity')]
     tunits = [rstring("SECS"), rstring("MINS"), rstring("HOURS"),
               rstring("MINS SECS"), rstring("HOURS MINS")]
     formats = [rstring('JPEG'), rstring('PNG'), rstring('TIFF')]
     ckeys = COLOURS.keys()
     ckeys.sort()
-    oColours = wrap(OVERLAY_COLOURS.keys())
+    o_colours = wrap(OVERLAY_COLOURS.keys())
 
     client = scripts.client(
         'Movie_Figure.py',
@@ -575,7 +570,7 @@ See http://help.openmicroscopy.org/publish.html#movies""",
 
         scripts.String(
             "Data_Type", optional=False, grouping="01",
-            description="The data you want to work with.", values=dataTypes,
+            description="The data you want to work with.", values=data_types,
             default="Image"),
 
         scripts.List(
@@ -616,7 +611,7 @@ See http://help.openmicroscopy.org/publish.html#movies""",
 
         scripts.String(
             "Algorithm", grouping="08.3",
-            description="Algorithum for projection.", values=algorithums),
+            description="Algorithum for projection.", values=algorithms),
 
         scripts.Int(
             "Stepping", grouping="08.4",
@@ -632,7 +627,7 @@ See http://help.openmicroscopy.org/publish.html#movies""",
         scripts.String(
             "Scalebar_Colour", grouping="10.2",
             description="The color of the scale bar.",
-            default='White', values=oColours),
+            default='White', values=o_colours),
 
         scripts.String(
             "Format", grouping="11",
@@ -661,20 +656,19 @@ See http://help.openmicroscopy.org/publish.html#movies""",
     try:
         conn = BlitzGateway(client_obj=client)
 
-        commandArgs = client.getInputs(unwrap=True)
-        print commandArgs
+        command_args = client.getInputs(unwrap=True)
 
         # Makes the figure and attaches it to Image. Returns the id of the
         # originalFileLink child. (ID object, not value)
-        fileAnnotation, message = movieFigure(conn, commandArgs)
+        file_annotation, message = movie_figure(conn, command_args)
 
         # Return message and file annotation (if applicable) to the client
         client.setOutput("Message", rstring(message))
-        if fileAnnotation:
-            client.setOutput("File_Annotation", robject(fileAnnotation._obj))
+        if file_annotation:
+            client.setOutput("File_Annotation", robject(file_annotation._obj))
     finally:
         client.closeSession()
 
 
 if __name__ == "__main__":
-    runAsScript()
+    run_script()
