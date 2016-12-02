@@ -344,16 +344,13 @@ def process_images(conn, script_params):
 
         # prepare a csv file to write our data to...
         file_name = "Plot_Profile_%s.csv" % image.getId()
-        try:
-            f = open(file_name, 'w')
+        with open(file_name, 'w') as f:
             f.write(col_header)
             if len(lines) > 0:
                 process_lines(conn, script_params, image, lines, line_width, f)
             if len(polylines) > 0:
                 process_polylines(
                     conn, script_params, image, polylines, line_width, f)
-        finally:
-            f.close()
 
         file_ann, fa_message = scriptUtil.createLinkFileAnnotation(
             conn, file_name, image, output="Line Plot csv (Excel) file",
