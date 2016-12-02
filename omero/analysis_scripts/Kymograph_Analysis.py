@@ -43,7 +43,7 @@ import logging
 logger = logging.getLogger('kymograph_analysis')
 
 
-def pointsStringToXYlist(string):
+def points_string_to_xy_list(string):
     """
     Method for converting the string returned from
     omero.model.ShapeI.getPoints()
@@ -63,7 +63,7 @@ def pointsStringToXYlist(string):
     return xy_list
 
 
-def processImages(conn, script_params):
+def process_images(conn, script_params):
 
     file_anns = []
     message = ""
@@ -127,7 +127,7 @@ def processImages(conn, script_params):
 
                 elif type(s) == omero.model.PolylineI:
                     table_data += "\nPolyline ID: %s" % s.getId().getValue()
-                    points = pointsStringToXYlist(s.getPoints().getValue())
+                    points = points_string_to_xy_list(s.getPoints().getValue())
                     x_start, y_start = points[0]
                     for i in range(1, len(points)):
                         x1, y1 = points[i-1]
@@ -192,8 +192,11 @@ def processImages(conn, script_params):
     return file_anns, message
 
 
-if __name__ == "__main__":
-
+def run_script():
+    """
+    The main entry point of the script, as called by the client via the
+    scripting service, passing the required parameters.
+    """
     data_types = [rstring('Image')]
 
     client = scripts.client(
@@ -223,7 +226,7 @@ of movement, saved as an Excel / CSV file.""",
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
 
-        file_anns, message = processImages(conn, script_params)
+        file_anns, message = process_images(conn, script_params)
 
         if file_anns:
             if len(file_anns) == 1:
@@ -232,3 +235,7 @@ of movement, saved as an Excel / CSV file.""",
 
     finally:
         client.closeSession()
+
+
+if __name__ == "__main__":
+    run_script()
