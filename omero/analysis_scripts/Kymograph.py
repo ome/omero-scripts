@@ -47,7 +47,7 @@ import logging
 logger = logging.getLogger('kymograph')
 
 
-def getLineData(pixels, x1, y1, x2, y2, line_w=2, the_z=0, the_c=0, the_t=0):
+def get_line_data(pixels, x1, y1, x2, y2, line_w=2, the_z=0, the_c=0, the_t=0):
     """
     Grabs pixel data covering the specified line, and rotates it horizontally
     so that x1,y1 is to the left,
@@ -147,7 +147,7 @@ def getLineData(pixels, x1, y1, x2, y2, line_w=2, the_z=0, the_c=0, the_t=0):
     return asarray(cropped)
 
 
-def pointsStringToXYlist(string):
+def points_string_to_xy_list(string):
     """
     Method for converting the string returned from
     omero.model.ShapeI.getPoints()
@@ -167,8 +167,8 @@ def pointsStringToXYlist(string):
     return xy_list
 
 
-def polyLineKymograph(conn, script_arams, image, polylines, line_width,
-                      dataset):
+def polyline_kymograph(conn, script_arams, image, polylines, line_width,
+                       dataset):
     """
     Creates a new kymograph Image from one or more polylines.
 
@@ -194,7 +194,7 @@ def polyLineKymograph(conn, script_arams, image, polylines, line_width,
     print "\nCreating Kymograph image from 'polyline' ROI. First polyline:", \
         first_shape
 
-    def planeGen():
+    def plane_gen():
         """ Final image is single Z and T. Each plane is rows of T-slices """
         for the_c in range(size_c):
             shape = first_shape
@@ -211,8 +211,8 @@ def polyLineKymograph(conn, script_arams, image, polylines, line_width,
                 for l in range(len(points)-1):
                     x1, y1 = points[l]
                     x2, y2 = points[l+1]
-                    ld = getLineData(pixels, x1, y1, x2,
-                                     y2, line_width, the_z, the_c, the_t)
+                    ld = get_line_data(pixels, x1, y1, x2, y2, line_width,
+                                       the_z, the_c, the_t)
                     line_data.append(ld)
                 row_data = hstack(line_data)
                 t_rows.append(row_data)
@@ -235,11 +235,11 @@ def polyLineKymograph(conn, script_arams, image, polylines, line_width,
         % (image.getId(), first_shape['points'])
     desc += "\nwith each timepoint being %s vertical pixels" % line_width
     return conn.createImageFromNumpySeq(
-        planeGen(), name, 1, size_c, 1, description=desc,
+        plane_gen(), name, 1, size_c, 1, description=desc,
         dataset=dataset)
 
 
-def linesKymograph(conn, script_params, image, lines, line_width, dataset):
+def lines_kymograph(conn, script_params, image, lines, line_width, dataset):
     """
     Creates a new kymograph Image from one or more lines.
     If one line, use this for every time point.
@@ -266,7 +266,7 @@ def linesKymograph(conn, script_params, image, lines, line_width, dataset):
 
     print "\nCreating Kymograph image from 'line' ROI. First line:", first_line
 
-    def planeGen():
+    def plane_gen():
         """ Final image is single Z and T. Each plane is rows of T-slices """
         for the_c in range(size_c):
             shape = first_line
@@ -280,7 +280,7 @@ def linesKymograph(conn, script_params, image, lines, line_width, dataset):
                 the_z = shape['theZ']
                 x1, y1, x2, y2 = shape['x1'], shape['y1'], shape['x2'], \
                     shape['y2']
-                row_data = getLineData(
+                row_data = get_line_data(
                     pixels, x1, y1, x2, y2, line_width,
                     the_z, the_c, the_t)
                 # if the row is too long, crop - if it's too short, pad
@@ -302,11 +302,11 @@ def linesKymograph(conn, script_params, image, lines, line_width, dataset):
         % (image.getId(), first_line)
     desc += "\nwith each timepoint being %s vertical pixels" % line_width
     return conn.createImageFromNumpySeq(
-        planeGen(), name, 1, size_c, 1, description=desc,
+        plane_gen(), name, 1, size_c, 1, description=desc,
         dataset=dataset)
 
 
-def processImages(conn, script_params):
+def process_images(conn, script_params):
 
     line_width = script_params['Line_Width']
     new_kymographs = []
@@ -381,16 +381,16 @@ def processImages(conn, script_params):
                                 'y2': y2}
 
                 elif type(s) == omero.model.PolylineI:
-                    points = pointsStringToXYlist(s.getPoints().getValue())
+                    points = points_string_to_xy_list(s.getPoints().getValue())
                     polylines[t] = {'theZ': z, 'points': points}
 
             if len(lines) > 0:
-                new_img = linesKymograph(
+                new_img = lines_kymograph(
                     conn, script_params, image, lines, line_width, dataset)
                 new_images.append(new_img)
                 lines = []
             elif len(polylines) > 0:
-                new_img = polyLineKymograph(
+                new_img = polyline_kymograph(
                     conn, script_params, image, polylines, line_width, dataset)
                 new_images.append(new_img)
             else:
@@ -524,7 +524,7 @@ same sizeC as input.""",
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
 
-        new_images, message = processImages(conn, script_params)
+        new_images, message = process_images(conn, script_params)
 
         if new_images:
             if len(new_images) == 1:
