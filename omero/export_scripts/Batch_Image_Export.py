@@ -622,5 +622,6 @@ See http://help.openmicroscopy.org/export.html#batch""",
     finally:
         client.closeSession()
 
+
 if __name__ == "__main__":
     runScript()

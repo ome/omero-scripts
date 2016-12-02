@@ -525,5 +525,6 @@ images using the specified tile size.
         client.closeSession()
         printDuration()
 
+
 if __name__ == "__main__":
     runAsScript()
