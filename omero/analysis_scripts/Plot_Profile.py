@@ -44,7 +44,7 @@ import logging
 logger = logging.getLogger('plot_profile')
 
 
-def getLineData(pixels, x1, y1, x2, y2, line_w=2, the_z=0, the_c=0, the_t=0):
+def get_line_data(pixels, x1, y1, x2, y2, line_w=2, the_z=0, the_c=0, the_t=0):
     """
     Grabs pixel data covering the specified line, and rotates it horizontally
     so that x1,y1 is to the left,
@@ -142,7 +142,7 @@ def getLineData(pixels, x1, y1, x2, y2, line_w=2, the_z=0, the_c=0, the_t=0):
     return asarray(cropped)
 
 
-def pointsStringToXYlist(string):
+def points_string_to_xy_list(string):
     """
     Method for converting the string returned from
     omero.model.ShapeI.getPoints()
@@ -162,7 +162,7 @@ def pointsStringToXYlist(string):
     return xy_list
 
 
-def processPolyLines(conn, script_params, image, polylines, line_width, fout):
+def process_polylines(conn, script_params, image, polylines, line_width, fout):
     """
     Output data from one or more polylines on an image. Attach csv to image.
 
@@ -181,7 +181,7 @@ def processPolyLines(conn, script_params, image, polylines, line_width, fout):
             for l in range(len(points)-1):
                 x1, y1 = points[l]
                 x2, y2 = points[l+1]
-                ld = getLineData(
+                ld = get_line_data(
                     pixels, x1, y1, x2, y2, line_width,
                     the_z, the_c, the_t)
                 ldata.append(ld)
@@ -210,7 +210,7 @@ def processPolyLines(conn, script_params, image, polylines, line_width, fout):
                     fout.write('\n')
 
 
-def processLines(conn, script_params, image, lines, line_width, fout):
+def process_lines(conn, script_params, image, lines, line_width, fout):
     """
     Creates a new kymograph Image from one or more lines.
     If one line, use this for every time point.
@@ -228,9 +228,9 @@ def processLines(conn, script_params, image, lines, line_width, fout):
         roi_id = l['id']
         for the_c in the_cs:
             line_data = []
-            line_data = getLineData(pixels, l['x1'],
-                                   l['y1'], l['x2'], l['y2'], line_width,
-                                   the_z, the_c, the_t)
+            line_data = get_line_data(pixels, l['x1'], l['y1'], l['x2'],
+                                      l['y2'], line_width,
+                                      the_z, the_c, the_t)
 
             if script_params['Sum_or_Average'] == 'Sum':
                 output_data = line_data.sum(axis=0)
@@ -255,7 +255,7 @@ def processLines(conn, script_params, image, lines, line_width, fout):
                     fout.write('\n')
 
 
-def processImages(conn, script_params):
+def process_images(conn, script_params):
 
     line_width = script_params['Line_Width']
     file_anns = []
@@ -285,7 +285,8 @@ def processImages(conn, script_params):
         size_c = image.getSizeC()
 
         if 'Channels' in script_params:
-            script_params['Channels'] = [i-1 for i in script_params['Channels']]
+            script_params['Channels'] = [i-1 for i in
+                                         script_params['Channels']]
             # Convert user input from 1-based to 0-based
             for i in script_params['Channels']:
                 print i, type(i)
@@ -326,7 +327,7 @@ def processImages(conn, script_params):
                                   'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2})
 
                 elif type(s) == omero.model.PolylineI:
-                    points = pointsStringToXYlist(s.getPoints().getValue())
+                    points = points_string_to_xy_list(s.getPoints().getValue())
                     polylines.append({'id': roi_id, 'theT': t, 'theZ': z,
                                       'points': points})
 
@@ -347,9 +348,9 @@ def processImages(conn, script_params):
             f = open(file_name, 'w')
             f.write(col_header)
             if len(lines) > 0:
-                processLines(conn, script_params, image, lines, line_width, f)
+                process_lines(conn, script_params, image, lines, line_width, f)
             if len(polylines) > 0:
-                processPolyLines(
+                process_polylines(
                     conn, script_params, image, polylines, line_width, f)
         finally:
             f.close()
@@ -418,7 +419,7 @@ and outputs the data as CSV files, for plotting in e.g. Excel.""",
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
 
-        file_anns, message = processImages(conn, script_params)
+        file_anns, message = process_images(conn, script_params)
 
         if file_anns:
             if len(file_anns) == 1:
