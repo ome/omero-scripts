@@ -41,7 +41,7 @@ import omero
 import omero.util.script_utils as scriptUtil
 from omero.rtypes import rlong, rstring, robject, unwrap
 import omero.scripts as scripts
-from numpy import math, zeros, hstack, vstack
+from numpy import asarray, int32, math, zeros, hstack, vstack
 import logging
 
 logger = logging.getLogger('kymograph')
@@ -62,8 +62,6 @@ def get_line_data(pixels, x1, y1, x2, y2, line_w=2, the_z=0, the_c=0, the_t=0):
     @param the_c:           Channel index
     @param the_t:           Time index
     """
-
-    from numpy import asarray, int32
 
     size_x = pixels.getSizeX()
     size_y = pixels.getSizeY()
