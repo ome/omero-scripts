@@ -191,9 +191,6 @@ def polyline_kymograph(conn, script_arams, image, polylines, line_width,
             first_shape = polylines[t]
             break
 
-    print "\nCreating Kymograph image from 'polyline' ROI. First polyline:", \
-        first_shape
-
     def plane_gen():
         """ Final image is single Z and T. Each plane is rows of T-slices """
         for the_c in range(size_c):
@@ -264,8 +261,6 @@ def lines_kymograph(conn, script_params, image, lines, line_width, dataset):
             first_line = lines[t]
             break
 
-    print "\nCreating Kymograph image from 'line' ROI. First line:", first_line
-
     def plane_gen():
         """ Final image is single Z and T. Each plane is rows of T-slices """
         for the_c in range(size_c):
@@ -327,8 +322,6 @@ def process_images(conn, script_params):
 
     for image in images:
         if image.getSizeT() == 1:
-            print "Image: %s is not a movie (sizeT = 1)"\
-                " - Can't create Kymograph" % image.getId()
             continue
         new_images = []      # kymographs derived from the current image.
         c_names = []
@@ -393,22 +386,17 @@ def process_images(conn, script_params):
                 new_img = polyline_kymograph(
                     conn, script_params, image, polylines, line_width, dataset)
                 new_images.append(new_img)
-            else:
-                print "ROI: %s had no lines or polylines" \
-                    % roi.getId().getValue()
 
         # look-up the interval for each time-point
         t_interval = None
         infos = list(pixels.copyPlaneInfo(the_c=0, the_t=size_t-1, the_z=0))
         if len(infos) > 0 and infos[0].getDeltaT() is not None:
             duration = infos[0].getDeltaT(units="SECOND").getValue()
-            print "duration", duration
             if size_t == 1:
                 t_interval = duration
             else:
                 t_interval = duration/(size_t-1)
         elif pixels.timeIncrement is not None:
-            print "pixels.timeIncrement", pixels.timeIncrement
             t_interval = pixels.timeIncrement
         elif "Time_Increment" in script_params:
             t_interval = script_params["Time_Increment"]
@@ -421,7 +409,6 @@ def process_images(conn, script_params):
 
         # Save channel names and colors for each new image
         for img in new_images:
-            print "Applying channel Names:", c_names, " Colors:", colors
             for i, c in enumerate(img.getChannels()):
                 lc = c.getLogicalChannel()
                 lc.setName(c_names[i])
@@ -519,7 +506,6 @@ same sizeC as input.""",
 
     try:
         script_params = client.getInputs(unwrap=True)
-        print script_params
 
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
