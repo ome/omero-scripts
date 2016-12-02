@@ -186,11 +186,9 @@ def save_as_ome_tiff(conn, image, folder_name=None):
 
     log("  Saving file as: %s" % img_name)
     fileSize, block_gen = image.exportOmeTiff(bufsize=65536)
-    f = open(str(img_name), "wb")
-    for piece in block_gen:
-        f.write(piece)
-
-    f.close()
+    with open(str(img_name), "wb") as f:
+        for piece in block_gen:
+            f.write(piece)
 
 
 def save_planes_for_image(conn, image, size_c, split_cs, merged_cs,
@@ -456,13 +454,11 @@ def batch_image_export(conn, script_params):
                 img._re.close()
 
         # write log for exported images (not needed for ome-tiff)
-        log_file = open(os.path.join(exp_dir, 'Batch_Image_Export.txt'), 'w')
-        try:
+        name = 'Batch_Image_Export.txt'
+        with open(os.path.join(exp_dir, name), 'w') as log_file:
             for s in log_strings:
                 log_file.write(s)
                 log_file.write("\n")
-        finally:
-            log_file.close()
 
     if len(os.listdir(exp_dir)) == 0:
         return None, "No files exported. See 'info' for more details"
