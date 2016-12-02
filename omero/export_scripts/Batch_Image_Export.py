@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
- components/tools/OmeroPy/scripts/omero/export_scripts/Batch_Image_Export.py
-
 -----------------------------------------------------------------------------
   Copyright (C) 2006-2014 University of Dundee. All rights reserved.
 
