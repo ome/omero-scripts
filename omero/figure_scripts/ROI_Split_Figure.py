@@ -67,7 +67,6 @@ def log(text):
     """
     Adds the text to a list of logs. Compiled into figure legend at the end.
     """
-    print text
     log_strings.append(text)
 
 
@@ -775,7 +774,6 @@ def roi_figure(conn, command_args):
     log("")
     fig_legend = "\n".join(log_strings)
 
-    # print figLegend    # bug fixing only
     format = command_args["Format"]
 
     figure_name = "roi_figure"
