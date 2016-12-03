@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
- components/tools/OmeroPy/scripts/omero/util_scripts/Combine_Images.py
-
 -----------------------------------------------------------------------------
   Copyright (C) 2006-2014 University of Dundee. All rights reserved.
 
@@ -44,7 +42,6 @@ from omero.gateway import BlitzGateway
 import omero.constants
 from omero.rtypes import rstring, rlong, robject
 import omero.util.script_utils as scriptUtil
-import time
 
 COLOURS = scriptUtil.COLOURS
 
@@ -52,38 +49,27 @@ DEFAULT_T_REGEX = "_T"
 DEFAULT_Z_REGEX = "_Z"
 DEFAULT_C_REGEX = "_C"
 
-channelRegexes = {
+channel_regexes = {
     DEFAULT_C_REGEX: r'_C(?P<C>.+?)(_|$)',
     "C": r'C(?P<C>\w+?)',
     "_c": r'_c(?P<C>\w+?)',
     "_w": r'_w(?P<C>\w+?)',
     "None (single channel)": False}
 
-zRegexes = {
+z_regexes = {
     DEFAULT_Z_REGEX: r'_Z(?P<Z>\d+)',
     "Z": r'Z(?P<Z>\d+)',
     "_z": r'_z(?P<Z>\d+)',
     "None (single z section)": False}
 
-timeRegexes = {
+time_regexes = {
     DEFAULT_T_REGEX: r'_T(?P<T>\d+)',
     "T": r'T(?P<T>\d+)',
     "_t": r'_t(?P<T>\d+)',
     "None (single time point)": False}
 
 
-startTime = 0
-
-
-def printDuration(output=True):
-    global startTime
-    if startTime == 0:
-        startTime = time.time()
-    if output:
-        print "Script timer = %s secs" % (time.time() - startTime)
-
-
-def getPlane(rawPixelStore, pixels, theZ, theC, theT):
+def get_plane(raw_pixel_store, pixels, the_z, the_c, the_t):
     """
     This method downloads the specified plane of the OMERO image and returns
     it as a numpy array.
@@ -96,54 +82,45 @@ def getPlane(rawPixelStore, pixels, theZ, theC, theT):
     """
 
     # get the plane
-    pixelsId = pixels.getId().getValue()
-    bypassOriginalFile = True
-    rawPixelStore.setPixelsId(pixelsId, bypassOriginalFile)
-    plane2D = scriptUtil.downloadPlane(
-        rawPixelStore, pixels, theZ, theC, theT)
-    return plane2D
+    pixels_id = pixels.getId().getValue()
+    raw_pixel_store.setPixelsId(pixels_id, True)
+    return scriptUtil.downloadPlane(
+        raw_pixel_store, pixels, the_z, the_c, the_t)
 
 
-def manuallyAssignImages(parameterMap, imageIds, sourceZ):
+def manually_assign_images(parameter_map, image_ids, source_z):
 
-    sizeZ = sourceZ
-    sizeC = 1
-    sizeT = 1
+    size_z = source_z
+    size_c = 1
+    size_t = 1
 
     dims = []
-    dimSizes = [1, 1, 1]  # at least 1 in each dimension
-    dimMap = {"C": "Size_C", "Z": "Size_Z", "T": "Size_T"}
-    dimensionParams = ["Dimension_1", "Dimension_2", "Dimension_3"]
+    dim_sizes = [1, 1, 1]  # at least 1 in each dimension
+    dim_map = {"C": "Size_C", "Z": "Size_Z", "T": "Size_T"}
+    dimension_params = ["Dimension_1", "Dimension_2", "Dimension_3"]
 
-    for i, d in enumerate(dimensionParams):
-        if d in parameterMap and len(parameterMap[d]) > 0:
+    for i, d in enumerate(dimension_params):
+        if d in parameter_map and len(parameter_map[d]) > 0:
             # First letter of 'Channel' or 'Time' or 'Z'
-            dim = parameterMap[d][0]
+            dim = parameter_map[d][0]
             dims.append(dim)
-            if dim == "Z" and sourceZ > 1:
+            if dim == "Z" and source_z > 1:
                 continue
-            sizeParam = dimMap[dim]
-            if sizeParam in parameterMap:
-                dimSizes[i] = parameterMap[sizeParam]
+            size_param = dim_map[dim]
+            if size_param in parameter_map:
+                dim_sizes[i] = parameter_map[size_param]
             else:
-                print "calculate size of dim:", d, dim
-                print "existing dim sizes:", dimSizes
-                dimSizes[i] = len(imageIds) / \
-                    (dimSizes[0] * dimSizes[1] * dimSizes[2])
-                print "new dim sizes:", dimSizes
+                dim_sizes[i] = len(image_ids) / \
+                    (dim_sizes[0] * dim_sizes[1] * dim_sizes[2])
 
-    print "dims", dims
-    print "dimSizes", dimSizes
+    index = 0
 
-    imageIndex = 0
+    image_map = {}   # map of (z,c,t) : imageId
 
-    imageMap = {}   # map of (z,c,t) : imageId
-
-    print ""
-    for dim3 in range(dimSizes[2]):
-        for dim2 in range(dimSizes[1]):
-            for dim1 in range(dimSizes[0]):
-                if imageIndex >= len(imageIds):
+    for dim3 in range(dim_sizes[2]):
+        for dim2 in range(dim_sizes[1]):
+            for dim1 in range(dim_sizes[0]):
+                if index >= len(image_ids):
                     break
                 z, c, t = (0, 0, 0)
                 ddd = (dim1, dim2, dim3)
@@ -151,321 +128,297 @@ def manuallyAssignImages(parameterMap, imageIds, sourceZ):
                 for i, d in enumerate(dims):
                     if d == "C":
                         c = ddd[i]
-                        sizeC = max(sizeC, c+1)
+                        size_c = max(size_c, c+1)
                     elif d == "T":
                         t = ddd[i]
-                        sizeT = max(sizeT, t+1)
+                        size_t = max(size_t, t+1)
                     elif d == "Z":
                         z = ddd[i]
-                        sizeZ = max(sizeZ, z+1)
+                        size_z = max(size_z, z+1)
                 # handle Z stacks...
-                if sourceZ > 1:
-                    print "Z-STACK ImageId: %s to c,t: %s, %s" \
-                        % (imageIds[imageIndex], c, t)
-                    for srcZ in range(sourceZ):
-                        imageMap[(srcZ, c, t)] = (imageIds[imageIndex], srcZ)
+                if source_z > 1:
+                    for src_z in range(source_z):
+                        image_map[(src_z, c, t)] = (image_ids[index], src_z)
                 else:
-                    print "Assign ImageId: %s to z,c,t: %s, %s, %s" \
-                        % (imageIds[imageIndex], z, c, t)
-                    imageMap[(z, c, t)] = (imageIds[imageIndex], 0)
-                imageIndex += 1
+                    image_map[(z, c, t)] = (image_ids[index], 0)
+                index += 1
 
-    print "sizeZ: %s  sizeC: %s  sizeT: %s" % (sizeZ, sizeC, sizeT)
-
-    return (sizeZ, sizeC, sizeT, imageMap)
+    return (size_z, size_c, size_t, image_map)
 
 
-def assignImagesByRegex(parameterMap, imageIds, queryService, sourceZ,
-                        idNameMap=None):
+def assign_images_by_regex(parameter_map, image_ids, query_service, source_z,
+                           id_name_map=None):
 
     c = None
-    regex_channel = channelRegexes[parameterMap["Channel_Name_Pattern"]]
+    regex_channel = channel_regexes[parameter_map["Channel_Name_Pattern"]]
     if regex_channel:
         c = re.compile(regex_channel)
 
     t = None
-    regex_t = timeRegexes[parameterMap["Time_Name_Pattern"]]
+    regex_t = time_regexes[parameter_map["Time_Name_Pattern"]]
     if regex_t:
         t = re.compile(regex_t)
 
     z = None
-    regex_z = zRegexes[parameterMap["Z_Name_Pattern"]]
+    regex_z = z_regexes[parameter_map["Z_Name_Pattern"]]
     if regex_z:
         z = re.compile(regex_z)
 
     # other parameters we need to determine
-    sizeZ = sourceZ
-    sizeT = 1
-    zStart = None      # could be 0 or 1 ?
-    tStart = None
+    size_z = source_z
+    size_t = 1
+    z_start = None      # could be 0 or 1 ?
+    t_start = None
 
-    imageMap = {}  # map of (z,c,t) : imageId
+    image_map = {}  # map of (z,c,t) : imageId
     channels = []
 
-    if idNameMap is None:
-        idNameMap = getImageNames(queryService, imageIds)
+    if id_name_map is None:
+        id_name_map = get_image_names(query_service, image_ids)
 
     # assign each (imageId,zPlane) to combined image (z,c,t) by name.
-    for iId in imageIds:
-        name = idNameMap[iId]
+    for iid in image_ids:
+        name = id_name_map[iid]
         if t:
-            tSearch = t.search(name)
+            t_search = t.search(name)
         if c:
-            cSearch = c.search(name)
+            c_search = c.search(name)
 
-        if t is None or tSearch is None:
-            theT = 0
+        if t is None or t_search is None:
+            the_t = 0
         else:
-            theT = int(tSearch.group('T'))
+            the_t = int(t_search.group('T'))
 
-        if c is None or cSearch is None:
-            cName = "0"
+        if c is None or c_search is None:
+            c_name = "0"
         else:
-            cName = cSearch.group('C')
-        if cName in channels:
-            theC = channels.index(cName)
+            c_name = c_search.group('C')
+        if c_name in channels:
+            the_c = channels.index(c_name)
         else:
-            theC = len(channels)
-            channels.append(cName)
+            the_c = len(channels)
+            channels.append(c_name)
 
-        sizeT = max(sizeT, theT+1)
-        if tStart is None:
-            tStart = theT
+        size_t = max(size_t, the_t+1)
+        if t_start is None:
+            t_start = the_t
         else:
-            tStart = min(tStart, theT)
+            t_start = min(t_start, the_t)
 
         # we have T and C now. Need to check if source images are Z stacks
-        if sourceZ > 1:
-            zStart = 0
-            print "Image STACK ID: %s Name: %s is C: %s T: %s"\
-                "channelName: %s" % (iId, name, theC, theT, cName)
-            for srcZ in range(sourceZ):
-                imageMap[(srcZ, theC, theT)] = (iId, srcZ)
+        if source_z > 1:
+            z_start = 0
+            for src_z in range(source_z):
+                image_map[(src_z, the_c, the_t)] = (iid, src_z)
         else:
             if z:
-                zSearch = z.search(name)
+                z_search = z.search(name)
 
-            if z is None or zSearch is None:
-                theZ = 0
+            if z is None or z_search is None:
+                the_z = 0
             else:
-                theZ = int(zSearch.group('Z'))
+                the_z = int(z_search.group('Z'))
 
-            sizeZ = max(sizeZ, theZ+1)
-            if zStart is None:
-                zStart = theZ
+            size_z = max(size_z, the_z+1)
+            if z_start is None:
+                z_start = the_z
             else:
-                zStart = min(zStart, theZ)
+                z_start = min(z_start, the_z)
 
-            print "Image ID: %s Name: %s is Z: %s C: %s T: %s "\
-                "channelName: %s" % (iId, name, theZ, theC, theT, cName)
             # every plane comes from z=0
-            imageMap[(theZ, theC, theT)] = (iId, 0)
-
-    print "assignImagesByRegex tStart:", tStart, "zStart:", zStart,\
-        "maxT+1:", sizeT, "maxZ+1:", sizeZ
+            image_map[(the_z, the_c, the_t)] = (iid, 0)
 
     # if indexes were 1-based (or higher), need to shift indexes accordingly.
-    if tStart > 0 or zStart > 0:
-        sizeT = sizeT-tStart
-        sizeZ = sizeZ-zStart
-        print "   sizeT:", sizeT, "sizeZ:", sizeZ
-        iMap = {}
-        for key, value in imageMap.items():
+    if t_start > 0 or z_start > 0:
+        size_t = size_t-t_start
+        size_z = size_z-z_start
+        i_map = {}
+        for key, value in image_map.items():
             z, c, t = key
-            iMap[(z-zStart, c, t-tStart)] = value
+            i_map[(z-z_start, c, t-t_start)] = value
     else:
-        iMap = imageMap
+        i_map = image_map
 
-    cNames = {}
+    c_names = {}
     for c, name in enumerate(channels):
-        cNames[c] = name
-    return (sizeZ, cNames, sizeT, iMap)
+        c_names[c] = name
+    return (size_z, c_names, size_t, i_map)
 
 
-def getImageNames(queryService, imageIds):
-    idString = ",".join([str(i) for i in imageIds])
-    query_string = "select i from Image i where i.id in (%s)" % idString
-    images = queryService.findAllByQuery(query_string, None)
-    idMap = {}
+def get_image_names(query_service, image_ids):
+    id_string = ",".join([str(i) for i in image_ids])
+    query_string = "select i from Image i where i.id in (%s)" % id_string
+    images = query_service.findAllByQuery(query_string, None)
+    id_map = {}
     for i in images:
-        iId = i.id.val
-        name = i.name.val
-        idMap[iId] = name
-    return idMap
+        iid = i.getId().getValue()
+        name = i.getName().getValue()
+        id_map[iid] = name
+    return id_map
 
 
-def pickPixelSizes(pixelSizes):
+def pick_pixel_sizes(pixel_sizes):
     """
     Process a list of pixel sizes and pick sizes to set for new image.
     If we have different sizes from different images, return None
     """
-    pixSize = None
-    for px in pixelSizes:
+    pix_size = None
+    for px in pixel_sizes:
         if px is None:
             continue
-        if pixSize is None:
-            pixSize = px
+        if pix_size is None:
+            pix_size = px
         else:
             # compare - if different, return None
-            if (pixSize.getValue() != px.getValue() or
-                    pixSize.getUnit() != px.getUnit()):
-                print ("Pixel size mismatch! The mismatched dimension(s)"
-                       " will not be set: "), pixSize, px
+            if (pix_size.getValue() != px.getValue() or
+                    pix_size.getUnit() != px.getUnit()):
                 return None
-    return pixSize
+    return pix_size
 
 
-def makeSingleImage(services, parameterMap, imageIds, dataset, colourMap):
+def make_single_image(services, parameter_map, image_ids, dataset, colour_map):
     """
-    This takes the images specified by imageIds, sorts them in to Z,C,T
-    dimensions according to parameters in the parameterMap, assembles them
+    This takes the images specified by image_ids, sorts them in to Z,C,T
+    dimensions according to parameters in the parameter_map, assembles them
     into a new Image, which is saved in dataset.
     """
 
-    if len(imageIds) == 0:
+    if len(image_ids) == 0:
         return
 
-    renderingEngine = services["renderingEngine"]
-    queryService = services["queryService"]
-    pixelsService = services["pixelsService"]
-    rawPixelStore = services["rawPixelStore"]
-    rawPixelStoreUpload = services["rawPixelStoreUpload"]
-    updateService = services["updateService"]
-    containerService = services["containerService"]
-
-    print "makeSingleImage: imageId count:", len(imageIds)
+    rendering_engine = services["renderingEngine"]
+    query_service = services["queryService"]
+    pixels_service = services["pixelsService"]
+    raw_pixel_store = services["rawPixelStore"]
+    raw_pixel_store_upload = services["rawPixelStoreUpload"]
+    update_service = services["updateService"]
+    container_service = services["containerService"]
 
     # Filter images by name if user has specified filter.
-    idNameMap = None
-    if "Filter_Names" in parameterMap:
-        filterString = parameterMap["Filter_Names"]
-        if len(filterString) > 0:
-            print "Filtering images for names containing '%s'" % filterString
-            idNameMap = getImageNames(queryService, imageIds)
-            imageIds = [i for i in imageIds
-                        if idNameMap[i].find(filterString) > -1]
+    id_name_map = None
+    if "Filter_Names" in parameter_map:
+        filter_string = parameter_map["Filter_Names"]
+        if len(filter_string) > 0:
+            id_name_map = get_image_names(query_service, image_ids)
+            image_ids = [i for i in image_ids
+                         if id_name_map[i].find(filter_string) > -1]
 
-    imageId = imageIds[0]
+    image_id = image_ids[0]
 
     # get pixels, with pixelsType, from the first image
     query_string = "select p from Pixels p join fetch p.image i join "\
-        "fetch p.pixelsType pt where i.id='%d'" % imageId
-    pixels = queryService.findByQuery(query_string, None)
+        "fetch p.pixelsType pt where i.id='%d'" % image_id
+    pixels = query_service.findByQuery(query_string, None)
     # use the pixels type object we got from the first image.
-    pixelsType = pixels.getPixelsType()
+    pixels_type = pixels.getPixelsType()
 
     # combined image will have same X and Y sizes...
-    sizeX = pixels.getSizeX().getValue()
-    sizeY = pixels.getSizeY().getValue()
+    size_x = pixels.getSizeX().getValue()
+    size_y = pixels.getSizeY().getValue()
     # if we have a Z stack, use this in new image (don't combine Z)
-    sourceZ = pixels.getSizeZ().getValue()
+    source_z = pixels.getSizeZ().getValue()
 
     # Now we need to find where our planes are coming from.
     # imageMap is a map of destination:source, defined as (newX, newY,
     # newZ):(imageId, z)
-    if "Manually_Define_Dimensions" in parameterMap and \
-            parameterMap["Manually_Define_Dimensions"]:
-        sizeZ, sizeC, sizeT, imageMap = manuallyAssignImages(
-            parameterMap, imageIds, sourceZ)
-        cNames = {}
+    if "Manually_Define_Dimensions" in parameter_map and \
+            parameter_map["Manually_Define_Dimensions"]:
+        size_z, size_c, size_t, image_map = manually_assign_images(
+            parameter_map, image_ids, source_z)
+        c_names = {}
     else:
-        sizeZ, cNames, sizeT, imageMap = assignImagesByRegex(
-            parameterMap, imageIds, queryService, sourceZ, idNameMap)
-        sizeC = len(cNames)
+        size_z, c_names, size_t, image_map = assign_images_by_regex(
+            parameter_map, image_ids, query_service, source_z, id_name_map)
+        size_c = len(c_names)
 
-    print "sizeZ: %s  sizeC: %s  sizeT: %s" % (sizeZ, sizeC, sizeT)
+    if "Channel_Names" in parameter_map:
+        for c, name in enumerate(parameter_map["Channel_Names"]):
+            c_names[c] = name
 
-    if "Channel_Names" in parameterMap:
-        for c, name in enumerate(parameterMap["Channel_Names"]):
-            cNames[c] = name
+    image_name = "combinedImage"
+    description = "created from image Ids: %s" % image_ids
 
-    imageName = "combinedImage"
-    description = "created from image Ids: %s" % imageIds
+    channel_list = range(size_c)
+    iid = pixels_service.createImage(size_x, size_y, size_z, size_t,
+                                     channel_list, pixels_type, image_name,
+                                     description)
+    image = container_service.getImages("Image", [iid.getValue()], None)[0]
 
-    channelList = range(sizeC)
-    iId = pixelsService.createImage(sizeX, sizeY, sizeZ, sizeT, channelList,
-                                    pixelsType, imageName, description)
-    image = containerService.getImages("Image", [iId.getValue()], None)[0]
+    pixels_id = image.getPrimaryPixels().getId().getValue()
+    raw_pixel_store_upload.setPixelsId(pixels_id, True)
 
-    pixelsId = image.getPrimaryPixels().getId().getValue()
-    rawPixelStoreUpload.setPixelsId(pixelsId, True)
-
-    pixelSizes = {'x': [], 'y': []}
-    for theC in range(sizeC):
-        minValue = 0
-        maxValue = 0
-        for theZ in range(sizeZ):
-            for theT in range(sizeT):
-                if (theZ, theC, theT) in imageMap:
-                    imageId, planeZ = imageMap[(theZ, theC, theT)]
-                    print "Getting plane from Image ID:", imageId
+    pixel_sizes = {'x': [], 'y': []}
+    for the_c in range(size_c):
+        min_value = 0
+        max_value = 0
+        for the_z in range(size_z):
+            for the_t in range(size_t):
+                if (the_z, the_c, the_t) in image_map:
+                    image_id, plane_z = image_map[(the_z, the_c, the_t)]
                     query_string = "select p from Pixels p join fetch "\
                         "p.image i join fetch p.pixelsType pt where "\
-                        "i.id='%d'" % imageId
-                    pixels = queryService.findByQuery(query_string, None)
-                    plane2D = getPlane(rawPixelStore, pixels, planeZ, 0, 0)
+                        "i.id='%d'" % image_id
+                    pixels = query_service.findByQuery(query_string,
+                                                       None)
+                    plane_2d = get_plane(raw_pixel_store, pixels, plane_z,
+                                         0, 0)
                     # Note pixels sizes (may be None)
-                    pixelSizes['x'].append(pixels.getPhysicalSizeX())
-                    pixelSizes['y'].append(pixels.getPhysicalSizeY())
+                    pixel_sizes['x'].append(pixels.getPhysicalSizeX())
+                    pixel_sizes['y'].append(pixels.getPhysicalSizeY())
                 else:
-                    print "Creating blank plane for theZ, theC, theT",\
-                        theZ, theC, theT
-                    plane2D = zeros((sizeY, sizeX))
-                print "Uploading plane: theZ: %s, theC: %s, theT: %s"\
-                    % (theZ, theC, theT)
+                    plane_2d = zeros((size_y, size_x))
                 scriptUtil.uploadPlaneByRow(
-                    rawPixelStoreUpload, plane2D, theZ, theC, theT)
-                minValue = min(minValue, plane2D.min())
-                maxValue = max(maxValue, plane2D.max())
-        print "Setting the min, max ", minValue, maxValue
-        pixelsService.setChannelGlobalMinMax(pixelsId, theC, float(minValue),
-                                             float(maxValue))
+                    raw_pixel_store_upload, plane_2d, the_z, the_c, the_t)
+                min_value = min(min_value, plane_2d.min())
+                max_value = max(max_value, plane_2d.max())
+        pixels_service.setChannelGlobalMinMax(pixels_id, the_c,
+                                              float(min_value),
+                                              float(max_value))
         rgba = COLOURS["White"]
-        if theC in colourMap:
-            rgba = colourMap[theC]
-            print "Setting the Channel colour:", rgba
-        scriptUtil.resetRenderingSettings(renderingEngine, pixelsId, theC,
-                                          minValue, maxValue, rgba)
+        if the_c in colour_map:
+            rgba = colour_map[the_c]
+        scriptUtil.resetRenderingSettings(rendering_engine, pixels_id, the_c,
+                                          min_value, max_value, rgba)
 
     # rename new channels
-    pixels = renderingEngine.getPixels()
+    pixels = rendering_engine.getPixels()
     # has channels loaded - (getting Pixels from image doesn't)
     i = 0
     for c in pixels.iterateChannels():
         # c is an instance of omero.model.ChannelI
-        if i >= len(cNames):
+        if i >= len(c_names):
             break
         lc = c.getLogicalChannel()  # returns omero.model.LogicalChannelI
-        lc.setName(rstring(cNames[i]))
-        updateService.saveObject(lc)
+        lc.setName(rstring(c_names[i]))
+        update_service.saveObject(lc)
         i += 1
 
     # Set pixel sizes if known
-    pixSizeX = pickPixelSizes(pixelSizes['x'])
-    pixSizeY = pickPixelSizes(pixelSizes['y'])
-    print "Setting pixel sizes... X: %s Y: %s" % (pixSizeX, pixSizeY)
-    if pixSizeX is not None or pixSizeY is not None:
+    pix_size_x = pick_pixel_sizes(pixel_sizes['x'])
+    pix_size_y = pick_pixel_sizes(pixel_sizes['y'])
+    if pix_size_x is not None or pix_size_y is not None:
         # reload to avoid OptimisticLockException
-        pixels = services["queryService"].get('Pixels', pixels.id.val)
-        if pixSizeX is not None:
-            pixels.setPhysicalSizeX(pixSizeX)
-        if pixSizeY is not None:
-            pixels.setPhysicalSizeY(pixSizeY)
+        pixels = services["queryService"].get('Pixels',
+                                              pixels.getId().getValue())
+        if pix_size_x is not None:
+            pixels.setPhysicalSizeX(pix_size_x)
+        if pix_size_y is not None:
+            pixels.setPhysicalSizeY(pix_size_y)
         services["updateService"].saveObject(pixels)
 
     # put the image in dataset, if specified.
     if dataset and dataset.canLink():
         link = omero.model.DatasetImageLinkI()
         link.parent = omero.model.DatasetI(dataset.getId(), False)
-        link.child = omero.model.ImageI(image.id.val, False)
-        updateService.saveAndReturnObject(link)
+        link.child = omero.model.ImageI(image.getId().getValue(), False)
+        update_service.saveAndReturnObject(link)
     else:
         link = None
 
     return image, link
 
 
-def combineImages(conn, parameterMap):
+def combine_images(conn, parameter_map):
 
     # get the services we need
     services = {}
@@ -478,63 +431,56 @@ def combineImages(conn, parameterMap):
     services["updateService"] = conn.getUpdateService()
     services["rawFileStore"] = conn.createRawFileStore()
 
-    queryService = services["queryService"]
+    query_service = services["queryService"]
 
-    colourMap = {}
-    if "Channel_Colours" in parameterMap:
-        for c, colour in enumerate(parameterMap["Channel_Colours"]):
+    colour_map = {}
+    if "Channel_Colours" in parameter_map:
+        for c, colour in enumerate(parameter_map["Channel_Colours"]):
             if colour in COLOURS:
-                colourMap[c] = COLOURS[colour]
-    print "colourMap", colourMap
+                colour_map[c] = COLOURS[colour]
 
     # Get images or datasets
     message = ""
-    objects, logMessage = scriptUtil.getObjects(conn, parameterMap)
-    message += logMessage
+    objects, log_message = scriptUtil.getObjects(conn, parameter_map)
+    message += log_message
     if not objects:
-        print message
         return None, message
 
     # get the images IDs from list (in order) or dataset (sorted by name)
-    outputImages = []
+    output_images = []
     links = []
 
-    dataType = parameterMap["Data_Type"]
-    if dataType == "Image":
+    data_type = parameter_map["Data_Type"]
+    if data_type == "Image":
         dataset = None
         objects.sort(key=lambda x: (x.getName()))    # Sort images by name
-        imageIds = [image.id for image in objects]
+        image_ids = [image.id for image in objects]
         # get dataset from first image
         query_string = "select i from Image i join fetch i.datasetLinks idl"\
-            " join fetch idl.parent where i.id in (%s)" % imageIds[0]
-        image = queryService.findByQuery(query_string, None)
+            " join fetch idl.parent where i.id in (%s)" % image_ids[0]
+        image = query_service.findByQuery(query_string, None)
         if image:
             for link in image.iterateDatasetLinks():
                 ds = link.parent
-                dataset = conn.getObject("Dataset", ds.id.val)
-                print "Dataset", dataset.getName()
+                dataset = conn.getObject("Dataset", ds.getId().getValue())
                 break    # only use 1st dataset
-        else:
-            print "No Dataset found for Image ID: %s  Combined Image will "\
-                "not be put into dataset." % imageIds[0]
-        newImg, link = makeSingleImage(services, parameterMap, imageIds,
-                                       dataset, colourMap)
-        if newImg:
-            outputImages.append(newImg)
+        new_img, link = make_single_image(services, parameter_map, image_ids,
+                                          dataset, colour_map)
+        if new_img:
+            output_images.append(new_img)
         if link:
             links.append(link)
     else:
         for dataset in objects:
             images = list(dataset.listChildren())
             if not images:
-                print "No images found for Dataset ID: %s" % dataset.getId()
                 continue
             images.sort(key=lambda x: (x.getName()))
-            imageIds = [i.getId() for i in images]
-            newImg, link = makeSingleImage(services, parameterMap, imageIds,
-                                           dataset, colourMap)
-            if newImg:
-                outputImages.append(newImg)
+            image_ids = [i.getId() for i in images]
+            new_img, link = make_single_image(services, parameter_map,
+                                              image_ids, dataset, colour_map)
+            if new_img:
+                output_images.append(new_img)
             if link:
                 links.append(link)
 
@@ -545,37 +491,35 @@ def combineImages(conn, parameterMap):
         except:
             pass
 
-    if outputImages:
-        if len(outputImages) > 1:
-            message += "%s new images created" % len(outputImages)
+    if output_images:
+        if len(output_images) > 1:
+            message += "%s new images created" % len(output_images)
         else:
             message += "New image created"
-        if not links or not len(links) == len(outputImages):
+        if not links or not len(links) == len(output_images):
             message += " but could not be attached"
     else:
         message += "No image created"
     message += "."
 
-    return outputImages, message
+    return output_images, message
 
 
-def runAsScript():
+def run_script():
     """
     The main entry point of the script, as called by the client via the
     scripting service, passing the required parameters.
     """
-    printDuration(False)    # start timer
-
     ckeys = COLOURS.keys()
     ckeys.sort()
-    cOptions = [rstring(col) for col in ckeys]
-    dataTypes = [rstring('Dataset'), rstring('Image')]
-    firstDim = [rstring('Time'), rstring('Channel'), rstring('Z')]
-    extraDims = [rstring(''), rstring('Time'), rstring('Channel'),
-                 rstring('Z')]
-    channelRegs = [rstring(r) for r in channelRegexes.keys()]
-    zRegs = [rstring(r) for r in zRegexes.keys()]
-    tRegs = [rstring(r) for r in timeRegexes.keys()]
+    c_options = [rstring(col) for col in ckeys]
+    data_types = [rstring('Dataset'), rstring('Image')]
+    first_dim = [rstring('Time'), rstring('Channel'), rstring('Z')]
+    extra_dims = [rstring(''), rstring('Time'), rstring('Channel'),
+                  rstring('Z')]
+    channel_regs = [rstring(r) for r in channel_regexes.keys()]
+    z_regs = [rstring(r) for r in z_regexes.keys()]
+    t_regs = [rstring(r) for r in time_regexes.keys()]
 
     client = scripts.client(
         'Combine_Images.py',
@@ -586,7 +530,7 @@ See http://help.openmicroscopy.org/scripts.html""",
         scripts.String(
             "Data_Type", optional=False, grouping="1",
             description="Use all the images in specified 'Datasets' or choose"
-            " individual 'Images'.", values=dataTypes, default="Image"),
+            " individual 'Images'.", values=data_types, default="Image"),
 
         scripts.List(
             "IDs", optional=False, grouping="2",
@@ -604,17 +548,17 @@ See http://help.openmicroscopy.org/scripts.html""",
 
         scripts.String(
             "Channel_Name_Pattern", grouping="3.1", default=DEFAULT_C_REGEX,
-            values=channelRegs,
+            values=channel_regs,
             description="""Auto-pick images by channel in the image name"""),
 
         scripts.String(
             "Z_Name_Pattern", grouping="3.2",
-            default=DEFAULT_Z_REGEX, values=zRegs,
+            default=DEFAULT_Z_REGEX, values=z_regs,
             description="""Auto-pick images by Z-index in the image name"""),
 
         scripts.String(
             "Time_Name_Pattern", grouping="3.3", default=DEFAULT_T_REGEX,
-            values=tRegs,
+            values=t_regs,
             description="""Auto-pick images by T-index in the image name"""),
 
         scripts.Bool(
@@ -624,15 +568,15 @@ See http://help.openmicroscopy.org/scripts.html""",
 
         scripts.String(
             "Dimension_1", grouping="4.1",
-            description="The first Dimension to change", values=firstDim),
+            description="The first Dimension to change", values=first_dim),
 
         scripts.String(
-            "Dimension_2", grouping="4.2", values=extraDims, default="",
+            "Dimension_2", grouping="4.2", values=extra_dims, default="",
             description="The second Dimension to change. Only specify this if"
             " combining multiple dimensions."),
 
         scripts.String(
-            "Dimension_3", grouping="4.3", values=extraDims, default="",
+            "Dimension_3", grouping="4.3", values=extra_dims, default="",
             description="The third Dimension to change. Only specify this if"
             " combining multiple dimensions."),
 
@@ -650,8 +594,8 @@ See http://help.openmicroscopy.org/scripts.html""",
 
         scripts.List(
             "Channel_Colours", grouping="7",
-            description="List of Colours for channels.", default="White",
-            values=cOptions).ofType(rstring("")),
+            description="List of Colors for channels.", default="White",
+            values=c_options).ofType(rstring("")),
 
         scripts.List(
             "Channel_Names", grouping="8",
@@ -664,13 +608,12 @@ See http://help.openmicroscopy.org/scripts.html""",
     )
 
     try:
-        parameterMap = client.getInputs(unwrap=True)
-        print parameterMap
+        parameter_map = client.getInputs(unwrap=True)
 
         conn = BlitzGateway(client_obj=client)
 
         # create the combined image
-        images, message = combineImages(conn, parameterMap)
+        images, message = combine_images(conn, parameter_map)
 
         client.setOutput("Message", rstring(message))
         if images:
@@ -681,8 +624,7 @@ See http://help.openmicroscopy.org/scripts.html""",
 
     finally:
         client.closeSession()
-        printDuration()
 
 
 if __name__ == "__main__":
-    runAsScript()
+    run_script()
