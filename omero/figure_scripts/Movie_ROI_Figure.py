@@ -723,7 +723,7 @@ def run_script():
     data_types = [rstring('Image')]
     labels = [rstring('Image Name'), rstring('Datasets'), rstring('Tags')]
     algorithms = [rstring('Maximum Intensity'), rstring('Mean Intensity')]
-    roi_label = """Specify an ROI to pick by specifying it's shape label. \
+    roi_label = """Specify an ROI to pick by specifying its shape label. \
 'FigureROI' by default, (not case sensitive). If matching ROI not found, use \
 any ROI."""
     formats = [rstring('JPEG'), rstring('PNG'), rstring('TIFF')]
@@ -746,12 +746,12 @@ any ROI."""
 
         scripts.List(
             "Merged_Channels", grouping="03",
-            description="A list of channel indexes to display, starting at 1."
-            " E.g. 1, 2, 3").ofType(rint(0)),
+            description="A list of channel indexes to display, starting at 1"
+            " e.g. 1, 2, 3").ofType(rint(0)),
 
         scripts.Float(
             "Roi_Zoom", grouping="04", default=1,
-            description="How much to zoom the ROI. E.g. x 2. If 0 then ROI"
+            description="How much to zoom the ROI e.g. x 2. If 0 then ROI"
             " panel will zoom to same size as main image"),
 
         scripts.Int(
@@ -798,7 +798,7 @@ any ROI."""
 
         scripts.String(
             "Algorithm", grouping="09",
-            description="Algorithum for projection, if ROI spans several Z"
+            description="Algorithm for projection, if ROI spans several Z"
             " sections.", values=algorithms),
 
         scripts.String(

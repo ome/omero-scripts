@@ -611,7 +611,7 @@ See http://help.openmicroscopy.org/publish.html#movies""",
 
         scripts.String(
             "Algorithm", grouping="08.3",
-            description="Algorithum for projection.", values=algorithms),
+            description="Algorithm for projection.", values=algorithms),
 
         scripts.Int(
             "Stepping", grouping="08.4",
