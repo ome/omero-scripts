@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
- components/tools/OmeroPy/scripts/omero/util_scripts/Channel_Offsets.py
-
 -----------------------------------------------------------------------------
   Copyright (C) 2006-2014 University of Dundee. All rights reserved.
 
@@ -44,112 +42,105 @@ import omero.util.script_utils as script_utils
 from numpy import zeros, hstack, vstack
 
 
-def newImageWithChannelOffsets(conn, imageId, channel_offsets, dataset=None):
+def new_image_with_channel_offsets(conn, image_id, channel_offsets,
+                                   dataset=None):
     """
     Process a single image here: creating a new image and passing planes from
     original image to new image - applying offsets to each channel as we go.
 
-    @param imageId:             Original image
+    @param image_id:            Original image
     @param channel_offsets:     List of map for each channel {'index':index,
                                 'x':x, 'y'y, 'z':z}
     """
 
-    oldImage = conn.getObject("Image", imageId)
-    if oldImage is None:
-        print "Image not found for ID:", imageId
+    old_image = conn.getObject("Image", image_id)
+    if old_image is None:
         return
 
     if dataset is None:
-        dataset = oldImage.getParent()
+        dataset = old_image.getParent()
 
     # these dimensions don't change
-    sizeZ = oldImage.getSizeZ()
-    sizeC = oldImage.getSizeC()
-    sizeT = oldImage.getSizeT()
-    sizeX = oldImage.getSizeX()
-    sizeY = oldImage.getSizeY()
+    size_z = old_image.getSizeZ()
+    size_c = old_image.getSizeC()
+    size_t = old_image.getSizeT()
+    size_x = old_image.getSizeX()
+    size_y = old_image.getSizeY()
 
     # check we're not dealing with Big image.
-    rps = oldImage.getPrimaryPixels()._prepareRawPixelsStore()
-    bigImage = rps.requiresPixelsPyramid()
+    rps = old_image.getPrimaryPixels()._prepareRawPixelsStore()
+    big_image = rps.requiresPixelsPyramid()
     rps.close()
-    if bigImage:
-        print "This script does not support 'BIG' images such as Image ID: " \
-            "%s X: %d Y: %d" % (imageId, sizeX, sizeY)
+    if big_image:
         return
 
     # setup the (z,c,t) list of planes we need
-    zctList = []
-    for z in range(sizeZ):
+    zct_list = []
+    for z in range(size_z):
         for offset in channel_offsets:
-            if offset['index'] < sizeC:
-                for t in range(sizeT):
-                    zOffset = offset['z']
-                    zctList.append((z-zOffset, offset['index'], t))
-
-    print "zctList", zctList
+            if offset['index'] < size_c:
+                for t in range(size_t):
+                    z_offset = offset['z']
+                    zct_list.append((z-z_offset, offset['index'], t))
 
     # for convenience, make a map of channel:offsets
-    offsetMap = {}
-    channelList = []
+    offset_map = {}
+    channel_list = []
     for c in channel_offsets:
-        cIndex = c['index']
-        if cIndex < sizeC:
-            channelList.append(cIndex)
-            offsetMap[cIndex] = {'x': c['x'], 'y': c['y'], 'z': c['z']}
+        c_index = c['index']
+        if c_index < size_c:
+            channel_list.append(c_index)
+            offset_map[c_index] = {'x': c['x'], 'y': c['y'], 'z': c['z']}
 
-    def offsetPlane(plane, x, y):
+    def offset_plane(plane, x, y):
         """
         Takes a numpy 2D array and returns the same plane offset by x and y,
         adding rows and columns of 0 values
         """
         height, width = plane.shape
-        dataType = plane.dtype
+        data_type = plane.dtype
         # shift x by cropping, creating a new array of columns and stacking
         # horizontally
         if abs(x) > 0:
-            newCols = zeros((height, abs(x)), dataType)
+            new_cols = zeros((height, abs(x)), data_type)
             x1 = max(0, 0-x)
             x2 = min(width, width-x)
             crop = plane[0:height, x1:x2]
             if x > 0:
-                plane = hstack((newCols, crop))
+                plane = hstack((new_cols, crop))
             else:
-                plane = hstack((crop, newCols))
+                plane = hstack((crop, new_cols))
         # shift y by cropping, creating a new array of rows and stacking
         # vertically
         if abs(y) > 0:
-            newRows = zeros((abs(y), width), dataType)
+            new_rows = zeros((abs(y), width), data_type)
             y1 = max(0, 0-y)
             y2 = min(height, height-y)
             crop = plane[y1:y2, 0:width]
             if y > 0:
-                plane = vstack((newRows, crop))
+                plane = vstack((new_rows, crop))
             else:
-                plane = vstack((crop, newRows))
+                plane = vstack((crop, new_rows))
         return plane
 
-    def offsetPlaneGen():
-        pixels = oldImage.getPrimaryPixels()
+    def offset_plane_gen():
+        pixels = old_image.getPrimaryPixels()
         dt = None
         # get the planes one at a time - exceptions on getPlane() don't affect
         # subsequent calls (new RawPixelsStore)
-        for i in range(len(zctList)):
-            z, c, t = zctList[i]
-            offsets = offsetMap[c]
-            if z < 0 or z >= sizeZ:
-                print "Black plane for zct:", zctList[i]
+        for i in range(len(zct_list)):
+            z, c, t = zct_list[i]
+            offsets = offset_map[c]
+            if z < 0 or z >= size_z:
                 if dt is None:
                     # if we are on our first plane, we don't know datatype
                     # yet...
                     dt = pixels.getPlane(0, 0, 0).dtype
                     # hack! TODO: add method to pixels to supply dtype
-                plane = zeros((sizeY, sizeX), dt)
+                plane = zeros((size_y, size_x), dt)
             else:
-                print "getPlane for zct:", zctList[i], "applying offsets:", \
-                    offsets
                 try:
-                    plane = pixels.getPlane(*zctList[i])
+                    plane = pixels.getPlane(*zct_list[i])
                     dt = plane.dtype
                 except:
                     # E.g. the Z-index is out of range - Simply supply an
@@ -159,20 +150,20 @@ def newImageWithChannelOffsets(conn, imageId, channel_offsets, dataset=None):
                         # yet...
                         dt = pixels.getPlane(0, 0, 0).dtype
                         # hack! TODO: add method to pixels to supply dtype
-                    plane = zeros((sizeY, sizeX), dt)
-            yield offsetPlane(plane, offsets['x'], offsets['y'])
+                    plane = zeros((size_y, size_x), dt)
+            yield offset_plane(plane, offsets['x'], offsets['y'])
 
     # create a new image with our generator of numpy planes.
-    newImageName = "%s_offsets" % oldImage.getName()
-    descLines = [" Channel %s: Offsets x: %s y: %s z: %s" % (c['index'],
-                 c['x'], c['y'], c['z']) for c in channel_offsets]
+    new_image_name = "%s_offsets" % old_image.getName()
+    desc_lines = [" Channel %s: Offsets x: %s y: %s z: %s" % (c['index'],
+                  c['x'], c['y'], c['z']) for c in channel_offsets]
     desc = "Image created from Image ID: %s by applying Channel Offsets:\n" \
-        % imageId
-    desc += "\n".join(descLines)
+        % image_id
+    desc += "\n".join(desc_lines)
     i = conn.createImageFromNumpySeq(
-        offsetPlaneGen(), newImageName,
-        sizeZ=sizeZ, sizeC=len(offsetMap.items()), sizeT=sizeT,
-        description=desc, sourceImageId=imageId, channelList=channelList)
+        offset_plane_gen(), new_image_name,
+        sizeZ=size_z, sizeC=len(offset_map.items()), sizeT=size_t,
+        description=desc, sourceImageId=image_id, channelList=channel_list)
 
     # Link image to dataset
     link = None
@@ -185,7 +176,7 @@ def newImageWithChannelOffsets(conn, imageId, channel_offsets, dataset=None):
     return i, link
 
 
-def processImages(conn, scriptParams):
+def process_images(conn, script_params):
     """
     Process the script params to make a list of channel_offsets, then iterate
     through the images creating a new image from each with the specified
@@ -195,39 +186,37 @@ def processImages(conn, scriptParams):
     message = ""
 
     # Get the images
-    images, logMessage = script_utils.getObjects(conn, scriptParams)
-    message += logMessage
+    images, log_message = script_utils.getObjects(conn, script_params)
+    message += log_message
     if not images:
         return None, None, message
-    imageIds = [i.getId() for i in images]
+    image_ids = [i.getId() for i in images]
 
     # Get the channel offsets
     channel_offsets = []
     for i in range(1, 5):
-        pName = "Channel_%s" % i
-        if scriptParams[pName]:
+        p_name = "Channel_%s" % i
+        if script_params[p_name]:
             index = i-1     # UI channel index is 1-based - we want 0-based
-            x = "Channel%s_X_shift" % i in scriptParams and \
-                scriptParams["Channel%s_X_shift" % i] or 0
-            y = "Channel%s_Y_shift" % i in scriptParams and \
-                scriptParams["Channel%s_Y_shift" % i] or 0
-            z = "Channel%s_Z_shift" % i in scriptParams and \
-                scriptParams["Channel%s_Z_shift" % i] or 0
+            x = "Channel%s_X_shift" % i in script_params and \
+                script_params["Channel%s_X_shift" % i] or 0
+            y = "Channel%s_Y_shift" % i in script_params and \
+                script_params["Channel%s_Y_shift" % i] or 0
+            z = "Channel%s_Z_shift" % i in script_params and \
+                script_params["Channel%s_Z_shift" % i] or 0
             channel_offsets.append({'index': index, 'x': x, 'y': y, 'z': z})
 
-    print channel_offsets
-
     dataset = None
-    if "New_Dataset_Name" in scriptParams:
+    if "New_Dataset_Name" in script_params:
         # create new Dataset...
-        newDatasetName = scriptParams["New_Dataset_Name"]
+        new_dataset_name = script_params["New_Dataset_Name"]
         dataset = omero.gateway.DatasetWrapper(conn,
                                                obj=omero.model.DatasetI())
-        dataset.setName(rstring(newDatasetName))
+        dataset.setName(rstring(new_dataset_name))
         dataset.save()
         # add to parent Project
-        parentDs = images[0].getParent()
-        project = parentDs is not None and parentDs.getParent() or None
+        parent_ds = images[0].getParent()
+        project = parent_ds is not None and parent_ds.getParent() or None
         if project is not None and project.canLink():
             link = omero.model.ProjectDatasetLinkI()
             link.parent = omero.model.ProjectI(project.getId(), False)
@@ -235,39 +224,40 @@ def processImages(conn, scriptParams):
             conn.getUpdateService().saveAndReturnObject(link)
 
     # need to handle Datasets eventually - Just do images for now
-    newImages = []
+    new_images = []
     links = []
-    for iId in imageIds:
-        newImg, link = newImageWithChannelOffsets(conn, iId, channel_offsets,
-                                                  dataset)
-        if newImg is not None:
-            newImages.append(newImg)
+    for iId in image_ids:
+        new_img, link = new_image_with_channel_offsets(conn, iId,
+                                                       channel_offsets,
+                                                       dataset)
+        if new_img is not None:
+            new_images.append(new_img)
             if link is not None:
                 links.append(link)
 
-    if not newImages:
+    if not new_images:
         message += "No image created."
     else:
-        if len(newImages) == 1:
+        if len(new_images) == 1:
             if not link:
-                linkMessage = " but could not be attached"
+                link_message = " but could not be attached"
             else:
-                linkMessage = ""
-            message += "New image created%s: %s." % (linkMessage,
-                                                     newImages[0].getName())
-        elif len(newImages) > 1:
-            message += "%s new images created" % len(newImages)
-            if not len(links) == len(newImages):
+                link_message = ""
+            message += "New image created%s: %s." % (link_message,
+                                                     new_images[0].getName())
+        elif len(new_images) > 1:
+            message += "%s new images created" % len(new_images)
+            if not len(links) == len(new_images):
                 message += " but some of them could not be attached."
             else:
                 message += "."
 
-    return newImages, dataset, message
+    return new_images, dataset, message
 
 
-def runAsScript():
+def run_script():
 
-    dataTypes = [rstring('Image')]
+    data_types = [rstring('Image')]
 
     client = scripts.client(
         'Channel_Offsets.py',
@@ -278,7 +268,7 @@ See http://help.openmicroscopy.org/scripts.html""",
         scripts.String(
             "Data_Type", optional=False, grouping="1",
             description="Pick Images by 'Image' ID or by the ID of their "
-            "Dataset'", values=dataTypes, default="Image"),
+            "Dataset'", values=data_types, default="Image"),
 
         scripts.List(
             "IDs", optional=False, grouping="2",
@@ -369,13 +359,12 @@ See http://help.openmicroscopy.org/scripts.html""",
     )
 
     try:
-        scriptParams = client.getInputs(unwrap=True)
-        print scriptParams
+        script_params = client.getInputs(unwrap=True)
 
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
 
-        images, dataset, message = processImages(conn, scriptParams)
+        images, dataset, message = process_images(conn, script_params)
 
         # Return message, new image and new dataset (if applicable) to the
         # client
@@ -390,4 +379,4 @@ See http://help.openmicroscopy.org/scripts.html""",
 
 
 if __name__ == "__main__":
-    runAsScript()
+    run_script()
