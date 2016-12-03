@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
- components/tools/OmeroPy/scripts/omero/export_scripts/Make_Movie.py
-
 -----------------------------------------------------------------------------
   Copyright (C) 2006-2015 University of Dundee. All rights reserved.
 
@@ -107,30 +105,29 @@ def log(text):
     Adds lines of text to the logLines list, so they can be collected into a
     figure legend.
     """
-    print text
     logLines.append(text)
 
 
-def downloadPlane(gateway, pixels, pixelsId, x, y, z, c, t):
+def download_plane(gateway, pixels, pixels_id, x, y, z, c, t):
     """ Retrieves the selected plane """
-    rawPlane = gateway.getPlane(pixelsId, z, c, t)
-    convertType = '>' + str(x*y) + pixelstypetopython.toPython(
+    raw_plane = gateway.get_plane(pixels_id, z, c, t)
+    convert_type = '>' + str(x*y) + pixelstypetopython.toPython(
         pixels.getPixelsType().getValue())
-    convertedPlane = unpack(convertType, rawPlane)
-    remappedPlane = numpy.array(
-        convertedPlane, dtype=(pixels.getPixelsType().getValue()))
-    remappedPlane.resize(x, y)
-    return remappedPlane
+    converted_plane = unpack(convert_type, raw_plane)
+    remapped_plane = numpy.array(
+        converted_plane, dtype=(pixels.getPixelsType().getValue()))
+    remapped_plane.resize(x, y)
+    return remapped_plane
 
 
-def uploadPlane(gateway, newPixelsId, x, y, z, c, t, newPlane):
+def upload_plane(gateway, new_pixels_id, x, y, z, c, t, new_plane):
     """Uploads the specified plane. """
-    byteSwappedPlane = newPlane.byteswap()
-    convertedPlane = byteSwappedPlane.tostring()
-    gateway.uploadPlane(newPixelsId, z, c, t, convertedPlane)
+    byte_swapped_plane = new_plane.byteswap()
+    converted_plane = byte_swapped_plane.tostring()
+    gateway.upload_plane(new_pixels_id, z, c, t, converted_plane)
 
 
-def macOSX():
+def mac_osx():
     """ Identifies if the Operating System is Mac or not."""
     if ('darwin' in sys.platform):
         return 1
@@ -138,50 +135,50 @@ def macOSX():
         return 0
 
 
-def buildAVI(sizeX, sizeY, filelist, fps, movieName, format):
+def build_avi(size_x, size_y, filelist, fps, movie_name, format):
     """ Encodes. """
     program = 'mencoder'
     args = ""
     if (format == WMV):
-        args = ' mf://'+filelist + ' -mf w=' + str(sizeX) + ':h=' + \
-            str(sizeY) + ':fps=' + str(fps) + \
-            ':type=jpg -ovc lavc -lavcopts vcodec=wmv2 -o %s' % movieName
+        args = ' mf://'+filelist + ' -mf w=' + str(size_x) + ':h=' + \
+            str(size_y) + ':fps=' + str(fps) + \
+            ':type=jpg -ovc lavc -lavcopts vcodec=wmv2 -o %s' % movie_name
     elif (format == QT):
-        args = ' mf://'+filelist + ' -mf w=' + str(sizeX) + ':h=' + \
-            str(sizeY) + ':fps='+str(fps) + \
+        args = ' mf://'+filelist + ' -mf w=' + str(size_x) + ':h=' + \
+            str(size_y) + ':fps='+str(fps) + \
             ':type=png -ovc lavc -lavcopts vcodec=mjpeg:vbitrate=800  -o %s' \
-            % movieName
+            % movie_name
     else:
-        args = ' mf://'+filelist + ' -mf w=' + str(sizeX) + ':h=' + \
-            str(sizeY) + ':fps=' + str(fps) + \
-            ':type=jpg -ovc lavc -lavcopts vcodec=mpeg4 -o %s' % movieName
+        args = ' mf://'+filelist + ' -mf w=' + str(size_x) + ':h=' + \
+            str(size_y) + ':fps=' + str(fps) + \
+            ':type=jpg -ovc lavc -lavcopts vcodec=mpeg4 -o %s' % movie_name
     log(args)
     os.system(program + args)
 
 
-def rangeFromList(list, index):
-    minValue = list[0][index]
-    maxValue = list[0][index]
+def range_from_list(list, index):
+    min_value = list[0][index]
+    max_value = list[0][index]
     for i in list:
-        minValue = min(minValue, i[index])
-        maxValue = max(maxValue, i[index])
-    return range(minValue, maxValue+1)
+        min_value = min(min_value, i[index])
+        max_value = max(max_value, i[index])
+    return range(min_value, max_value+1)
 
 
-def calculateAquisitionTime(conn, pixelsId, cList, tzList):
+def calculate_acquisition_time(conn, pixels_id, c_list, tz_list):
     """ Loads the plane information. """
-    queryService = conn.getQueryService()
+    query_service = conn.getQueryService()
 
-    tRange = ",".join([str(i) for i in rangeFromList(tzList, 0)])
-    zRange = ",".join([str(i) for i in rangeFromList(tzList, 1)])
-    cRange = ",".join([str(i) for i in cList])
+    t_range = ",".join([str(i) for i in range_from_list(tz_list, 0)])
+    z_range = ",".join([str(i) for i in range_from_list(tz_list, 1)])
+    c_range = ",".join([str(i) for i in c_list])
     query = "from PlaneInfo as Info where Info.theZ in (%s) and Info.theT" \
         " in (%s) and Info.theC in (%s) and pixels.id='%s'" \
-        % (zRange, tRange, cRange, pixelsId)
-    infoList = queryService.findAllByQuery(query, None)
+        % (z_range, t_range, c_range, pixels_id)
+    info_list = query_service.findAllByQuery(query, None)
 
     map = {}
-    for info in infoList:
+    for info in info_list:
         if (info.deltaT is None):
             return None
         key = "z:" + str(info.theZ.getValue()) + "t:" + \
@@ -193,226 +190,223 @@ def calculateAquisitionTime(conn, pixelsId, cList, tzList):
         else:
             map[key] = info.deltaT.getValue()
     for key in map:
-        map[key] = map[key]/len(cRange)
+        map[key] = map[key]/len(c_range)
     return map
 
 
-def addScalebar(scalebar, image, pixels, commandArgs):
+def add_scalebar(scalebar, image, pixels, command_args):
     """ Adds the scalebar. """
     image_w, image_h = image.size
     draw = ImageDraw.Draw(image)
     if (pixels.getPhysicalSizeX() is None):
         return image
     # FIXME: units ignored for now
-    pixelSizeX = pixels.getPhysicalSizeX().getValue()
-    if (pixelSizeX <= 0):
+    pixel_size_x = pixels.getPhysicalSizeX().getValue()
+    if (pixel_size_x <= 0):
         return image
-    scaleBarY = image_h-30
-    scaleBarX = image_w-scalebar/pixelSizeX-20
-    scaleBarTextY = scaleBarY-15
-    scaleBarX2 = scaleBarX+scalebar/pixelSizeX
-    if (scaleBarX <= 0 or scaleBarX2 <= 0 or scaleBarY <= 0 or
-            scaleBarX2 > image_w):
+    scale_bar_y = image_h-30
+    scale_bar_x = image_w-scalebar/pixel_size_x-20
+    scale_bar_text_y = scale_bar_y-15
+    scale_bar_x2 = scale_bar_x+scalebar/pixel_size_x
+    if (scale_bar_x <= 0 or scale_bar_x2 <= 0 or scale_bar_y <= 0 or
+            scale_bar_x2 > image_w):
         return image
-    draw.line([(scaleBarX, scaleBarY), (scaleBarX2, scaleBarY)],
-              fill=commandArgs["Overlay_Colour"])
-    draw.text(((scaleBarX+scaleBarX2) / 2, scaleBarTextY), str(scalebar),
-              fill=commandArgs["Overlay_Colour"])
+    draw.line([(scale_bar_x, scale_bar_y), (scale_bar_x2, scale_bar_y)],
+              fill=command_args["Overlay_Colour"])
+    draw.text(((scale_bar_x+scale_bar_x2) / 2, scale_bar_text_y),
+              str(scalebar), fill=command_args["Overlay_Colour"])
     return image
 
 
-def addPlaneInfo(z, t, pixels, image, colour):
+def add_plane_info(z, t, pixels, image, colour):
     """ Displays the plane information. """
     image_w, image_h = image.size
     draw = ImageDraw.Draw(image)
-    planeInfoTextY = image_h-60
-    textX = 20
-    if(planeInfoTextY <= 0 or textX > image_w or planeInfoTextY > image_h):
+    text_y = image_h-60
+    text_x = 20
+    if (text_y <= 0 or text_x > image_w or text_y > image_h):
         return image
-    planeCoord = "z:"+str(z+1)+" t:"+str(t+1)
-    draw.text((textX, planeInfoTextY), planeCoord, fill=colour)
+    plane_coord = "z:"+str(z+1)+" t:"+str(t+1)
+    draw.text((text_x, text_y), plane_coord, fill=colour)
     return image
 
 
-def addTimePoints(time, pixels, image, colour):
+def add_time_points(time, pixels, image, colour):
     """ Displays the time-points as hrs:mins:secs """
     time = figureUtil.formatTime(time, "HOURS_MINS_SECS")
     image_w, image_h = image.size
     draw = ImageDraw.Draw(image)
-    textY = image_h-45
-    textX = 20
-    if(textY <= 0 or textX > image_w or textY > image_h):
+    text_y = image_h-45
+    text_x = 20
+    if (text_y <= 0 or text_x > image_w or text_y > image_h):
         return image
-    draw.text((textX, textY), str(time), fill=colour)
+    draw.text((text_x, text_y), str(time), fill=colour)
     return image
 
 
-def getRenderingEngine(conn, pixelsId, sizeC, cRange):
+def get_rendering_engine(conn, pixels_id, size_c, c_range):
     """ Initializes the rendering engine for the specified pixels set. """
-    renderingEngine = conn.createRenderingEngine()
-    renderingEngine.lookupPixels(pixelsId)
-    if(renderingEngine.lookupRenderingDef(pixelsId) == 0):
-        renderingEngine.resetDefaults()
-    renderingEngine.lookupRenderingDef(pixelsId)
-    renderingEngine.load()
-    if len(cRange) == 0:
-        for channel in range(sizeC):
-            renderingEngine.setActive(channel, 1)
+    rendering_engine = conn.createRenderingEngine()
+    rendering_engine.lookupPixels(pixels_id)
+    if (rendering_engine.lookupRenderingDef(pixels_id) == 0):
+        rendering_engine.resetDefaults()
+    rendering_engine.lookupRenderingDef(pixels_id)
+    rendering_engine.load()
+    if len(c_range) == 0:
+        for channel in range(size_c):
+            rendering_engine.setActive(channel, 1)
     else:
-        for channel in range(sizeC):
-            renderingEngine.setActive(channel, 0)
-        for channel in cRange:
-            renderingEngine.setActive(channel, 1)
-    return renderingEngine
+        for channel in range(size_c):
+            rendering_engine.setActive(channel, 0)
+        for channel in c_range:
+            rendering_engine.setActive(channel, 1)
+    return rendering_engine
 
 
-def getPlane(renderingEngine, z, t):
+def get_plane(rendering_engine, z, t):
     """ Retrieves the specified XY-plane. """
-    planeDef = omero.romio.PlaneDef()
-    planeDef.t = t
-    planeDef.z = z
-    planeDef.x = 0
-    planeDef.y = 0
-    planeDef.slice = 0
-    return renderingEngine.renderAsPackedInt(planeDef)
+    plane_def = omero.romio.PlaneDef()
+    plane_def.t = t
+    plane_def.z = z
+    plane_def.x = 0
+    plane_def.y = 0
+    plane_def.slice = 0
+    return rendering_engine.renderAsPackedInt(plane_def)
 
 
-def inRange(low, high, max):
+def in_range(low, high, max):
     """ Determines if the passed values are in the range. """
-    if(low < 0 or low > high):
+    if (low < 0 or low > high):
         return 0
-    if(high < 0 or high > max):
+    if (high < 0 or high > max):
         return 0
     return 1
 
 
-def validChannels(set, sizeC):
+def valid_channels(set, size_c):
     """ Determines if the channels are valid """
-    if(len(set) == 0):
+    if (len(set) == 0):
         return False
     for val in set:
         if isinstance(val, StringTypes):
             val = int(val.split('|')[0].split('$')[0])
-        if(val < 0 or val > sizeC):
+        if (val < 0 or val > size_c):
             return False
     return True
 
 
-def validColourRange(colour):
+def valid_colour_range(colour):
     """ Checks if the passed value is valid. """
-    if(colour >= 0 and colour < 0xffffff):
+    if (colour >= 0 and colour < 0xffffff):
         return 1
     return 0
 
 
-def buildPlaneMapFromRanges(zRange, tRange):
+def build_plane_map_from_ranges(z_range, t_range):
     """ Determines the plane to load. """
-    planeMap = []
-    for t in tRange:
-        for z in zRange:
-            planeMap.append([t, z])
-    return planeMap
+    plane_map = []
+    for t in t_range:
+        for z in z_range:
+            plane_map.append([t, z])
+    return plane_map
 
 
-def strToRange(key):
-    splitKey = key.split('-')
-    if(len(splitKey) == 1):
-        return range(int(splitKey[0]), int(splitKey[0])+1)
-    return range(int(splitKey[0]), int(splitKey[1])+1)
+def str_to_range(key):
+    split_key = key.split('-')
+    if (len(split_key) == 1):
+        return range(int(split_key[0]), int(split_key[0])+1)
+    return range(int(split_key[0]), int(split_key[1])+1)
 
 
-def unrollPlaneMap(planeMap):
-    unrolledPlaneMap = []
-    for tSet in planeMap:
-        zValue = planeMap[tSet]
-        for t in strToRange(tSet):
-            for z in strToRange(zValue.getValue()):
-                unrolledPlaneMap.append([int(t), int(z)])
-    return unrolledPlaneMap
+def unroll_plane_map(plane_map):
+    unrolled_plane_map = []
+    for t_set in plane_map:
+        z_value = plane_map[t_set]
+        for t in str_to_range(t_set):
+            for z in str_to_range(z_value.getValue()):
+                unrolled_plane_map.append([int(t), int(z)])
+    return unrolled_plane_map
 
 
-def calculateRanges(sizeZ, sizeT, commandArgs):
+def calculate_ranges(size_z, size_t, command_args):
     """ Determines the plane to load. """
-    planeMap = {}
-    if "Plane_Map" not in commandArgs:
-        zStart = 0
-        zEnd = sizeZ
-        if "Z_Start" in commandArgs and commandArgs["Z_Start"] >= 0 and \
-                commandArgs["Z_Start"] < sizeZ:
-            zStart = commandArgs["Z_Start"]
-        if "Z_End" in commandArgs and commandArgs["Z_End"] >= 0 and \
-                commandArgs["Z_End"] < sizeZ and \
-                commandArgs["Z_End"] >= zStart:
-            zEnd = commandArgs["Z_End"]+1
-        tStart = 0
-        tEnd = sizeT-1
-        if "T_Start" in commandArgs and commandArgs["T_Start"] >= 0 and \
-                commandArgs["T_Start"] < sizeT:
-            tStart = commandArgs["T_Start"]
-        if "T_End" in commandArgs and commandArgs["T_End"] >= 0 and \
-                commandArgs["T_End"] < sizeT and \
-                commandArgs["T_End"] >= tStart:
-            tEnd = commandArgs["T_End"]+1
-        if(zEnd == zStart):
-            zEnd = zEnd+1
-        if(tEnd == tStart):
-            tEnd = tEnd+1
+    plane_map = {}
+    if "Plane_Map" not in command_args:
+        z_start = 0
+        z_end = size_z
+        if "Z_Start" in command_args and command_args["Z_Start"] >= 0 and \
+                command_args["Z_Start"] < size_z:
+            z_start = command_args["Z_Start"]
+        if "Z_End" in command_args and command_args["Z_End"] >= 0 and \
+                command_args["Z_End"] < size_z and \
+                command_args["Z_End"] >= z_start:
+            z_end = command_args["Z_End"]+1
+        t_start = 0
+        t_end = size_t-1
+        if "T_Start" in command_args and command_args["T_Start"] >= 0 and \
+                command_args["T_Start"] < size_t:
+            t_start = command_args["T_Start"]
+        if "T_End" in command_args and command_args["T_End"] >= 0 and \
+                command_args["T_End"] < size_t and \
+                command_args["T_End"] >= t_start:
+            t_end = command_args["T_End"]+1
+        if (z_end == z_start):
+            z_end = z_end+1
+        if (t_end == t_start):
+            t_end = t_end+1
 
-        zRange = range(zStart, zEnd)
-        tRange = range(tStart, tEnd)
-        planeMap = buildPlaneMapFromRanges(zRange, tRange)
+        z_range = range(z_start, z_end)
+        t_range = range(t_start, t_end)
+        plane_map = build_plane_map_from_ranges(z_range, t_range)
     else:
-        map = commandArgs["Plane_Map"]
-        planeMap = unrollPlaneMap(map)
-    return planeMap
+        map = command_args["Plane_Map"]
+        plane_map = unroll_plane_map(map)
+    return plane_map
 
 
-def reshape_to_fit(image, sizeX, sizeY, bg=(0, 0, 0)):
+def reshape_to_fit(image, size_x, size_y, bg=(0, 0, 0)):
     """
     Make the PIL image fit the sizeX and sizeY dimensions by scaling as
     necessary and then padding with background.
     Used for watermark and intro & outro slides.
     """
     image_w, image_h = image.size
-    if (image_w, image_h) == (sizeX, sizeY):
+    if (image_w, image_h) == (size_x, size_y):
         return image
     # scale
-    print "scale...from ", image.size, " to ", sizeX, sizeY
-    ratio = min(float(sizeX) / image_w, float(sizeY) / image_h)
+    ratio = min(float(size_x) / image_w, float(size_y) / image_h)
     image = image.resize(map(lambda x: int(x*ratio), image.size),
                          Image.ANTIALIAS)
-    print ratio, image.size
     # paste
-    bg = Image.new("RGBA", (sizeX, sizeY), (0, 0, 0))     # black bg
-    ovlpos = (sizeX-image.size[0]) / 2, (sizeY-image.size[1]) / 2
-    print "ovlpos", ovlpos
+    bg = Image.new("RGBA", (size_x, size_y), (0, 0, 0))     # black bg
+    ovlpos = (size_x-image.size[0]) / 2, (size_y-image.size[1]) / 2
     bg.paste(image, ovlpos)
     return bg
 
 
-def write_intro_end_slides(conn, commandArgs, orig_file_id, duration, sizeX,
-                           sizeY):
+def write_intro_end_slides(conn, command_args, orig_file_id, duration, size_x,
+                           size_y):
     """
     Uses an original file (jpeg or png) to add frames to the movie.
-    Scales and pads to fit sizeX, sizeY.
+    Scales and pads to fit size_x, size_y.
 
     @param orig_file_id:    Original File (png or jpeg) ID
     @param duration:        Duration of intro / end (secs)
-    @param sizeX:           Width of the exported movie
-    @param sizeY:           Height of the exported movie
+    @param size_x:          Width of the exported movie
+    @param size_y:          Height of the exported movie
     @return:                List of file names to add to mencoder list
     """
 
     slide_filenames = []
-    fps = commandArgs["FPS"]
-    format = commandArgs["Format"]
+    fps = command_args["FPS"]
+    format = command_args["Format"]
 
     # get Original File as Image
     slide_file = conn.getObject("OriginalFile", orig_file_id)
     slide_data = "".join(slide_file.getFileInChunks())
     i = StringIO(slide_data)
     slide = Image.open(i)
-    slide = reshape_to_fit(slide, sizeX, sizeY)
+    slide = reshape_to_fit(slide, size_x, size_y)
 
     # write the file once
     if format == QT:
@@ -428,29 +422,29 @@ def write_intro_end_slides(conn, commandArgs, orig_file_id, duration, sizeX,
     return slide_filenames
 
 
-def prepareWatermark(conn, commandArgs, sizeX, sizeY):
+def prepare_watermark(conn, command_args, size_x, size_y):
     """
     Read Original File (png or jpeg) to use as watermark,
-    scale if needed to fit movie (sizeX, sizeY) and return
+    scale if needed to fit movie (size_x, size_y) and return
 
     @return:        PIL Image to use as watermark.
     """
 
-    wm_orig_file = commandArgs["Watermark"]
+    wm_orig_file = command_args["Watermark"]
     # get Original File as Image
-    wm_file = conn.getObject("OriginalFile", wm_orig_file.id.val)
+    wm_file = conn.getObject("OriginalFile", wm_orig_file.getId().getValue())
     wm_data = "".join(wm_file.getFileInChunks())
     i = StringIO(wm_data)
     wm = Image.open(i)
     wm_w, wm_h = wm.size
     # only resize watermark if too big
-    if wm_w > sizeX or wm_h > sizeY:
-        wm = reshape_to_fit(wm, sizeX, sizeY)
+    if wm_w > size_x or wm_h > size_y:
+        wm = reshape_to_fit(wm, size_x, size_y)
     # wm = wm.convert("L")
     return wm
 
 
-def pasteWatermark(image, watermark):
+def paste_watermark(image, watermark):
     """
     Paste the watermark onto the bottom left corner of the image. Return image
     """
@@ -462,7 +456,7 @@ def pasteWatermark(image, watermark):
     return image
 
 
-def writeMovie(commandArgs, conn):
+def write_movie(command_args, conn):
     """
     Makes the movie.
 
@@ -474,184 +468,183 @@ def writeMovie(commandArgs, conn):
     message = ""
 
     session = conn.c.sf
-    updateService = session.getUpdateService()
-    rawFileStore = session.createRawFileStore()
+    update_service = session.getUpdateService()
+    raw_file_store = session.createRawFileStore()
 
     # Get the images
-    images, logMessage = scriptUtil.getObjects(conn, commandArgs)
-    message += logMessage
+    images, log_message = scriptUtil.getObjects(conn, command_args)
+    message += log_message
     if not images:
         return None, message
     # Get the first valid image (should be expanded to process the list)
-    omeroImage = images[0]
+    omero_image = images[0]
 
-    if commandArgs["RenderingDef_ID"] >= 0:
-        omeroImage._prepareRenderingEngine(rdid=commandArgs["RenderingDef_ID"])
-    pixels = omeroImage.getPrimaryPixels()
-    pixelsId = pixels.getId()
+    if command_args["RenderingDef_ID"] >= 0:
+        rid = command_args["RenderingDef_ID"]
+        omero_image._prepareRenderingEngine(rdid=rid)
+    pixels = omero_image.getPrimaryPixels()
+    pixels_id = pixels.getId()
 
-    sizeX = pixels.getSizeX()
-    sizeY = pixels.getSizeY()
-    sizeZ = pixels.getSizeZ()
-    sizeC = pixels.getSizeC()
-    sizeT = pixels.getSizeT()
+    size_x = pixels.getSizeX()
+    size_y = pixels.getSizeY()
+    size_z = pixels.getSizeZ()
+    size_c = pixels.getSizeC()
+    size_t = pixels.getSizeT()
 
-    if (sizeX is None or sizeY is None or sizeZ is None or sizeT is None or
-            sizeC is None):
+    if (size_x is None or size_y is None or size_z is None or size_t is None or
+            size_c is None):
         return
 
     if (pixels.getPhysicalSizeX() is None):
-        commandArgs["Scalebar"] = 0
+        command_args["Scalebar"] = 0
 
-    cRange = range(0, sizeC)
-    cWindows = None
-    cColours = None
-    if "ChannelsExtended" in commandArgs and \
-            validChannels(commandArgs["ChannelsExtended"], sizeC):
-        cRange = []
-        cWindows = []
-        cColours = []
-        for c in commandArgs["ChannelsExtended"]:
+    c_range = range(0, size_c)
+    c_windows = None
+    c_colours = None
+    if "ChannelsExtended" in command_args and \
+            valid_channels(command_args["ChannelsExtended"], size_c):
+        c_range = []
+        c_windows = []
+        c_colours = []
+        for c in command_args["ChannelsExtended"]:
             m = re.match('^(?P<i>\d+)(\|(?P<ws>\d+)' +
                          '\:(?P<we>\d+))?(\$(?P<c>.+))?$', c)
             if m is not None:
-                cRange.append(int(m.group('i'))-1)
-                cWindows.append([float(m.group('ws')), float(m.group('we'))])
-                cColours.append(m.group('c'))
-    elif "Channels" in commandArgs and \
-            validChannels(commandArgs["Channels"], sizeC):
-        cRange = commandArgs["Channels"]
+                c_range.append(int(m.group('i'))-1)
+                c_windows.append([float(m.group('ws')), float(m.group('we'))])
+                c_colours.append(m.group('c'))
+    elif "Channels" in command_args and \
+            valid_channels(command_args["Channels"], size_c):
+        c_range = command_args["Channels"]
 
-    tzList = calculateRanges(sizeZ, sizeT, commandArgs)
+    tz_list = calculate_ranges(size_z, size_t, command_args)
 
-    timeMap = calculateAquisitionTime(conn, pixelsId, cRange, tzList)
-    if (timeMap is None):
-        commandArgs["Show_Time"] = False
-    if (timeMap is not None):
-        if (len(timeMap) == 0):
-            commandArgs["Show_Time"] = False
+    time_map = calculate_acquisition_time(conn, pixels_id, c_range, tz_list)
+    if (time_map is None):
+        command_args["Show_Time"] = False
+    if (time_map is not None):
+        if (len(time_map) == 0):
+            command_args["Show_Time"] = False
 
-    frameNo = 1
-    omeroImage.setActiveChannels(map(lambda x: x+1, cRange),
-                                 cWindows,
-                                 cColours)
-    renderingEngine = omeroImage._re
+    frame_no = 1
+    omero_image.setActiveChannels(map(lambda x: x+1, c_range),
+                                  c_windows, c_colours)
+    rendering_engine = omero_image._re
 
-    overlayColour = (255, 255, 255)
-    if "Overlay_Colour" in commandArgs:
-        r, g, b, a = COLOURS[commandArgs["Overlay_Colour"]]
-        overlayColour = (r, g, b)
+    overlay_colour = (255, 255, 255)
+    if "Overlay_Colour" in command_args:
+        r, g, b, a = COLOURS[command_args["Overlay_Colour"]]
+        overlay_colour = (r, g, b)
 
-    canvasColour = tuple(COLOURS[commandArgs["Canvas_Colour"]][:3])
-    mw = commandArgs["Min_Width"]
-    if mw < sizeX:
-        mw = sizeX
-    mh = commandArgs["Min_Height"]
-    if mh < sizeY:
-        mh = sizeY
+    canvas_colour = tuple(COLOURS[command_args["Canvas_Colour"]][:3])
+    mw = command_args["Min_Width"]
+    if mw < size_x:
+        mw = size_x
+    mh = command_args["Min_Height"]
+    if mh < size_y:
+        mh = size_y
     ovlpos = None
     canvas = None
-    if sizeX < mw or sizeY < mh:
-        ovlpos = ((mw-sizeX) / 2, (mh-sizeY) / 2)
-        canvas = Image.new("RGBA", (mw, mh), canvasColour)
+    if size_x < mw or size_y < mh:
+        ovlpos = ((mw-size_x) / 2, (mh-size_y) / 2)
+        canvas = Image.new("RGBA", (mw, mh), canvas_colour)
 
-    format = commandArgs["Format"]
-    fileNames = []
+    format = command_args["Format"]
+    file_names = []
 
     # add intro...
-    if "Intro_Slide" in commandArgs and commandArgs["Intro_Slide"].id:
-        intro_duration = commandArgs["Intro_Duration"]
-        intro_fileId = commandArgs["Intro_Slide"].id.val
+    if "Intro_Slide" in command_args and command_args["Intro_Slide"].id:
+        intro_duration = command_args["Intro_Duration"]
+        intro_file_id = command_args["Intro_Slide"].getId().getValue()
         intro_filenames = write_intro_end_slides(
-            conn, commandArgs, intro_fileId, intro_duration, mw, mh)
-        fileNames.extend(intro_filenames)
+            conn, command_args, intro_file_id, intro_duration, mw, mh)
+        file_names.extend(intro_filenames)
 
     # prepare watermark
-    if "Watermark" in commandArgs and commandArgs["Watermark"].id:
-        watermark = prepareWatermark(conn, commandArgs, mw, mh)
+    if "Watermark" in command_args and command_args["Watermark"].id:
+        watermark = prepare_watermark(conn, command_args, mw, mh)
 
     # add movie frames...
-    for tz in tzList:
+    for tz in tz_list:
         t = tz[0]
         z = tz[1]
-        plane = getPlane(renderingEngine, z, t)
-        planeImage = numpy.array(plane, dtype='uint32')
-        planeImage = planeImage.byteswap()
-        planeImage = planeImage.reshape(sizeX, sizeY)
-        image = Image.frombuffer('RGBA', (sizeX, sizeY), planeImage.data,
+        plane = get_plane(rendering_engine, z, t)
+        plane_image = numpy.array(plane, dtype='uint32')
+        plane_image = plane_image.byteswap()
+        plane_image = plane_image.reshape(size_x, size_y)
+        image = Image.frombuffer('RGBA', (size_x, size_y), plane_image.data,
                                  'raw', 'ARGB', 0, 1)
         if ovlpos is not None:
             image2 = canvas.copy()
             image2.paste(image, ovlpos, image)
             image = image2
 
-        if "Scalebar" in commandArgs and commandArgs["Scalebar"]:
-            image = addScalebar(
-                commandArgs["Scalebar"], image, pixels, commandArgs)
-        planeInfo = "z:"+str(z)+"t:"+str(t)
-        if "Show_Time" in commandArgs and commandArgs["Show_Time"]:
-            time = timeMap[planeInfo]
-            image = addTimePoints(time, pixels, image, overlayColour)
-        if "Show_Plane_Info" in commandArgs and \
-                commandArgs["Show_Plane_Info"]:
-            image = addPlaneInfo(z, t, pixels, image, overlayColour)
-        if "Watermark" in commandArgs and commandArgs["Watermark"].id:
-            image = pasteWatermark(image, watermark)
+        if "Scalebar" in command_args and command_args["Scalebar"]:
+            image = add_scalebar(
+                command_args["Scalebar"], image, pixels, command_args)
+        plane_info = "z:"+str(z)+"t:"+str(t)
+        if "Show_Time" in command_args and command_args["Show_Time"]:
+            time = time_map[plane_info]
+            image = add_time_points(time, pixels, image, overlay_colour)
+        if "Show_Plane_Info" in command_args and \
+                command_args["Show_Plane_Info"]:
+            image = add_plane_info(z, t, pixels, image, overlay_colour)
+        if "Watermark" in command_args and command_args["Watermark"].id:
+            image = paste_watermark(image, watermark)
         if format == QT:
-            filename = str(frameNo) + '.png'
+            filename = str(frame_no) + '.png'
             image.save(filename, "PNG")
         else:
-            filename = str(frameNo) + '.jpg'
+            filename = str(frame_no) + '.jpg'
             image.save(filename, "JPEG")
-        fileNames.append(filename)
-        frameNo += 1
+        file_names.append(filename)
+        frame_no += 1
 
     # add exit frames... "outro"
     # add intro...
-    if "Ending_Slide" in commandArgs and commandArgs["Ending_Slide"].id:
-        end_duration = commandArgs["Ending_Duration"]
-        end_fileId = commandArgs["Ending_Slide"].id.val
+    if "Ending_Slide" in command_args and command_args["Ending_Slide"].id:
+        end_duration = command_args["Ending_Duration"]
+        end_file_id = command_args["Ending_Slide"].id.val
         end_filenames = write_intro_end_slides(
-            conn, commandArgs, end_fileId, end_duration, mw, mh)
-        fileNames.extend(end_filenames)
+            conn, command_args, end_file_id, end_duration, mw, mh)
+        file_names.extend(end_filenames)
 
-    filelist = ",".join(fileNames)
+    filelist = ",".join(file_names)
 
     ext = formatMap[format]
-    movieName = "Movie"
-    if "Movie_Name" in commandArgs:
-        movieName = commandArgs["Movie_Name"]
-        movieName = os.path.basename(movieName)
-    if not movieName.endswith(".%s" % ext):
-        movieName = "%s.%s" % (movieName, ext)
+    movie_name = "Movie"
+    if "Movie_Name" in command_args:
+        movie_name = command_args["Movie_Name"]
+        movie_name = os.path.basename(movie_name)
+    if not movie_name.endswith(".%s" % ext):
+        movie_name = "%s.%s" % (movie_name, ext)
 
     # spaces etc in file name cause problems
-    movieName = re.sub("[$&\;|\(\)<>' ]", "", movieName)
-    framesPerSec = 2
-    if "FPS" in commandArgs:
-        framesPerSec = commandArgs["FPS"]
+    movie_name = re.sub("[$&\;|\(\)<>' ]", "", movie_name)
+    frames_per_sec = 2
+    if "FPS" in command_args:
+        frames_per_sec = command_args["FPS"]
     output = "localfile.%s" % ext
-    buildAVI(mw, mh, filelist, framesPerSec, output, format)
+    build_avi(mw, mh, filelist, frames_per_sec, output, format)
     mimetype = formatMimetypes[format]
 
     if not os.path.exists(output):
-        print "mencoder Failed to create movie file: %s" % output
         return None, "Failed to create movie file: %s" % output
-    if not commandArgs["Do_Link"]:
-        originalFile = scriptUtil.createFile(
-            updateService, output, mimetype, movieName)
-        scriptUtil.uploadFile(rawFileStore, originalFile, movieName)
-        return originalFile, message
+    if not command_args["Do_Link"]:
+        original_file = scriptUtil.createFile(
+            update_service, output, mimetype, movie_name)
+        scriptUtil.uploadFile(raw_file_store, original_file, movie_name)
+        return original_file, message
 
     namespace = NSCREATED + "/omero/export_scripts/Make_Movie"
-    fileAnnotation, annMessage = scriptUtil.createLinkFileAnnotation(
-        conn, output, omeroImage, ns=namespace,
-        mimetype=mimetype, origFilePathAndName=movieName)
-    message += annMessage
-    return fileAnnotation._obj, message
+    file_annotation, ann_message = scriptUtil.createLinkFileAnnotation(
+        conn, output, omero_image, ns=namespace,
+        mimetype=mimetype, origFilePathAndName=movie_name)
+    message += ann_message
+    return file_annotation._obj, message
 
 
-def runAsScript():
+def run_script():
     """
     The main entry point of the script. Gets the parameters from the scripting
     service, makes the figure and returns the output to the client.
@@ -663,8 +656,8 @@ def runAsScript():
     ckeys = COLOURS.keys()
     ckeys = ckeys
     ckeys.sort()
-    cOptions = wrap(ckeys)
-    dataTypes = [rstring("Image")]
+    c_options = wrap(ckeys)
+    data_types = [rstring("Image")]
 
     client = scripts.client(
         'Make_Movie',
@@ -674,7 +667,7 @@ def runAsScript():
         scripts.String(
             "Data_Type", optional=False, grouping="1",
             description="Choose Images via their 'Image' IDs.",
-            values=dataTypes, default="Image"),
+            values=data_types, default="Image"),
 
         scripts.List(
             "IDs", optional=False, grouping="1",
@@ -743,12 +736,12 @@ def runAsScript():
         scripts.String(
             "Overlay_Colour",
             description="The color of the scale bar.",
-            default='White', values=cOptions, grouping="11"),
+            default='White', values=c_options, grouping="11"),
 
         scripts.String(
             "Canvas_Colour",
             description="The background color when using minimum size.",
-            default='Black', values=cOptions),
+            default='Black', values=c_options),
 
         scripts.Int(
             "Min_Width",
@@ -802,18 +795,17 @@ def runAsScript():
     try:
         conn = BlitzGateway(client_obj=client)
 
-        commandArgs = client.getInputs(unwrap=True)
-        print commandArgs
+        command_args = client.getInputs(unwrap=True)
 
-        fileAnnotation, message = writeMovie(commandArgs, conn)
+        file_annotation, message = write_movie(command_args, conn)
 
         # return this fileAnnotation to the client.
         client.setOutput("Message", rstring(message))
-        if fileAnnotation is not None:
-            client.setOutput("File_Annotation", robject(fileAnnotation))
+        if file_annotation is not None:
+            client.setOutput("File_Annotation", robject(file_annotation))
     finally:
         client.closeSession()
 
 
 if __name__ == "__main__":
-    runAsScript()
+    run_script()
