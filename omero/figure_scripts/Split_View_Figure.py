@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
- components/tools/OmeroPy/scripts/omero/figure_scripts/Split_View_Figure.py
-
 -----------------------------------------------------------------------------
   Copyright (C) 2006-2014 University of Dundee. All rights reserved.
 
@@ -61,7 +59,7 @@ OVERLAY_COLOURS = dict(COLOURS, **scriptUtil.EXTRA_COLOURS)
 
 
 # keep track of log strings.
-logStrings = []
+log_strings = []
 
 
 def log(text):
@@ -73,36 +71,36 @@ def log(text):
         text = text.encode('utf8')
     except:
         pass
-    print text
-    logStrings.append(text)
+    log_strings.append(text)
 
 
-def getSplitView(conn, pixelIds, zStart, zEnd, splitIndexes, channelNames,
-                 colourChannels, mergedIndexes, mergedColours, width=None,
-                 height=None, spacer=12, algorithm=None, stepping=1,
-                 scalebar=None, overlayColour=(255, 255, 255)):
+def get_split_view(conn, pixel_ids, z_start, z_end, split_indexes,
+                   channel_names, colour_channels, merged_indexes,
+                   merged_colours, width=None, height=None, spacer=12,
+                   algorithm=None, stepping=1, scalebar=None,
+                   overlay_colour=(255, 255, 255)):
     """
     This method makes a figure of a number of images, arranged in rows with
     each row being the split-view of a single image. The channels are arranged
     left to right, with the combined image added on the right.
     The combined image is rendered according to current settings on the
     server, but it's channels will be turned on/off according to
-    @mergedIndexes.
+    @merged_indexes.
     No text labels are added to the image at this stage.
 
     The figure is returned as a PIL 'Image'
 
-    @ session           session for server access
-    @ pixelIds          a list of the Ids for the pixels we want to display
-    @ zStart            the start of Z-range for projection
-    @ zEnd              the end of Z-range for projection
-    @ splitIndexes      a list of the channel indexes to display. Same
+    @ conn              session for server access
+    @ pixel_ids         a list of the Ids for the pixels we want to display
+    @ z_start           the start of Z-range for projection
+    @ z_end             the end of Z-range for projection
+    @ split_indexes     a list of the channel indexes to display. Same
                         channels for each image/row
-    @ channelNames      the Map of index:names to go above the columns for
+    @ channel_names     the Map of index:names to go above the columns for
                         each split channel
-    @ colourChannels    the colour to make each column/ channel
-    @ mergedIndexes     list or set of channels in the merged image
-    @ mergedColours     index: colour dictionary of channels in the merged
+    @ colour_channels   the colour to make each column/ channel
+    @ merged_indexes    list or set of channels in the merged image
+    @ merged_colours    index: colour dictionary of channels in the merged
                         image
     @ width             the size in pixels to show each panel
     @ height            the size in pixels to show each panel
@@ -118,163 +116,163 @@ def getSplitView(conn, pixelIds, zStart, zEnd, splitIndexes, channelNames,
 
     # create a rendering engine
     re = conn.createRenderingEngine()
-    queryService = conn.getQueryService()
+    query_service = conn.getQueryService()
 
-    rowPanels = []
-    totalHeight = 0
-    totalWidth = 0
-    maxImageWidth = 0
+    row_panels = []
+    total_height = 0
+    total_width = 0
+    max_image_width = 0
 
-    physicalSizeX = 0
+    physical_size_x = 0
 
     log("Split View Rendering Log...")
 
-    if zStart > -1 and zEnd > -1:
-        alString = str(algorithm).replace("INTENSITY",
-                                          " Intensity").capitalize()
+    if z_start > -1 and z_end > -1:
+        al_string = str(algorithm).replace("INTENSITY",
+                                           " Intensity").capitalize()
         log("All images projected using '%s' projection with step size: "
             "%d  start: %d  end: %d"
-            % (alString, stepping, zStart+1, zEnd+1))
+            % (al_string, stepping, z_start+1, z_end+1))
     else:
         log("Images show last-viewed Z-section")
 
-    for row, pixelsId in enumerate(pixelIds):
+    for row, pixels_id in enumerate(pixel_ids):
         log("Rendering row %d" % (row+1))
 
-        pixels = queryService.get("Pixels", pixelsId)
-        sizeX = pixels.getSizeX().getValue()
-        sizeY = pixels.getSizeY().getValue()
-        sizeZ = pixels.getSizeZ().getValue()
-        sizeC = pixels.getSizeC().getValue()
+        pixels = query_service.get("Pixels", pixels_id)
+        size_x = pixels.getSizeX().getValue()
+        size_y = pixels.getSizeY().getValue()
+        size_z = pixels.getSizeZ().getValue()
+        size_c = pixels.getSizeC().getValue()
 
         if pixels.getPhysicalSizeX():
-            physicalX = pixels.getPhysicalSizeX().getValue()
+            physical_x = pixels.getPhysicalSizeX().getValue()
         else:
-            physicalX = 0
+            physical_x = 0
         if pixels.getPhysicalSizeY():
-            physicalY = pixels.getPhysicalSizeY().getValue()
+            physical_y = pixels.getPhysicalSizeY().getValue()
         else:
-            physicalY = 0
-        log("  Pixel size (um): x: %.3f  y: %.3f" % (physicalX, physicalY))
+            physical_y = 0
+        log("  Pixel size (um): x: %.3f  y: %.3f" % (physical_x, physical_y))
         if row == 0:    # set values for primary image
-            physicalSizeX = physicalX
-            physicalSizeY = physicalY
+            physical_size_x = physical_x
+            physical_size_y = physical_y
         else:  # compare primary image with current one
-            if physicalSizeX != physicalX or physicalSizeY != physicalY:
+            if physical_size_x != physical_x or physical_size_y != physical_y:
                 log(" WARNING: Images have different pixel lengths."
                     " Scales are not comparable.")
 
-        log("  Image dimensions (pixels): x: %d  y: %d" % (sizeX, sizeY))
-        maxImageWidth = max(maxImageWidth, sizeX)
+        log("  Image dimensions (pixels): x: %d  y: %d" % (size_x, size_y))
+        max_image_width = max(max_image_width, size_x)
 
         # set up rendering engine with the pixels
-        re.lookupPixels(pixelsId)
-        if not re.lookupRenderingDef(pixelsId):
+        re.lookupPixels(pixels_id)
+        if not re.lookupRenderingDef(pixels_id):
             re.resetDefaults()
-        if not re.lookupRenderingDef(pixelsId):
+        if not re.lookupRenderingDef(pixels_id):
             raise "Failed to lookup Rendering Def"
         re.load()
 
-        proStart = zStart
-        proEnd = zEnd
+        pro_start = z_start
+        pro_end = z_end
         # make sure we're within Z range for projection.
-        if proEnd >= sizeZ:
-            proEnd = sizeZ - 1
-            if proStart > sizeZ:
-                proStart = 0
+        if pro_end >= size_z:
+            pro_end = size_z - 1
+            if pro_start > size_z:
+                pro_start = 0
             log(" WARNING: Current image has fewer Z-sections than the"
                 " primary image.")
 
         # if we have an invalid z-range (start or end less than 0), show
         # default Z only
-        if proStart < 0 or proEnd < 0:
-            proStart = re.getDefaultZ()
-            proEnd = proStart
-            log("  Display Z-section: %d" % (proEnd+1))
+        if pro_start < 0 or pro_end < 0:
+            pro_start = re.getDefaultZ()
+            pro_end = pro_start
+            log("  Display Z-section: %d" % (pro_end+1))
         else:
             log("  Projecting z range: %d - %d   (max Z is %d)"
-                % (proStart+1, proEnd+1, sizeZ))
+                % (pro_start+1, pro_end+1, size_z))
 
-        # turn on channels in mergedIndexes
-        for i in range(sizeC):
+        # turn on channels in merged_indexes
+        for i in range(size_c):
             re.setActive(i, False)      # Turn all off first
-        log("Turning on mergedIndexes: %s ..." % mergedIndexes)
-        for i in mergedIndexes:
-            if i >= sizeC:
-                channelMismatch = True
+        log("Turning on merged_indexes: %s ..." % merged_indexes)
+        for i in merged_indexes:
+            if i >= size_c:
+                channel_mismatch = True
             else:
                 re.setActive(i, True)
-                if i in mergedColours:
-                    re.setRGBA(i, *mergedColours[i])
+                if i in merged_colours:
+                    re.setRGBA(i, *merged_colours[i])
 
         # get the combined image, using the existing rendering settings
-        channelsString = ", ".join([channelNames[i] for i in mergedIndexes])
-        log("  Rendering merged channels: %s" % channelsString)
-        if proStart != proEnd:
+        channels_string = ", ".join([channel_names[i] for i in merged_indexes])
+        log("  Rendering merged channels: %s" % channels_string)
+        if pro_start != pro_end:
             overlay = re.renderProjectedCompressed(
-                algorithm, timepoint, stepping, proStart, proEnd)
+                algorithm, timepoint, stepping, pro_start, pro_end)
         else:
-            planeDef = omero.romio.PlaneDef()
-            planeDef.z = proStart
-            planeDef.t = timepoint
-            overlay = re.renderCompressed(planeDef)
+            plane_def = omero.romio.PlaneDef()
+            plane_def.z = pro_start
+            plane_def.t = timepoint
+            overlay = re.renderCompressed(plane_def)
 
         # now get each channel in greyscale (or colour)
         # a list of renderedImages (data as Strings) for the split-view row
-        renderedImages = []
+        rendered_images = []
         i = 0
-        channelMismatch = False
+        channel_mismatch = False
         # first, turn off all channels in pixels
-        for i in range(sizeC):
+        for i in range(size_c):
             re.setActive(i, False)
 
         # for each channel in the splitview...
-        for index in splitIndexes:
-            if index >= sizeC:
+        for index in split_indexes:
+            if index >= size_c:
                 # can't turn channel on - simply render black square!
-                channelMismatch = True
-                renderedImages.append(None)
+                channel_mismatch = True
+                rendered_images.append(None)
             else:
                 re.setActive(index, True)  # turn channel on
-                if colourChannels:  # if split channels are coloured...
-                    if index in mergedIndexes:
+                if colour_channels:  # if split channels are coloured...
+                    if index in merged_indexes:
                         # and this channel is in the combined image
-                        if index in mergedColours:
-                            rgba = tuple(mergedColours[index])
-                            print "Setting channel to color", index, rgba
+                        if index in merged_colours:
+                            rgba = tuple(merged_colours[index])
                             re.setRGBA(index, *rgba)        # set coloured
                         else:
-                            mergedColours[index] = re.getRGBA(index)
+                            merged_colours[index] = re.getRGBA(index)
                     else:
                         # otherwise set white (max alpha)
                         re.setRGBA(index, 255, 255, 255, 255)
                 else:
-                    # if not colourChannels - channels are white
+                    # if not colour_channels - channels are white
                     re.setRGBA(index, 255, 255, 255, 255)
                 info = (index, re.getChannelWindowStart(index),
                         re.getChannelWindowEnd(index))
                 log("  Render channel: %s  start: %d  end: %d" % info)
-                if proStart != proEnd:
-                    renderedImg = re.renderProjectedCompressed(
-                        algorithm, timepoint, stepping, proStart, proEnd)
+                if pro_start != pro_end:
+                    rendered_img = re.renderProjectedCompressed(
+                        algorithm, timepoint, stepping, pro_start, pro_end)
                 else:
-                    planeDef = omero.romio.PlaneDef()
-                    planeDef.z = proStart
-                    planeDef.t = timepoint
-                    renderedImg = re.renderCompressed(planeDef)
-                renderedImages.append(renderedImg)
-            if index < sizeC:
+                    plane_def = omero.romio.PlaneDef()
+                    plane_def.z = pro_start
+                    plane_def.t = timepoint
+                    rendered_img = re.renderCompressed(plane_def)
+                rendered_images.append(rendered_img)
+            if index < size_c:
                 re.setActive(index, False)  # turn the channel off again!
 
-        if channelMismatch:
+        if channel_mismatch:
             log(" WARNING channel mismatch: The current image has fewer"
                 " channels than the primary image.")
 
         # make a canvas for the row of splitview images...
-        imageCount = len(renderedImages) + 1  # extra image for combined image
-        canvasWidth = ((width + spacer) * imageCount) + spacer
-        canvasHeight = spacer + height
-        size = (canvasWidth, canvasHeight)
+        # extra image for combined image
+        image_count = len(rendered_images) + 1
+        canvas_width = ((width + spacer) * image_count) + spacer
+        canvas_height = spacer + height
+        size = (canvas_width, canvas_height)
         # create a canvas of appropriate width, height
         canvas = Image.new(mode, size, white)
 
@@ -282,9 +280,9 @@ def getSplitView(conn, pixelIds, zStart, zEnd, splitIndexes, channelNames,
         py = spacer/2
         col = 0
         # paste the images in
-        for img in renderedImages:
+        for img in rendered_images:
             if img is None:
-                im = Image.new(mode, (sizeX, sizeY), (0, 0, 0))
+                im = Image.new(mode, (size_x, size_y), (0, 0, 0))
             else:
                 im = Image.open(io.BytesIO(img))
             i = imgUtil.resizeImage(im, width, height)
@@ -294,45 +292,45 @@ def getSplitView(conn, pixelIds, zStart, zEnd, splitIndexes, channelNames,
 
         # add combined image, after resizing and adding scale bar
         i = Image.open(io.BytesIO(overlay))
-        scaledImage = imgUtil.resizeImage(i, width, height)
+        scaled_image = imgUtil.resizeImage(i, width, height)
         if scalebar:
-            xIndent = spacer
-            yIndent = xIndent
+            x_indent = spacer
+            y_indent = x_indent
             # if we've scaled to half size, zoom = 2
             zoom = imgUtil.getZoomFactor(i.size, width, height)
             # and the scale bar will be half size
             sbar = float(scalebar) / zoom
-            status, logMsg = figUtil.addScalebar(
-                sbar, xIndent, yIndent, scaledImage, pixels, overlayColour)
-            log(logMsg)
+            status, log_msg = figUtil.addScalebar(
+                sbar, x_indent, y_indent, scaled_image, pixels, overlay_colour)
+            log(log_msg)
 
-        imgUtil.pasteImage(scaledImage, canvas, px, py)
+        imgUtil.pasteImage(scaled_image, canvas, px, py)
 
         # most should be same width anyway
-        totalWidth = max(totalWidth, canvasWidth)
+        total_width = max(total_width, canvas_width)
         # add together the heights of each row
-        totalHeight = totalHeight + canvasHeight
-        rowPanels.append(canvas)
+        total_height = total_height + canvas_height
+        row_panels.append(canvas)
 
     # make a figure to combine all split-view rows
     # each row has 1/2 spacer above and below the panels. Need extra 1/2
     # spacer top and bottom
-    figureSize = (totalWidth, totalHeight+spacer)
-    figureCanvas = Image.new(mode, figureSize, white)
+    figure_size = (total_width, total_height+spacer)
+    figure_canvas = Image.new(mode, figure_size, white)
 
-    rowY = spacer/2
-    for row in rowPanels:
-        imgUtil.pasteImage(row, figureCanvas, 0, rowY)
-        rowY = rowY + row.size[1]
+    row_y = spacer/2
+    for row in row_panels:
+        imgUtil.pasteImage(row, figure_canvas, 0, row_y)
+        row_y = row_y + row.size[1]
 
-    return figureCanvas
+    return figure_canvas
 
 
-def makeSplitViewFigure(conn, pixelIds, zStart, zEnd, splitIndexes,
-                        channelNames, colourChannels, mergedIndexes,
-                        mergedColours, mergedNames, width, height,
-                        imageLabels=None, algorithm=None, stepping=1,
-                        scalebar=None, overlayColour=(255, 255, 255)):
+def make_split_view_figure(conn, pixel_ids, z_start, z_end, split_indexes,
+                           channel_names, colour_channels, merged_indexes,
+                           merged_colours, merged_names, width, height,
+                           image_labels=None, algorithm=None, stepping=1,
+                           scalebar=None, overlay_colour=(255, 255, 255)):
 
     """
     This method makes a figure of a number of images, arranged in rows with
@@ -340,35 +338,35 @@ def makeSplitViewFigure(conn, pixelIds, zStart, zEnd, splitIndexes,
     left to right, with the combined image added on the right.
     The combined image is rendered according to current settings on the
     server, but it's channels will be turned on/off according to
-    @mergedIndexes.
-    The colour of each channel turned white if colourChannels is false or the
+    @merged_indexes.
+    The colour of each channel turned white if colour_channels is false or the
     channel is not in the merged image.
-    Otherwise channel is changed to mergedColours[i]
+    Otherwise channel is changed to merged_colours[i]
     Text is added at the top of the figure, to display channel names above
     each column, and the combined image may have it's various channels named
-    in coloured text. The optional imageLabels is a list of string lists for
+    in coloured text. The optional image_labels is a list of string lists for
     naming the images at the left of the figure (Each image may have 0 or
     multiple labels).
 
     The figure is returned as a PIL 'Image'
 
-    @ session           session for server access
-    @ pixelIds          a list of the Ids for the pixels we want to display
-    @ zStart            the start of Z-range for projection
-    @ zEnd              the end of Z-range for projection
-    @ splitIndexes      a list of the channel indexes to display. Same
+    @ conn              session for server access
+    @ pixel_ids         a list of the Ids for the pixels we want to display
+    @ z_start           the start of Z-range for projection
+    @ z_end             the end of Z-range for projection
+    @ split_indexes     a list of the channel indexes to display. Same
                         channels for each image/row
-    @ channelNames      map of index:name to go above the columns for each
+    @ channel_names     map of index:name to go above the columns for each
                         split channel
-    @ colourChannels    true if split channels are
-    @ mergedIndexes     list (or set) of channels in the merged image
-    @ mergedColours     index: colour map of channels in the merged image
-    @ mergedNames       if true, label with merged panel with channel names
+    @ colour_channels   true if split channels are
+    @ merged_indexes    list (or set) of channels in the merged image
+    @ merged_colours    index: colour map of channels in the merged image
+    @ merged_names      if true, label with merged panel with channel names
                         (otherwise, label "Merged")
     @ width             the width of primary image (all images zoomed to this
                         height)
     @ height            the height of primary image
-    @ imageLabels       optional list of string lists.
+    @ image_labels      optional list of string lists.
     @ algorithm         for projection MAXIMUMINTENSITY or MEANINTENSITY
     @ stepping          projection increment
     """
@@ -384,126 +382,121 @@ def makeSplitViewFigure(conn, pixelIds, zStart, zEnd, splitIndexes,
         fontsize = 16
 
     spacer = (width/25) + 2
-    textGap = 3        # gap between text and image panels
-    leftTextWidth = 0
-    textHeight = 0
+    text_gap = 3        # gap between text and image panels
+    left_text_width = 0
+    text_height = 0
 
     # get the rendered splitview, with images surrounded on all sides by
     # spacer
-    sv = getSplitView(
-        conn, pixelIds, zStart, zEnd, splitIndexes, channelNames,
-        colourChannels, mergedIndexes, mergedColours, width, height, spacer,
-        algorithm, stepping, scalebar, overlayColour)
+    sv = get_split_view(
+        conn, pixel_ids, z_start, z_end, split_indexes, channel_names,
+        colour_channels, merged_indexes, merged_colours, width, height, spacer,
+        algorithm, stepping, scalebar, overlay_colour)
 
     font = imgUtil.getFont(fontsize)
     mode = "RGB"
     white = (255, 255, 255)
-    textHeight = font.getsize("Textq")[1]
-    # topSpacer = spacer + textHeight + textGap
-    # textCanvas = Image.new(mode, (1,1), white)
-    # textdraw = ImageDraw.Draw(textCanvas)
-    # h = textdraw.textsize("Textq", font=font) [1]
+    text_height = font.getsize("Textq")[1]
 
     # if adding text to the left, write the text on horizontal canvas, then
     # rotate to vertical (below)
-    if imageLabels:
+    if image_labels:
         # find max number of labels
-        maxCount = 0
-        for row in imageLabels:
-            maxCount = max(maxCount, len(row))
-        leftTextWidth = (textHeight + textGap) * maxCount
+        max_count = 0
+        for row in image_labels:
+            max_count = max(max_count, len(row))
+        left_text_width = (text_height + text_gap) * max_count
         # make the canvas as wide as the panels height
-        size = (sv.size[1], leftTextWidth)
-        textCanvas = Image.new(mode, size, white)
-        textdraw = ImageDraw.Draw(textCanvas)
+        size = (sv.size[1], left_text_width)
+        text_canvas = Image.new(mode, size, white)
+        textdraw = ImageDraw.Draw(text_canvas)
         px = spacer
-        imageLabels.reverse()
-        for row in imageLabels:
-            py = leftTextWidth - textGap  # start at bottom
+        image_labels.reverse()
+        for row in image_labels:
+            py = left_text_width - text_gap  # start at bottom
             for l, label in enumerate(row):
-                py = py - textHeight    # find the top of this row
+                py = py - text_height    # find the top of this row
                 w = textdraw.textsize(label, font=font)[0]
                 inset = int((height - w) / 2)
                 textdraw.text((px+inset, py), label, font=font,
                               fill=(0, 0, 0))
-                py = py - textGap    # add space between rows
+                py = py - text_gap    # add space between rows
             px = px + spacer + height         # spacer between each row
 
-    topTextHeight = textHeight + textGap
-    if (mergedNames):
-        topTextHeight = ((textHeight) * len(mergedIndexes))
+    top_text_height = text_height + text_gap
+    if (merged_names):
+        top_text_height = ((text_height) * len(merged_indexes))
     # make a canvas big-enough to add text to the images.
-    canvasWidth = leftTextWidth + sv.size[0]
-    canvasHeight = topTextHeight + sv.size[1]
-    size = (canvasWidth, canvasHeight)
+    canvas_width = left_text_width + sv.size[0]
+    canvas_height = top_text_height + sv.size[1]
+    size = (canvas_width, canvas_height)
     # create a canvas of appropriate width, height
     canvas = Image.new(mode, size, white)
 
     # add the split-view panel
-    pasteX = leftTextWidth
-    pasteY = topTextHeight
-    imgUtil.pasteImage(sv, canvas, pasteX, pasteY)
+    paste_x = left_text_width
+    paste_y = top_text_height
+    imgUtil.pasteImage(sv, canvas, paste_x, paste_y)
 
     draw = ImageDraw.Draw(canvas)
 
     # add text to rows
     # want it to be vertical. Rotate and paste the text canvas from above
-    if imageLabels:
-        textV = textCanvas.rotate(90)
-        imgUtil.pasteImage(textV, canvas, spacer, topTextHeight)
+    if image_labels:
+        text_v = text_canvas.rotate(90)
+        imgUtil.pasteImage(text_v, canvas, spacer, top_text_height)
 
     # add text to columns
-    px = spacer + leftTextWidth
+    px = spacer + left_text_width
     # edges of panels - rowHeight
-    py = topTextHeight + spacer - (textHeight + textGap)
-    for index in splitIndexes:
+    py = top_text_height + spacer - (text_height + text_gap)
+    for index in split_indexes:
         # calculate the position of the text, centered above the image
-        w = font.getsize(channelNames[index])[0]
+        w = font.getsize(channel_names[index])[0]
         inset = int((width - w) / 2)
         # text is coloured if channel is grey AND in the merged image
         rgba = (0, 0, 0, 255)
-        if index in mergedIndexes:
-            if (not colourChannels) and (index in mergedColours):
-                rgba = tuple(mergedColours[index])
+        if index in merged_indexes:
+            if (not colour_channels) and (index in merged_colours):
+                rgba = tuple(merged_colours[index])
                 if rgba == (255, 255, 255, 255):    # if white (unreadable),
                                                     # needs to be black!
                     rgba = (0, 0, 0, 255)
-        draw.text((px+inset, py), channelNames[index], font=font, fill=rgba)
+        draw.text((px+inset, py), channel_names[index], font=font, fill=rgba)
         px = px + width + spacer
 
     # add text for combined image
-    if (mergedNames):
-        mergedIndexes.reverse()
-        print "Adding merged channel names..."
-        for index in mergedIndexes:
+    if (merged_names):
+        merged_indexes.reverse()
+        for index in merged_indexes:
             rgba = (0, 0, 0, 255)
-            if index in mergedColours:
-                rgba = tuple(mergedColours[index])
-                log("%s %s %s" % (index, channelNames[index], rgba))
+            if index in merged_colours:
+                rgba = tuple(merged_colours[index])
+                log("%s %s %s" % (index, channel_names[index], rgba))
                 if rgba == (255, 255, 255, 255):    # if white (unreadable),
                                                     # needs to be black!
                     rgba = (0, 0, 0, 255)
-            name = channelNames[index]
-            combTextWidth = font.getsize(name)[0]
-            inset = int((width - combTextWidth) / 2)
+            name = channel_names[index]
+            comb_text_width = font.getsize(name)[0]
+            inset = int((width - comb_text_width) / 2)
             draw.text((px + inset, py), name, font=font, fill=rgba)
-            py = py - textHeight
+            py = py - text_height
     else:
-        combTextWidth = font.getsize("Merged")[0]
-        inset = int((width - combTextWidth) / 2)
+        comb_text_width = font.getsize("Merged")[0]
+        inset = int((width - comb_text_width) / 2)
         px = px + inset
         draw.text((px, py), "Merged", font=font, fill=(0, 0, 0))
 
     return canvas
 
 
-def splitViewFigure(conn, scriptParams):
+def split_view_figure(conn, script_params):
     """
     Processes the arguments, populating defaults if necessary. Prints the
     details to log (fig-legend).
     Even handles missing arguments that are not optional (from when this ran
     from commandline with everything optional)
-    then calls makeSplitViewFigure() to make the figure, attaches it to the
+    then calls make_split_view_figure() to make the figure, attaches it to the
     Image as an 'originalFile' annotation, with fig-legend as the description.
 
     @return: the id of the originalFileLink child. (ID object, not value)
@@ -513,200 +506,192 @@ def splitViewFigure(conn, scriptParams):
     log("")
 
     message = ""  # message to be returned to the client
-    imageIds = []
-    pixelIds = []
-    imageLabels = []
+    image_ids = []
+    pixel_ids = []
+    image_labels = []
 
     # function for getting image labels.
-    def getImageNames(fullName, tagsList, pdList):
-        name = fullName.split("/")[-1]
+    def get_image_names(full_name, tags_list, pd_list):
+        name = full_name.split("/")[-1]
         return [name.decode('utf8')]
 
     # default function for getting labels is getName (or use datasets / tags)
-    if scriptParams["Image_Labels"] == "Datasets":
-        def getDatasets(name, tagsList, pdList):
-            return [dataset.decode('utf8') for project, dataset in pdList]
-        getLabels = getDatasets
-    elif scriptParams["Image_Labels"] == "Tags":
-        def getTags(name, tagsList, pdList):
-            return [t.decode('utf8') for t in tagsList]
-        getLabels = getTags
+    if script_params["Image_Labels"] == "Datasets":
+        def get_datasets(name, tags_list, pd_list):
+            return [dataset.decode('utf8') for project, dataset in pd_list]
+        get_labels = get_datasets
+    elif script_params["Image_Labels"] == "Tags":
+        def get_tags(name, tags_list, pd_list):
+            return [t.decode('utf8') for t in tags_list]
+        get_labels = get_tags
     else:
-        getLabels = getImageNames
+        get_labels = get_image_names
 
     # Get the images
-    images, logMessage = scriptUtil.getObjects(conn, scriptParams)
-    message += logMessage
+    images, log_message = scriptUtil.getObjects(conn, script_params)
+    message += log_message
     if not images:
         return None, message
 
     # Attach figure to the first image
-    omeroImage = images[0]
+    omero_image = images[0]
 
     # process the list of images
     log("Image details:")
     for image in images:
-        imageIds.append(image.getId())
-        pixelIds.append(image.getPrimaryPixels().getId())
+        image_ids.append(image.getId())
+        pixel_ids.append(image.getPrimaryPixels().getId())
 
     # a map of imageId : list of (project, dataset) names.
-    pdMap = figUtil.getDatasetsProjectsFromImages(conn.getQueryService(),
-                                                  imageIds)
-    tagMap = figUtil.getTagsFromImages(conn.getMetadataService(), imageIds)
+    pd_map = figUtil.getDatasetsProjectsFromImages(conn.getQueryService(),
+                                                   image_ids)
+    tag_map = figUtil.getTagsFromImages(conn.getMetadataService(), image_ids)
     # Build a legend entry for each image
     for image in images:
         name = image.getName()
-        imageDate = image.getAcquisitionDate()
-        iId = image.getId()
-        tagsList = tagMap[iId]
-        pdList = pdMap[iId]
+        image_date = image.getAcquisitionDate()
+        iid = image.getId()
+        tags_list = tag_map[iid]
+        pd_list = pd_map[iid]
 
-        tags = ", ".join(tagsList)
-        pdString = ", ".join(["%s/%s" % pd for pd in pdList])
-        log(" Image: %s  ID: %d" % (name, iId))
-        if imageDate:
-            log("  Date: %s" % imageDate)
+        tags = ", ".join(tags_list)
+        pd_string = ", ".join(["%s/%s" % pd for pd in pd_list])
+        log(" Image: %s  ID: %d" % (name, iid))
+        if image_date:
+            log("  Date: %s" % image_date)
         else:
             log("  Date: not set")
         log("  Tags: %s" % tags)
-        log("  Project/Datasets: %s" % pdString)
+        log("  Project/Datasets: %s" % pd_string)
 
-        imageLabels.append(getLabels(name, tagsList, pdList))
+        image_labels.append(get_labels(name, tags_list, pd_list))
 
     # use the first image to define dimensions, channel colours etc.
-    sizeX = omeroImage.getSizeX()
-    sizeY = omeroImage.getSizeY()
-    sizeZ = omeroImage.getSizeZ()
-    sizeC = omeroImage.getSizeC()
+    size_x = omero_image.getSizeX()
+    size_y = omero_image.getSizeY()
+    size_z = omero_image.getSizeZ()
+    size_c = omero_image.getSizeC()
 
     # set image dimensions
-    zStart = -1
-    zEnd = -1
-    if "Z_Start" in scriptParams:
-        zStart = scriptParams["Z_Start"]
-    if "Z_End" in scriptParams:
-        zEnd = scriptParams["Z_End"]
+    z_start = -1
+    z_end = -1
+    if "Z_Start" in script_params:
+        z_start = script_params["Z_Start"]
+    if "Z_End" in script_params:
+        z_end = script_params["Z_End"]
 
-    width = "Width" in scriptParams and scriptParams["Width"] or sizeX
-    height = "Height" in scriptParams and scriptParams["Height"] or sizeY
+    width = "Width" in script_params and script_params["Width"] or size_x
+    height = "Height" in script_params and script_params["Height"] or size_y
 
     log("Image dimensions for all panels (pixels): width: %d  height: %d"
         % (width, height))
 
     # Make split-indexes list. If argument wasn't specified, include them all.
-    splitIndexes = []
-    if "Split_Indexes" in scriptParams:
-        splitIndexes = scriptParams["Split_Indexes"]
+    split_indexes = []
+    if "Split_Indexes" in script_params:
+        split_indexes = script_params["Split_Indexes"]
     else:
-        splitIndexes = range(sizeC)
+        split_indexes = range(size_c)
 
     # Make channel-names map. If argument wasn't specified, name by index
-    channelNames = {}
-    for c in range(sizeC):
-        channelNames[c] = str(c)
-    if "Channel_Names" in scriptParams:
-        cNameMap = scriptParams["Channel_Names"]
-        for c in cNameMap:
+    channel_names = {}
+    for c in range(size_c):
+        channel_names[c] = str(c)
+    if "Channel_Names" in script_params:
+        c_name_map = script_params["Channel_Names"]
+        for c in c_name_map:
             index = int(c)
-            channelNames[index] = cNameMap[c].decode('utf8')
+            channel_names[index] = c_name_map[c].decode('utf8')
 
-    mergedIndexes = []  # the channels in the combined image,
-    mergedColours = {}
-    if "Merged_Colours" in scriptParams:
-        cColourMap = scriptParams["Merged_Colours"]
-        for c in cColourMap:
-            rgb = cColourMap[c]
+    merged_indexes = []  # the channels in the combined image,
+    merged_colours = {}
+    if "Merged_Colours" in script_params:
+        c_colour_map = script_params["Merged_Colours"]
+        for c in c_colour_map:
+            rgb = c_colour_map[c]
             try:
                 rgb = int(rgb)
-                cIndex = int(c)
+                c_index = int(c)
             except ValueError:
-                print "Merged_Colours map should be index:rgbInt. Not %s:%s" \
-                    % (c, rgb)
                 continue
             rgba = imgUtil.RGBIntToRGBA(rgb)
-            mergedColours[cIndex] = rgba
-            mergedIndexes.append(cIndex)
-        mergedIndexes.sort()
+            merged_colours[c_index] = rgba
+            merged_indexes.append(c_index)
+        merged_indexes.sort()
     else:
-        mergedIndexes = range(sizeC)
+        merged_indexes = range(size_c)
 
-    colourChannels = not scriptParams["Split_Panels_Grey"]
+    colour_channels = not script_params["Split_Panels_Grey"]
 
     algorithm = ProjectionType.MAXIMUMINTENSITY
-    if "Mean Intensity" == scriptParams["Algorithm"]:
+    if "Mean Intensity" == script_params["Algorithm"]:
         algorithm = ProjectionType.MEANINTENSITY
 
-    stepping = min(scriptParams["Stepping"], sizeZ)
+    stepping = min(script_params["Stepping"], size_z)
 
     scalebar = None
-    if "Scalebar" in scriptParams:
-        scalebar = scriptParams["Scalebar"]
+    if "Scalebar" in script_params:
+        scalebar = script_params["Scalebar"]
         log("Scalebar is %d microns" % scalebar)
 
-    r, g, b, a = OVERLAY_COLOURS[scriptParams["Overlay_Colour"]]
-    overlayColour = (r, g, b)
+    r, g, b, a = OVERLAY_COLOURS[script_params["Overlay_Colour"]]
+    overlay_colour = (r, g, b)
 
-    mergedNames = scriptParams["Merged_Names"]
+    merged_names = script_params["Merged_Names"]
 
-    print "splitIndexes", splitIndexes
-    print "channelNames", channelNames
-    print "colourChannels", colourChannels
-    print "mergedIndexes", mergedIndexes
-    print "mergedColours", mergedColours
-    print "mergedNames", mergedNames
-    fig = makeSplitViewFigure(
-        conn, pixelIds, zStart, zEnd, splitIndexes, channelNames,
-        colourChannels, mergedIndexes, mergedColours, mergedNames, width,
-        height, imageLabels, algorithm, stepping, scalebar, overlayColour)
+    fig = make_split_view_figure(
+        conn, pixel_ids, z_start, z_end, split_indexes, channel_names,
+        colour_channels, merged_indexes, merged_colours, merged_names, width,
+        height, image_labels, algorithm, stepping, scalebar, overlay_colour)
 
-    figLegend = "\n".join(logStrings)
+    fig_legend = "\n".join(log_strings)
 
-    figureName = scriptParams["Figure_Name"]
-    figureName = os.path.basename(figureName)
+    figure_name = script_params["Figure_Name"]
+    figure_name = os.path.basename(figure_name)
     output = "localfile"
-    format = scriptParams["Format"]
+    format = script_params["Format"]
     if format == 'PNG':
         output = output + ".png"
-        figureName = figureName + ".png"
+        figure_name = figure_name + ".png"
         fig.save(output, "PNG")
         mimetype = "image/png"
     elif format == 'TIFF':
         output = output + ".tiff"
-        figureName = figureName + ".tiff"
+        figure_name = figure_name + ".tiff"
         fig.save(output, "TIFF")
         mimetype = "image/tiff"
     else:
         output = output + ".jpg"
-        figureName = figureName + ".jpg"
+        figure_name = figure_name + ".jpg"
         fig.save(output)
         mimetype = "image/jpeg"
 
     # Upload the figure 'output' to the server, creating a file annotation and
-    # attaching it to the omeroImage, adding the
-    # figLegend as the fileAnnotation description.
+    # attaching it to the omero_image, adding the
+    # fig_legend as the fileAnnotation description.
     namespace = NSCREATED + "/omero/figure_scripts/Split_View_Figure"
-    fileAnnotation, faMessage = scriptUtil.createLinkFileAnnotation(
-        conn, output, omeroImage, output="Split view figure",
-        mimetype=mimetype, ns=namespace, desc=figLegend,
-        origFilePathAndName=figureName)
-    message += faMessage
+    file_annotation, fa_message = scriptUtil.createLinkFileAnnotation(
+        conn, output, omero_image, output="Split view figure",
+        mimetype=mimetype, ns=namespace, desc=fig_legend,
+        origFilePathAndName=figure_name)
+    message += fa_message
 
-    return fileAnnotation, message
+    return file_annotation, message
 
 
-def runAsScript():
+def run_script():
     """
     The main entry point of the script, as called by the client via the
     scripting service, passing the required parameters.
     """
 
-    dataTypes = [rstring('Image')]
+    data_types = [rstring('Image')]
     labels = [rstring('Image Name'), rstring('Datasets'), rstring('Tags')]
-    algorithums = [rstring('Maximum Intensity'), rstring('Mean Intensity')]
+    algorithms = [rstring('Maximum Intensity'), rstring('Mean Intensity')]
     formats = [rstring('JPEG'), rstring('PNG'), rstring('TIFF')]
     ckeys = COLOURS.keys()
     ckeys.sort()
-    oColours = wrap(OVERLAY_COLOURS.keys())
+    o_colours = wrap(OVERLAY_COLOURS.keys())
 
     client = scripts.client(
         'Split_View_Figure.py',
@@ -717,7 +702,7 @@ See http://help.openmicroscopy.org/publish.html#figures""",
         # auto-populates with currently selected images.
         scripts.String(
             "Data_Type", optional=False, grouping="01",
-            description="The data you want to work with.", values=dataTypes,
+            description="The data you want to work with.", values=data_types,
             default="Image"),
 
         scripts.List(
@@ -726,8 +711,8 @@ See http://help.openmicroscopy.org/publish.html#figures""",
 
         scripts.String(
             "Algorithm", grouping="3",
-            description="Algorithum for projection. Only used if a Z-range is"
-            " chosen below", values=algorithums, default='Maximum Intensity'),
+            description="Algorithm for projection. Only used if a Z-range is"
+            " chosen below", values=algorithms, default='Maximum Intensity'),
 
         scripts.Int(
             "Z_Start", grouping="3.1",
@@ -799,7 +784,7 @@ See http://help.openmicroscopy.org/publish.html#figures""",
         scripts.String(
             "Overlay_Colour", grouping="97",
             description="The color of the scale bar.",
-            default='White', values=oColours),
+            default='White', values=o_colours),
 
         version="4.3.0",
         authors=["William Moore", "OME Team"],
@@ -810,21 +795,20 @@ See http://help.openmicroscopy.org/publish.html#figures""",
     try:
         conn = BlitzGateway(client_obj=client)
 
-        scriptParams = client.getInputs(unwrap=True)
-        print scriptParams
+        script_params = client.getInputs(unwrap=True)
 
         # call the main script, attaching resulting figure to Image. Returns
         # the FileAnnotationI
-        [fileAnnotation, message] = splitViewFigure(conn, scriptParams)
+        [file_annotation, message] = split_view_figure(conn, script_params)
 
         # Return message and file annotation (if applicable) to the client
         client.setOutput("Message", rstring(message))
-        if fileAnnotation is not None:
-            client.setOutput("File_Annotation", robject(fileAnnotation._obj))
+        if file_annotation is not None:
+            client.setOutput("File_Annotation", robject(file_annotation._obj))
 
     finally:
         client.closeSession()
 
 
 if __name__ == "__main__":
-    runAsScript()
+    run_script()
