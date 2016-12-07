@@ -163,7 +163,8 @@ def process_images(conn, script_params):
     with open(csv_file_name, 'w') as csv_file:
         csv_file.write("\n \n".join(csv_data))
 
-    file_ann = conn.createFileAnnfromLocalFile(csv_file, mimetype="text/csv")
+    file_ann = conn.createFileAnnfromLocalFile(csv_file_name,
+                                               mimetype="text/csv")
     fa_message = "Created Line Plot csv (Excel) file"
 
     links = []
