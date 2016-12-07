@@ -550,9 +550,9 @@ def roi_figure(conn, command_args):
         pixel_ids.append(image.getPrimaryPixels().getId())
 
     # a map of imageId : list of (project, dataset) names.
-    pd_map = figUtil.get_datasetsProjectsFromImages(conn.getQueryService(),
-                                                    image_ids)
-    tag_map = figUtil.get_tagsFromImages(conn.getMetadataService(), image_ids)
+    pd_map = figUtil.getDatasetsProjectsFromImages(conn.getQueryService(),
+                                                   image_ids)
+    tag_map = figUtil.getTagsFromImages(conn.getMetadataService(), image_ids)
     # Build a legend entry for each image
     for image in images:
         name = image.getName()

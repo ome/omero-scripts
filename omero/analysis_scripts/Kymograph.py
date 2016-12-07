@@ -387,7 +387,7 @@ def process_images(conn, script_params):
 
         # look-up the interval for each time-point
         t_interval = None
-        infos = list(pixels.copyPlaneInfo(the_c=0, the_t=size_t-1, the_z=0))
+        infos = list(pixels.copyPlaneInfo(theC=0, theT=size_t-1, theZ=0))
         if len(infos) > 0 and infos[0].getDeltaT() is not None:
             duration = infos[0].getDeltaT(units="SECOND").getValue()
             if size_t == 1:

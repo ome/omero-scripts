@@ -406,7 +406,7 @@ def make_thumbnail_figure(conn, script_params):
             title = dataset.getName().decode('utf8')
             ds_canvas = paint_dataset_canvas(
                 conn, images, title, tag_ids, show_untagged,
-                length=thumb_size, colCount=max_columns)
+                length=thumb_size, col_count=max_columns)
             if ds_canvas is None:
                 continue
             ds_canvases.append(ds_canvas)
@@ -415,7 +415,7 @@ def make_thumbnail_figure(conn, script_params):
     else:
         image_canvas = paint_dataset_canvas(
             conn, objects, "", tag_ids,
-            show_untagged, length=thumb_size, colCount=max_columns)
+            show_untagged, length=thumb_size, col_count=max_columns)
         ds_canvases.append(image_canvas)
         fig_height += image_canvas.size[1]
         fig_width = max(fig_width, image_canvas.size[0])
