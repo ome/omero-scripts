@@ -186,7 +186,7 @@ def createmovie_figure(conn, pixel_ids, t_indexes, z_start, z_end, width,
                     plane_def = omero.romio.PlaneDef()
                     plane_def.z = pro_start
                     plane_def.t = time
-                    plane_def = re.renderCompressed(plane_def)
+                    rendered_img = re.renderCompressed(plane_def)
                 # create images and resize, add to list
                 image = Image.open(io.BytesIO(rendered_img))
                 resized_image = imgUtil.resizeImage(image, width, height)
