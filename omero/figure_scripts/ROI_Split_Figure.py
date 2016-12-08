@@ -442,7 +442,7 @@ def get_split_view(conn, image_ids, pixel_ids, split_indexes, channel_names,
     left_text_width = (text_height + text_gap) * max_count + spacer
 
     max_split_panel_width = 0
-    totalcanvas_height = 0
+    total_canvas_height = 0
     merged_images = []
     roi_split_panes = []
     top_spacers = []         # space for labels above each row
@@ -517,8 +517,8 @@ def get_split_view(conn, image_ids, pixel_ids, split_indexes, channel_names,
         # note the maxWidth of zoomed panels and total height for row
         max_split_panel_width = max(max_split_panel_width,
                                     roi_split_pane.size[0])
-        totalcanvas_height += spacer + max(height+top_spacer,
-                                           roi_split_pane.size[1])
+        total_canvas_height += spacer + max(height+top_spacer,
+                                            roi_split_pane.size[1])
 
         merged_images.append(merged_image)
         roi_split_panes.append(roi_split_pane)
@@ -533,7 +533,7 @@ def get_split_view(conn, image_ids, pixel_ids, split_indexes, channel_names,
     # each row has 1/2 spacer above and below the panels. Need extra 1/2
     # spacer top and bottom
     canvas_width = left_text_width + width + 2 * spacer + max_split_panel_width
-    figure_size = (canvas_width, totalcanvas_height + spacer)
+    figure_size = (canvas_width, total_canvas_height + spacer)
     figure_canvas = Image.new("RGB", figure_size, (255, 255, 255))
 
     row_y = spacer

@@ -165,7 +165,7 @@ def points_string_to_xy_list(string):
     return xy_list
 
 
-def polyline_kymograph(conn, script_arams, image, polylines, line_width,
+def polyline_kymograph(conn, script_params, image, polylines, line_width,
                        dataset):
     """
     Creates a new kymograph Image from one or more polylines.
@@ -176,8 +176,8 @@ def polyline_kymograph(conn, script_arams, image, polylines, line_width,
     size_c = image.getSizeC()
     size_t = image.getSizeT()
 
-    use_all_times = "Use_All_Timepoints" in script_arams and \
-        script_arams['Use_All_Timepoints'] is True
+    use_all_times = "Use_All_Timepoints" in script_params and \
+        script_params['Use_All_Timepoints'] is True
     if len(polylines) == 1:
         use_all_times = True
 

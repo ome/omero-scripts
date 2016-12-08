@@ -100,7 +100,7 @@ def get_time_indexes(time_points, max_frames):
 def get_roi_movie_view(re, query_service, pixels, time_shape_map,
                        merged_indexes, merged_colours, roi_width,
                        roi_height, roi_zoom, spacer=12,
-                       algorithm=None, stepping=1, fontsize=24,
+                       algorithm=None, stepping=1, font_size=24,
                        max_columns=None, show_roi_duration=False):
 
     """
@@ -206,7 +206,7 @@ def get_roi_movie_view(re, query_service, pixels, time_shape_map,
         if (col_count % max_columns) > 0:
             row_count += 1
         col_count = max_columns
-    font = imgUtil.getFont(fontsize)
+    font = imgUtil.getFont(font_size)
     text_height = font.getsize("Textq")[1]
     # no spaces around panels
     canvas_width = ((panel_width + spacer) * col_count) - spacer
@@ -375,16 +375,16 @@ def get_split_view(conn, image_ids, pixel_ids, merged_indexes, merged_colours,
         log("ROI zoom: %F X" % roi_zoom)
 
     text_gap = spacer/3
-    fontsize = 12
+    font_size = 12
     if width > 500:
-        fontsize = 48
+        font_size = 48
     elif width > 400:
-        fontsize = 36
+        font_size = 36
     elif width > 300:
-        fontsize = 24
+        font_size = 24
     elif width > 200:
-        fontsize = 16
-    font = imgUtil.getFont(fontsize)
+        font_size = 16
+    font = imgUtil.getFont(font_size)
     text_height = font.getsize("Textq")[1]
     max_count = 0
     for row in image_labels:
@@ -392,7 +392,7 @@ def get_split_view(conn, image_ids, pixel_ids, merged_indexes, merged_colours,
     left_text_width = (text_height + text_gap) * max_count + spacer
 
     max_split_panel_width = 0
-    totalcanvas_height = 0
+    total_canvas_height = 0
     merged_images = []
     roi_split_panes = []
     top_spacers = []         # space for labels above each row
@@ -427,7 +427,7 @@ def get_split_view(conn, image_ids, pixel_ids, merged_indexes, merged_colours,
         roi_split_pane, full_merged_image, top_spacer = get_roi_movie_view(
             re, query_service, pixels, time_shape_map, merged_indexes,
             merged_colours, roi_width, roi_height, roi_zoom, spacer, algorithm,
-            stepping, fontsize, max_columns, show_roi_duration)
+            stepping, font_size, max_columns, show_roi_duration)
 
         # and now zoom the full-sized merged image, add scalebar
         merged_image = imgUtil.resizeImage(full_merged_image, width, height)
@@ -452,8 +452,8 @@ def get_split_view(conn, image_ids, pixel_ids, merged_indexes, merged_colours,
         # note the maxWidth of zoomed panels and total height for row
         max_split_panel_width = max(max_split_panel_width,
                                     roi_split_pane.size[0])
-        totalcanvas_height += spacer + max(height+top_spacer,
-                                           roi_split_pane.size[1])
+        total_canvas_height += spacer + max(height+top_spacer,
+                                            roi_split_pane.size[1])
 
         merged_images.append(merged_image)
         roi_split_panes.append(roi_split_pane)
@@ -463,7 +463,7 @@ def get_split_view(conn, image_ids, pixel_ids, merged_indexes, merged_colours,
     # each row has 1/2 spacer above and below the panels. Need extra 1/2
     # spacer top and bottom
     canvas_width = left_text_width + width + 2 * spacer + max_split_panel_width
-    figure_size = (canvas_width, totalcanvas_height + spacer)
+    figure_size = (canvas_width, total_canvas_height + spacer)
     figure_canvas = Image.new("RGB", figure_size, (255, 255, 255))
 
     row_y = spacer
@@ -679,7 +679,7 @@ def roi_figure(conn, command_args):
 
     format = command_args["Format"]
 
-    figure_name = "movieroi_figure"
+    figure_name = "movieROIFigure"
     if "Figure_Name" in command_args:
         figure_name = command_args["Figure_Name"]
         figure_name = os.path.basename(figure_name)

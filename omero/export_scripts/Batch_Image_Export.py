@@ -294,7 +294,7 @@ def batch_image_export(conn, script_params):
         zoom_percent = int(script_params["Zoom"][:-1])
 
     # functions used below for each imaage.
-    def get_zrange(size_z, script_params):
+    def get_z_range(size_z, script_params):
         z_range = None
         if "Choose_Z_Section" in script_params:
             z_choice = script_params["Choose_Z_Section"]
@@ -415,7 +415,7 @@ def batch_image_export(conn, script_params):
             size_c = img.getSizeC()
             size_z = img.getSizeZ()
             size_t = img.getSizeT()
-            z_range = get_zrange(size_z, script_params)
+            z_range = get_z_range(size_z, script_params)
             t_range = get_trange(size_t, script_params)
             log("Using:")
             if z_range is None:
@@ -468,17 +468,17 @@ def batch_image_export(conn, script_params):
         conn.deleteObjects("Annotation", ometiff_ids)
         export_file = os.path.join(folder_name, os.listdir(exp_dir)[0])
         namespace = NSOMETIFF
-        output_displayname = "OME-TIFF"
+        output_display_name = "OME-TIFF"
         mimetype = 'image/tiff'
     else:
         export_file = "%s.zip" % folder_name
         compress(export_file, folder_name)
         mimetype = 'application/zip'
-        output_displayname = "Batch export zip"
+        output_display_name = "Batch export zip"
         namespace = NSCREATED + "/omero/export_scripts/Batch_Image_Export"
 
     file_annotation, ann_message = script_utils.createLinkFileAnnotation(
-        conn, export_file, parent, output=output_displayname, ns=namespace,
+        conn, export_file, parent, output=output_display_name, ns=namespace,
         mimetype=mimetype)
     message += ann_message
     return file_annotation, message
