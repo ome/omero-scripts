@@ -105,7 +105,7 @@ def dataset_to_plate(conn, script_params, dataset_id, screen):
     dataset_img_count = len(images)
     if "Filter_Names" in script_params:
         filter_by = script_params["Filter_Names"]
-        images = [i for i in images if (i.getName().find(filter_by) >= 0)]
+        images = [i for i in images if i.getName().find(filter_by) >= 0]
     images.sort(key=lambda x: x.name.lower())
 
     # Do we try to remove images from Dataset and Delte Datset when/if empty?
