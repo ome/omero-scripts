@@ -320,7 +320,7 @@ def batch_image_export(conn, script_params):
                     z_range = (z_start, z_end+1)
         return z_range
 
-    def get_trange(size_t, script_params):
+    def get_t_range(size_t, script_params):
         t_range = None
         if "Choose_T_Section" in script_params:
             t_choice = script_params["Choose_T_Section"]
@@ -416,7 +416,7 @@ def batch_image_export(conn, script_params):
             size_z = img.getSizeZ()
             size_t = img.getSizeT()
             z_range = get_z_range(size_z, script_params)
-            t_range = get_trange(size_t, script_params)
+            t_range = get_t_range(size_t, script_params)
             log("Using:")
             if z_range is None:
                 log("  Z-index: Last-viewed")
