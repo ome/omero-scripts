@@ -44,7 +44,7 @@ import omero.util.imageUtil as imgUtil
 import omero.util.figureUtil as figUtil
 import omero.util.script_utils as scriptUtil
 from omero.gateway import BlitzGateway
-from omero.rtypes import rlong, rint, rstring, robject, wrap
+from omero.rtypes import rlong, rint, rstring, robject, wrap, unwrap
 from omero.constants.namespaces import NSCREATED
 import omero.model
 from omero.constants.projection import ProjectionType
@@ -280,8 +280,14 @@ def getRectangle(roiService, imageId, roiLabel):
 
         timeShapeMap = {}  # map of tIndex: (x,y,zMin,zMax) for a single roi
         for shape in rectangles:
-            t = shape.getTheT().getValue()
-            z = shape.getTheZ().getValue()
+            the_t = unwrap(shape.getTheT())
+            the_z = unwrap(shape.getTheZ())
+            t = 0
+            z = 0
+            if the_t is not None:
+                t = the_t
+            if the_z is not None:
+                z = the_z
             x = int(shape.getX().getValue())
             y = int(shape.getY().getValue())
             text = shape.getTextValue() and shape.getTextValue().getValue() \
@@ -840,6 +846,7 @@ any ROI."""
 
     finally:
         client.closeSession()
+
 
 if __name__ == "__main__":
     runAsScript()

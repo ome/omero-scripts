@@ -4,7 +4,7 @@
  components/tools/OmeroPy/scripts/omero/util_scripts/Images_From_ROIs.py
 
 -----------------------------------------------------------------------------
-  Copyright (C) 2006-2014 University of Dundee. All rights reserved.
+  Copyright (C) 2006-2016 University of Dundee. All rights reserved.
 
 
   This program is free software; you can redistribute it and/or modify
@@ -38,8 +38,10 @@ images with the regions within the ROIs, and saves them back to the server.
 import omero
 import omero.scripts as scripts
 from omero.gateway import BlitzGateway
-from omero.rtypes import rstring, rlong, robject
+from omero.rtypes import rstring, rlong, robject, unwrap
 import omero.util.script_utils as script_utils
+from omero.util.tiles import TileLoopIteration, RPSTileLoop
+from omero.model import PixelsI
 
 import os
 
@@ -53,6 +55,87 @@ def printDuration(output=True):
         startTime = time.time()
     if output:
         print "Script timer = %s secs" % (time.time() - startTime)
+
+
+def create_image_from_tiles(conn, source, image_name, description,
+                            box, tileSize):
+
+    pixelsService = conn.getPixelsService()
+    queryService = conn.getQueryService()
+    xbox, ybox, wbox, hbox, z1box, z2box, t1box, t2box = box
+    sizeX = wbox
+    sizeY = hbox
+    sizeZ = source.getSizeZ()
+    sizeT = source.getSizeT()
+    sizeC = source.getSizeC()
+    tileWidth = tileSize
+    tileHeight = tileSize
+    primary_pixels = source.getPrimaryPixels()
+
+    def create_image():
+        query = "from PixelsType as p where p.value='uint8'"
+        pixelsType = queryService.findByQuery(query, None)
+        channelList = range(sizeC)
+        # bytesPerPixel = pixelsType.bitSize.val / 8
+        iId = pixelsService.createImage(
+            sizeX,
+            sizeY,
+            sizeZ,
+            sizeT,
+            channelList,
+            pixelsType,
+            image_name,
+            description,
+            conn.SERVICE_OPTS)
+
+        image = conn.getObject("Image", iId)
+        return image
+
+    # Make a list of all the tiles we're going to need.
+    # This is the SAME ORDER that RPSTileLoop will ask for them.
+    zctTileList = []
+    for t in range(0, sizeT):
+        for c in range(0, sizeC):
+            for z in range(0, sizeZ):
+                for tileOffsetY in range(
+                        0, ((sizeY + tileHeight - 1) / tileHeight)):
+                    for tileOffsetX in range(
+                            0, ((sizeX + tileWidth - 1) / tileWidth)):
+                        x = tileOffsetX * tileWidth
+                        y = tileOffsetY * tileHeight
+                        w = tileWidth
+                        if (w + x > sizeX):
+                            w = sizeX - x
+                        h = tileHeight
+                        if (h + y > sizeY):
+                            h = sizeY - y
+                        tile_xywh = (xbox + x, ybox + y, w, h)
+                        zctTileList.append((z, c, t, tile_xywh))
+
+    # This is a generator that will return tiles in the sequence above
+    # getTiles() only opens 1 rawPixelsStore for all the tiles
+    # whereas getTile() opens and closes a rawPixelsStore for each tile.
+    tileGen = primary_pixels.getTiles(zctTileList)
+
+    def nextTile():
+        return tileGen.next()
+
+    class Iteration(TileLoopIteration):
+
+        def run(self, data, z, c, t, x, y, tileWidth, tileHeight, tileCount):
+            tile2d = nextTile()
+            data.setTile(tile2d, z, c, t, x, y, tileWidth, tileHeight)
+
+    new_image = create_image()
+    pid = new_image.getPixelsId()
+    loop = RPSTileLoop(conn.c.sf, PixelsI(pid, False))
+    loop.forEachTile(tileWidth, tileHeight, Iteration())
+
+    for theC in range(sizeC):
+        pixelsService.setChannelGlobalMinMax(pid, theC, float(0),
+                                             float(255), conn.SERVICE_OPTS)
+
+    return new_image
 
 
 def getRectangles(conn, imageId):
@@ -74,9 +157,14 @@ def getRectangles(conn, imageId):
         x = None
         for shape in roi.copyShapes():
             if type(shape) == omero.model.RectangleI:
-                # check t range and z range for every rectangle
-                t = shape.getTheT().getValue()
-                z = shape.getTheZ().getValue()
+                the_t = unwrap(shape.getTheT())
+                the_z = unwrap(shape.getTheZ())
+                t = 0
+                z = 0
+                if the_t is not None:
+                    t = the_t
+                if the_z is not None:
+                    z = the_z
                 if tStart is None:
                     tStart = t
                 if zStart is None:
@@ -201,34 +289,45 @@ def processImage(conn, imageId, parameterMap):
     else:
         images = []
         iIds = []
-        for r in rois:
+        bigImageSize = conn.getMaxPlaneSize()
+        bigImagePixelCount = bigImageSize[0] * bigImageSize[1]
+
+        for index, r in enumerate(rois):
+            newName = "%s_%0d" % (imageName, index)
             x, y, w, h, z1, z2, t1, t2 = r
             print "  ROI x: %s y: %s w: %s h: %s z1: %s z2: %s t1: %s t2: %s"\
                 % (x, y, w, h, z1, z2, t1, t2)
 
-            # need a tile generator to get all the planes within the ROI
-            sizeZ = z2-z1 + 1
-            sizeT = t2-t1 + 1
-            sizeC = image.getSizeC()
-            zctTileList = []
-            tile = (x, y, w, h)
-            print "zctTileList..."
-            for z in range(z1, z2+1):
-                for c in range(sizeC):
-                    for t in range(t1, t2+1):
-                        zctTileList.append((z, c, t, tile))
-
-            def tileGen():
-                for i, t in enumerate(pixels.getTiles(zctTileList)):
-                    yield t
-
-            print "sizeZ, sizeC, sizeT", sizeZ, sizeC, sizeT
-            description = "Created from image:\n  Name: %s\n  Image ID: %d"\
+            description = "Created from image:"\
+                " \n  Name: %s\n  Image ID: %d"\
                 " \n x: %d y: %d" % (imageName, imageId, x, y)
-            newImg = conn.createImageFromNumpySeq(
-                tileGen(), imageName,
-                sizeZ=sizeZ, sizeC=sizeC, sizeT=sizeT,
-                description=description, sourceImageId=imageId)
+            if (h * w < bigImagePixelCount):
+                # need a tile generator to get all the planes within the ROI
+                sizeZ = z2-z1 + 1
+                sizeT = t2-t1 + 1
+                sizeC = image.getSizeC()
+                zctTileList = []
+                tile = (x, y, w, h)
+                print "zctTileList..."
+                for z in range(z1, z2+1):
+                    for c in range(sizeC):
+                        for t in range(t1, t2+1):
+                            zctTileList.append((z, c, t, tile))
+
+                def tileGen():
+                    for i, t in enumerate(pixels.getTiles(zctTileList)):
+                        yield t
+                print "sizeZ, sizeC, sizeT", sizeZ, sizeC, sizeT
+                newImg = conn.createImageFromNumpySeq(
+                    tileGen(), newName,
+                    sizeZ=sizeZ, sizeC=sizeC, sizeT=sizeT,
+                    description=description, sourceImageId=imageId)
+            else:
+                s = time.time()
+                tileSize = parameterMap['Tile_Size']
+                newImg = create_image_from_tiles(conn, image, newName,
+                                                 description, r, tileSize)
+                print 'Tiled image creation took:', time.time()-s, 'seconds'
 
             print "New Image Id = %s" % newImg.getId()
 
@@ -372,12 +471,14 @@ def runAsScript():
 
     client = scripts.client(
         'Images_From_ROIs.py',
-        """Create new Images from the regions defined by Rectangle ROIs on \
-other Images.
-Designed to work with single-plane images (Z=1 T=1) with multiple ROIs per \
-image.
-If you choose to make an image stack from all the ROIs, this script \
-assumes that all the ROIs on each Image are the same size.""",
+        """Crop an Image using Rectangular ROIs, to create new Images.
+ROIs that extend across Z and T will crop according to the Z and T limits
+of each ROI.
+If you choose to 'make an image stack' from all the ROIs, the script \
+will create a single new Z-stack image with a single plane from each ROI.
+ROIs that are 'Big', typically over 3k x 3k pixels will create 'tiled'
+images using the specified tile size.
+""",
 
         scripts.String(
             "Data_Type", optional=False, grouping="1",
@@ -400,7 +501,13 @@ assumes that all the ROIs on each Image are the same size.""",
             description="If true, make a single Image (stack) from all the"
             " ROIs of each parent Image"),
 
-        version="4.2.0",
+        scripts.Int(
+            "Tile_Size", optional=False, grouping="5",
+            min=50, max=2500,
+            description="If the new image is large and tiled, "
+            "create tiles of this width & height", default=1024),
+
+        version="5.3.0",
         authors=["William Moore", "OME Team"],
         institutions=["University of Dundee"],
         contact="ome-users@lists.openmicroscopy.org.uk",
@@ -422,6 +529,7 @@ assumes that all the ROIs on each Image are the same size.""",
     finally:
         client.closeSession()
         printDuration()
+
 
 if __name__ == "__main__":
     runAsScript()

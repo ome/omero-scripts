@@ -645,5 +645,6 @@ See http://help.openmicroscopy.org/scripts.html""",
         client.closeSession()
         printDuration()
 
+
 if __name__ == "__main__":
     runAsScript()

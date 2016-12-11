@@ -40,7 +40,7 @@ sizeC as input.
 from omero.gateway import BlitzGateway
 import omero
 import omero.util.script_utils as scriptUtil
-from omero.rtypes import rlong, rstring, robject
+from omero.rtypes import rlong, rstring, robject, unwrap
 import omero.scripts as scripts
 from numpy import math, zeros, hstack, vstack
 import logging
@@ -387,8 +387,14 @@ def processImages(conn, scriptParams):
             for s in roi.copyShapes():
                 if s is None:
                     continue
-                theZ = s.getTheZ() and s.getTheZ().getValue() or 0
-                theT = s.getTheT() and s.getTheT().getValue() or 0
+                the_t = unwrap(s.getTheT())
+                the_z = unwrap(s.getTheZ())
+                z = 0
+                t = 0
+                if the_t is not None:
+                    t = the_t
+                if the_z is not None:
+                    z = the_z
                 # TODO: Add some filter of shapes. E.g. text? / 'lines' only
                 # etc.
                 if type(s) == omero.model.LineI:
@@ -396,12 +402,12 @@ def processImages(conn, scriptParams):
                     x2 = s.getX2().getValue()
                     y1 = s.getY1().getValue()
                     y2 = s.getY2().getValue()
-                    lines[theT] = {'theZ': theZ, 'x1': x1, 'y1': y1, 'x2': x2,
-                                   'y2': y2}
+                    lines[t] = {'theZ': z, 'x1': x1, 'y1': y1, 'x2': x2,
+                                'y2': y2}
 
                 elif type(s) == omero.model.PolylineI:
                     points = pointsStringToXYlist(s.getPoints().getValue())
-                    polylines[theT] = {'theZ': theZ, 'points': points}
+                    polylines[t] = {'theZ': z, 'points': points}
 
             if len(lines) > 0:
                 newImg = linesKymograph(
@@ -485,6 +491,7 @@ def processImages(conn, scriptParams):
                 % (len(newImages), linkMessage)
 
     return newKymographs, message
+
 
 if __name__ == "__main__":
 
