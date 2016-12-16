@@ -38,13 +38,13 @@ import omero
 from omero.rtypes import rstring, rlong, robject, unwrap
 import omero.scripts as scripts
 import omero.util.script_utils as scriptUtil
-from numpy import math, zeros, hstack, vstack, average
+from numpy import asarray, int32, math, zeros, hstack, vstack, average
 import logging
 
 logger = logging.getLogger('plot_profile')
 
 
-def getLineData(pixels, x1, y1, x2, y2, lineW=2, theZ=0, theC=0, theT=0):
+def get_line_data(pixels, x1, y1, x2, y2, line_w=2, the_z=0, the_c=0, the_t=0):
     """
     Grabs pixel data covering the specified line, and rotates it horizontally
     so that x1,y1 is to the left,
@@ -54,31 +54,29 @@ def getLineData(pixels, x1, y1, x2, y2, lineW=2, theZ=0, theC=0, theT=0):
 
     @param pixels:          PixelsWrapper object
     @param x1, y1, x2, y2:  Coordinates of line
-    @param lineW:           Width of the line we want
-    @param theZ:            Z index within pixels
-    @param theC:            Channel index
-    @param theT:            Time index
+    @param line_w:          Width of the line we want
+    @param the_z:           Z index within pixels
+    @param the_c:           Channel index
+    @param the_t:           Time index
     """
 
-    from numpy import asarray, int32
+    size_x = pixels.getSizeX()
+    size_y = pixels.getSizeY()
 
-    sizeX = pixels.getSizeX()
-    sizeY = pixels.getSizeY()
+    line_x = x2-x1
+    line_y = 1 if y2-y1 == 0 else y2-y1
 
-    lineX = x2-x1
-    lineY = 1 if y2-y1 == 0 else y2-y1
-
-    rads = math.atan(float(lineX) / lineY)
+    rads = math.atan(float(line_x) / line_y)
 
     # How much extra Height do we need, top and bottom?
-    extraH = abs(math.sin(rads) * lineW)
-    bottom = int(max(y1, y2) + extraH/2)
-    top = int(min(y1, y2) - extraH/2)
+    extra_h = abs(math.sin(rads) * line_w)
+    bottom = int(max(y1, y2) + extra_h/2)
+    top = int(min(y1, y2) - extra_h/2)
 
     # How much extra width do we need, left and right?
-    extraW = abs(math.cos(rads) * lineW)
-    left = int(min(x1, x2) - extraW)
-    right = int(max(x1, x2) + extraW)
+    extra_w = abs(math.cos(rads) * line_w)
+    left = int(min(x1, x2) - extra_w)
+    right = int(max(x1, x2) + extra_w)
 
     # What's the larger area we need? - Are we outside the image?
     pad_left, pad_right, pad_top, pad_bottom = 0, 0, 0, 0
@@ -90,18 +88,18 @@ def getLineData(pixels, x1, y1, x2, y2, lineW=2, theZ=0, theC=0, theT=0):
         pad_top = abs(top)
         top = 0
     y = top
-    if right > sizeX:
-        pad_right = right - sizeX
-        right = sizeX
+    if right > size_x:
+        pad_right = right - size_x
+        right = size_x
     w = int(right - left)
-    if bottom > sizeY:
-        pad_bottom = bottom - sizeY
-        bottom = sizeY
+    if bottom > size_y:
+        pad_bottom = bottom - size_y
+        bottom = size_y
     h = int(bottom - top)
     tile = (x, y, w, h)
 
     # get the Tile
-    plane = pixels.getTile(theZ, theC, theT, tile)
+    plane = pixels.getTile(the_z, the_c, the_t, tile)
 
     # pad if we wanted a bigger region
     if pad_left > 0:
@@ -122,31 +120,29 @@ def getLineData(pixels, x1, y1, x2, y2, lineW=2, theZ=0, theC=0, theT=0):
         plane = vstack((plane, pad_data))
 
     pil = scriptUtil.numpy_to_image(plane, (plane.min(), plane.max()), int32)
-    # pil.show()
 
     # Now need to rotate so that x1,y1 is horizontally to the left of x2,y2
-    toRotate = 90 - math.degrees(rads)
+    to_rotate = 90 - math.degrees(rads)
 
     if x1 > x2:
-        toRotate += 180
+        to_rotate += 180
     # filter=Image.BICUBIC see
     # http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2172449/
-    rotated = pil.rotate(toRotate, expand=True)
+    rotated = pil.rotate(to_rotate, expand=True)
     # rotated.show()
 
     # finally we need to crop to the length of the line
-    length = int(math.sqrt(math.pow(lineX, 2) + math.pow(lineY, 2)))
-    rotW, rotH = rotated.size
-    cropX = (rotW - length)/2
-    cropX2 = cropX + length
-    cropY = (rotH - lineW)/2
-    cropY2 = cropY + lineW
-    cropped = rotated.crop((cropX, cropY, cropX2, cropY2))
-    # cropped.show()
+    length = int(math.sqrt(math.pow(line_x, 2) + math.pow(line_y, 2)))
+    rot_w, rot_h = rotated.size
+    crop_x = (rot_w - length)/2
+    crop_x2 = crop_x + length
+    crop_y = (rot_h - line_w)/2
+    crop_y2 = crop_y + line_w
+    cropped = rotated.crop((crop_x, crop_y, crop_x2, crop_y2))
     return asarray(cropped)
 
 
-def pointsStringToXYlist(string):
+def points_string_to_xy_list(string):
     """
     Method for converting the string returned from
     omero.model.ShapeI.getPoints()
@@ -154,72 +150,67 @@ def pointsStringToXYlist(string):
     E.g: "points[309,427, 366,503, 190,491] points1[309,427, 366,503, 190,491]
     points2[309,427, 366,503, 190,491]"
     """
-    pointLists = string.strip().split("points")
-    if len(pointLists) < 2:
+    point_lists = string.strip().split("points")
+    if len(point_lists) < 2:
         logger.error("Unrecognised ROI shape 'points' string: %s" % string)
         return ""
-    firstList = pointLists[1]
-    xyList = []
-    for xy in firstList.strip(" []").split(", "):
+    first_list = point_lists[1]
+    xy_list = []
+    for xy in first_list.strip(" []").split(", "):
         x, y = xy.split(",")
-        xyList.append((int(x.strip()), int(y.strip())))
-    return xyList
+        xy_list.append((int(x.strip()), int(y.strip())))
+    return xy_list
 
 
-def processPolyLines(conn, scriptParams, image, polylines, lineWidth, fout):
+def process_polylines(conn, script_params, image, polylines, line_width, fout):
     """
     Output data from one or more polylines on an image. Attach csv to image.
 
     @param polylines:       list of theT:T, theZ:Z, points: list of (x,y)}
     """
     pixels = image.getPrimaryPixels()
-    theCs = scriptParams['Channels']
+    the_cs = script_params['Channels']
 
     for pl in polylines:
-        theT = pl['theT']
-        theZ = pl['theZ']
-        roiId = pl['id']
+        the_t = pl['theT']
+        the_z = pl['theZ']
+        roi_id = pl['id']
         points = pl['points']
-        for theC in theCs:
-            lData = []
+        for the_c in the_cs:
+            ldata = []
             for l in range(len(points)-1):
                 x1, y1 = points[l]
                 x2, y2 = points[l+1]
-                ld = getLineData(
-                    pixels, x1, y1, x2, y2, lineWidth,
-                    theZ, theC, theT)
-                lData.append(ld)
-            lineData = hstack(lData)
+                ld = get_line_data(
+                    pixels, x1, y1, x2, y2, line_width,
+                    the_z, the_c, the_t)
+                ldata.append(ld)
+            line_data = hstack(ldata)
 
-            print 'Image_ID, ROI_ID, Z, T, C, PolylineData.shape:" \
-                " %s, %s, %s, %s, %s, %s' \
-                % (image.getId(), roiId, theZ+1, theT+1, theC+1,
-                   str(lineData.shape))
-
-            if scriptParams['Sum_or_Average'] == 'Sum':
-                outputData = lineData.sum(axis=0)
+            if script_params['Sum_or_Average'] == 'Sum':
+                output_data = line_data.sum(axis=0)
             else:
-                outputData = average(lineData, axis=0)
+                output_data = average(line_data, axis=0)
 
-            lineHeader = scriptParams['Sum_or_Average'] == \
+            line_header = script_params['Sum_or_Average'] == \
                 'Average, with raw data' and 'Average,' or ""
 
             # Image_ID, ROI_ID, Z, T, C, Line data
-            fout.write('%s,%s,%s,%s,%s,%s' % (image.getId(), roiId, theZ+1,
-                       theT+1, theC+1, lineHeader))
-            fout.write(','.join([str(d) for d in outputData]))
+            fout.write('%s,%s,%s,%s,%s,%s' % (image.getId(), roi_id, the_z+1,
+                       the_t+1, the_c+1, line_header))
+            fout.write(','.join([str(d) for d in output_data]))
             fout.write('\n')
 
             # Optionally output raw data for each row of raw line data
-            if scriptParams['Sum_or_Average'] == 'Average, with raw data':
-                for r in range(lineWidth):
-                    fout.write('%s,%s,%s,%s,%s,%s,' % (image.getId(), roiId,
-                               theZ+1, theT+1, theC+1, r))
-                    fout.write(','.join([str(d) for d in lineData[r]]))
+            if script_params['Sum_or_Average'] == 'Average, with raw data':
+                for r in range(line_width):
+                    fout.write('%s,%s,%s,%s,%s,%s,' % (image.getId(), roi_id,
+                               the_z+1, the_t+1, the_c+1, r))
+                    fout.write(','.join([str(d) for d in line_data[r]]))
                     fout.write('\n')
 
 
-def processLines(conn, scriptParams, image, lines, lineWidth, fout):
+def process_lines(conn, script_params, image, lines, line_width, fout):
     """
     Creates a new kymograph Image from one or more lines.
     If one line, use this for every time point.
@@ -229,55 +220,50 @@ def processLines(conn, scriptParams, image, lines, lineWidth, fout):
     """
 
     pixels = image.getPrimaryPixels()
-    theCs = scriptParams['Channels']
+    the_cs = script_params['Channels']
 
     for l in lines:
-        theT = l['theT']
-        theZ = l['theZ']
-        roiId = l['id']
-        for theC in theCs:
-            lineData = []
-            lineData = getLineData(pixels, l['x1'],
-                                   l['y1'], l['x2'], l['y2'], lineWidth,
-                                   theZ, theC, theT)
+        the_t = l['theT']
+        the_z = l['theZ']
+        roi_id = l['id']
+        for the_c in the_cs:
+            line_data = []
+            line_data = get_line_data(pixels, l['x1'], l['y1'], l['x2'],
+                                      l['y2'], line_width,
+                                      the_z, the_c, the_t)
 
-            print 'Image_ID, ROI_ID, Z, T, C, LineData.shape:" \
-                " %s, %s, %s, %s, %s, %s' \
-                % (image.getId(), roiId, theZ+1,
-                   theT+1, theC+1, str(lineData.shape))
-
-            if scriptParams['Sum_or_Average'] == 'Sum':
-                outputData = lineData.sum(axis=0)
+            if script_params['Sum_or_Average'] == 'Sum':
+                output_data = line_data.sum(axis=0)
             else:
-                outputData = average(lineData, axis=0)
+                output_data = average(line_data, axis=0)
 
-            lineHeader = scriptParams['Sum_or_Average'] == \
+            line_header = script_params['Sum_or_Average'] == \
                 'Average, with raw data' and 'Average,' or ""
 
             # Image_ID, ROI_ID, Z, T, C, Line data
-            fout.write('%s,%s,%s,%s,%s,%s' % (image.getId(), roiId, theZ+1,
-                       theT+1, theC+1, lineHeader))
-            fout.write(','.join([str(d) for d in outputData]))
+            fout.write('%s,%s,%s,%s,%s,%s' % (image.getId(), roi_id, the_z+1,
+                       the_t+1, the_c+1, line_header))
+            fout.write(','.join([str(d) for d in output_data]))
             fout.write('\n')
 
             # Optionally output raw data for each row of raw line data
-            if scriptParams['Sum_or_Average'] == 'Average, with raw data':
-                for r in range(lineWidth):
-                    fout.write('%s,%s,%s,%s,%s,%s,' % (image.getId(), roiId,
-                               theZ+1, theT+1, theC+1, r))
-                    fout.write(','.join([str(d) for d in lineData[r]]))
+            if script_params['Sum_or_Average'] == 'Average, with raw data':
+                for r in range(line_width):
+                    fout.write('%s,%s,%s,%s,%s,%s,' % (image.getId(), roi_id,
+                               the_z+1, the_t+1, the_c+1, r))
+                    fout.write(','.join([str(d) for d in line_data[r]]))
                     fout.write('\n')
 
 
-def processImages(conn, scriptParams):
+def process_images(conn, script_params):
 
-    lineWidth = scriptParams['Line_Width']
-    fileAnns = []
+    line_width = script_params['Line_Width']
+    file_anns = []
     message = ""
 
     # Get the images
-    images, logMessage = scriptUtil.getObjects(conn, scriptParams)
-    message += logMessage
+    images, log_message = scriptUtil.getObjects(conn, script_params)
+    message += log_message
     if not images:
         return None, message
 
@@ -290,21 +276,19 @@ def processImages(conn, scriptParams):
 
     for image in images:
 
-        cNames = []
+        c_names = []
         colors = []
         for ch in image.getChannels():
-            cNames.append(ch.getLabel())
+            c_names.append(ch.getLabel())
             colors.append(ch.getColor().getRGB())
 
-        sizeC = image.getSizeC()
+        size_c = image.getSizeC()
 
-        if 'Channels' in scriptParams:
-            scriptParams['Channels'] = [i-1 for i in scriptParams['Channels']]
-            # Convert user input from 1-based to 0-based
-            for i in scriptParams['Channels']:
-                print i, type(i)
+        if 'Channels' in script_params:
+            script_params['Channels'] = [i-1 for i in
+                                         script_params['Channels']]
         else:
-            scriptParams['Channels'] = range(sizeC)
+            script_params['Channels'] = range(size_c)
 
         # channelMinMax = []
         # for c in image.getChannels():
@@ -312,14 +296,14 @@ def processImages(conn, scriptParams):
         #     maxC = c.getWindowMax()
         #     channelMinMax.append((minC, maxC))
 
-        roiService = conn.getRoiService()
-        result = roiService.findByImage(image.getId(), None)
+        roi_service = conn.getRoiService()
+        result = roi_service.findByImage(image.getId(), None)
 
         lines = []
         polylines = []
 
         for roi in result.rois:
-            roiId = roi.getId().getValue()
+            roi_id = roi.getId().getValue()
             for s in roi.copyShapes():
                 the_t = unwrap(s.getTheT())
                 the_z = unwrap(s.getTheZ())
@@ -336,62 +320,60 @@ def processImages(conn, scriptParams):
                     x2 = s.getX2().getValue()
                     y1 = s.getY1().getValue()
                     y2 = s.getY2().getValue()
-                    lines.append({'id': roiId, 'theT': t, 'theZ': z,
+                    lines.append({'id': roi_id, 'theT': t, 'theZ': z,
                                   'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2})
 
                 elif type(s) == omero.model.PolylineI:
-                    points = pointsStringToXYlist(s.getPoints().getValue())
-                    polylines.append({'id': roiId, 'theT': t, 'theZ': z,
+                    points = points_string_to_xy_list(s.getPoints().getValue())
+                    polylines.append({'id': roi_id, 'theT': t, 'theZ': z,
                                       'points': points})
 
         if len(lines) == 0 and len(polylines) == 0:
-            print "Image: %s had no lines or polylines" % image.getId()
             continue
 
         # prepare column headers, including line-id if we are going to output
         # raw data.
-        lineId = scriptParams['Sum_or_Average'] == 'Average, with raw data' \
+        line_id = script_params['Sum_or_Average'] == 'Average, with raw data' \
             and 'Line, ' or ""
-        colHeader = 'Image_ID, ROI_ID, Z, T, C, %sLine data %s of Line" \
-            " Width %s\n' % (lineId, scriptParams['Sum_or_Average'],
-                             scriptParams['Line_Width'])
-        print 'colHeader', colHeader
+        col_header = 'Image_ID, ROI_ID, Z, T, C, %sLine data %s of Line" \
+            " Width %s\n' % (line_id, script_params['Sum_or_Average'],
+                             script_params['Line_Width'])
 
         # prepare a csv file to write our data to...
-        fileName = "Plot_Profile_%s.csv" % image.getId()
-        try:
-            f = open(fileName, 'w')
-            f.write(colHeader)
+        file_name = "Plot_Profile_%s.csv" % image.getId()
+        with open(file_name, 'w') as f:
+            f.write(col_header)
             if len(lines) > 0:
-                processLines(conn, scriptParams, image, lines, lineWidth, f)
+                process_lines(conn, script_params, image, lines, line_width, f)
             if len(polylines) > 0:
-                processPolyLines(
-                    conn, scriptParams, image, polylines, lineWidth, f)
-        finally:
-            f.close()
+                process_polylines(
+                    conn, script_params, image, polylines, line_width, f)
 
-        fileAnn, faMessage = scriptUtil.createLinkFileAnnotation(
-            conn, fileName, image, output="Line Plot csv (Excel) file",
+        file_ann, fa_message = scriptUtil.createLinkFileAnnotation(
+            conn, file_name, image, output="Line Plot csv (Excel) file",
             mimetype="text/csv", desc=None)
-        if fileAnn:
-            fileAnns.append(fileAnn)
+        if file_ann:
+            file_anns.append(file_ann)
 
-    if not fileAnns:
-        faMessage = "No Analysis files created. See 'Info' or 'Error' for"\
+    if not file_anns:
+        fa_message = "No Analysis files created. See 'Info' or 'Error' for"\
             " more details"
-    elif len(fileAnns) > 1:
-        faMessage = "Created %s csv (Excel) files" % len(fileAnns)
-    message += faMessage
+    elif len(file_anns) > 1:
+        fa_message = "Created %s csv (Excel) files" % len(file_anns)
+    message += fa_message
 
-    return fileAnns, message
+    return file_anns, message
 
 
-if __name__ == "__main__":
-
-    dataTypes = [rstring('Image')]
-    sumAvgOptions = [rstring('Average'),
-                     rstring('Sum'),
-                     rstring('Average, with raw data')]
+def run_script():
+    """
+    The main entry point of the script, as called by the client via the
+    scripting service, passing the required parameters.
+    """
+    data_types = [rstring('Image')]
+    sum_avg_options = [rstring('Average'),
+                       rstring('Sum'),
+                       rstring('Average, with raw data')]
 
     client = scripts.client(
         'Plot_Profile.py',
@@ -401,7 +383,7 @@ and outputs the data as CSV files, for plotting in e.g. Excel.""",
         scripts.String(
             "Data_Type", optional=False, grouping="1",
             description="Choose source of images (only Image supported).",
-            values=dataTypes, default="Image"),
+            values=data_types, default="Image"),
 
         scripts.List(
             "IDs", optional=False, grouping="2",
@@ -415,7 +397,7 @@ and outputs the data as CSV files, for plotting in e.g. Excel.""",
             "Sum_or_Average", optional=False, grouping="3.1",
             description="Output the Sum or Average (mean) of Line Profile."
             " Option to include ALL line data with Average.",
-            default='Average', values=sumAvgOptions),
+            default='Average', values=sum_avg_options),
 
         scripts.List(
             "Channels", grouping="4",
@@ -429,18 +411,21 @@ and outputs the data as CSV files, for plotting in e.g. Excel.""",
     )
 
     try:
-        scriptParams = client.getInputs(unwrap=True)
-        print scriptParams
+        script_params = client.getInputs(unwrap=True)
 
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
 
-        fileAnns, message = processImages(conn, scriptParams)
+        file_anns, message = process_images(conn, script_params)
 
-        if fileAnns:
-            if len(fileAnns) == 1:
-                client.setOutput("Line_Data", robject(fileAnns[0]._obj))
+        if file_anns:
+            if len(file_anns) == 1:
+                client.setOutput("Line_Data", robject(file_anns[0]._obj))
         client.setOutput("Message", rstring(message))
 
     finally:
         client.closeSession()
+
+
+if __name__ == "__main__":
+    run_script()

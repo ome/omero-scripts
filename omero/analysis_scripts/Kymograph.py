@@ -41,13 +41,13 @@ import omero
 import omero.util.script_utils as scriptUtil
 from omero.rtypes import rlong, rstring, robject, unwrap
 import omero.scripts as scripts
-from numpy import math, zeros, hstack, vstack
+from numpy import asarray, int32, math, zeros, hstack, vstack
 import logging
 
 logger = logging.getLogger('kymograph')
 
 
-def getLineData(pixels, x1, y1, x2, y2, lineW=2, theZ=0, theC=0, theT=0):
+def get_line_data(pixels, x1, y1, x2, y2, line_w=2, the_z=0, the_c=0, the_t=0):
     """
     Grabs pixel data covering the specified line, and rotates it horizontally
     so that x1,y1 is to the left,
@@ -57,31 +57,29 @@ def getLineData(pixels, x1, y1, x2, y2, lineW=2, theZ=0, theC=0, theT=0):
 
     @param pixels:          PixelsWrapper object
     @param x1, y1, x2, y2:  Coordinates of line
-    @param lineW:           Width of the line we want
-    @param theZ:            Z index within pixels
-    @param theC:            Channel index
-    @param theT:            Time index
+    @param line_w:          Width of the line we want
+    @param the_z:           Z index within pixels
+    @param the_c:           Channel index
+    @param the_t:           Time index
     """
 
-    from numpy import asarray, int32
+    size_x = pixels.getSizeX()
+    size_y = pixels.getSizeY()
 
-    sizeX = pixels.getSizeX()
-    sizeY = pixels.getSizeY()
+    line_x = x2-x1
+    line_y = y2-y1
 
-    lineX = x2-x1
-    lineY = y2-y1
-
-    rads = math.atan(float(lineX)/lineY)
+    rads = math.atan(float(line_x)/line_y)
 
     # How much extra Height do we need, top and bottom?
-    extraH = abs(math.sin(rads) * lineW)
-    bottom = int(max(y1, y2) + extraH/2)
-    top = int(min(y1, y2) - extraH/2)
+    extra_h = abs(math.sin(rads) * line_w)
+    bottom = int(max(y1, y2) + extra_h/2)
+    top = int(min(y1, y2) - extra_h/2)
 
     # How much extra width do we need, left and right?
-    extraW = abs(math.cos(rads) * lineW)
-    left = int(min(x1, x2) - extraW)
-    right = int(max(x1, x2) + extraW)
+    extra_w = abs(math.cos(rads) * line_w)
+    left = int(min(x1, x2) - extra_w)
+    right = int(max(x1, x2) + extra_w)
 
     # What's the larger area we need? - Are we outside the image?
     pad_left, pad_right, pad_top, pad_bottom = 0, 0, 0, 0
@@ -93,18 +91,18 @@ def getLineData(pixels, x1, y1, x2, y2, lineW=2, theZ=0, theC=0, theT=0):
         pad_top = abs(top)
         top = 0
     y = top
-    if right > sizeX:
-        pad_right = right-sizeX
-        right = sizeX
+    if right > size_x:
+        pad_right = right-size_x
+        right = size_x
     w = int(right - left)
-    if bottom > sizeY:
-        pad_bottom = bottom-sizeY
-        bottom = sizeY
+    if bottom > size_y:
+        pad_bottom = bottom-size_y
+        bottom = size_y
     h = int(bottom - top)
     tile = (x, y, w, h)
 
     # get the Tile
-    plane = pixels.getTile(theZ, theC, theT, tile)
+    plane = pixels.getTile(the_z, the_c, the_t, tile)
 
     # pad if we wanted a bigger region
     if pad_left > 0:
@@ -125,31 +123,29 @@ def getLineData(pixels, x1, y1, x2, y2, lineW=2, theZ=0, theC=0, theT=0):
         plane = vstack((plane, pad_data))
 
     pil = scriptUtil.numpy_to_image(plane, (plane.min(), plane.max()), int32)
-    # pil.show()
 
     # Now need to rotate so that x1,y1 is horizontally to the left of x2,y2
-    toRotate = 90 - math.degrees(rads)
+    to_rotate = 90 - math.degrees(rads)
 
     if x1 > x2:
-        toRotate += 180
+        to_rotate += 180
     # filter=Image.BICUBIC see
     # http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2172449/
-    rotated = pil.rotate(toRotate, expand=True)
+    rotated = pil.rotate(to_rotate, expand=True)
     # rotated.show()
 
     # finally we need to crop to the length of the line
-    length = int(math.sqrt(math.pow(lineX, 2) + math.pow(lineY, 2)))
-    rotW, rotH = rotated.size
-    cropX = (rotW - length)/2
-    cropX2 = cropX + length
-    cropY = (rotH - lineW)/2
-    cropY2 = cropY + lineW
-    cropped = rotated.crop((cropX, cropY, cropX2, cropY2))
-    # cropped.show()
+    length = int(math.sqrt(math.pow(line_x, 2) + math.pow(line_y, 2)))
+    rot_w, rot_h = rotated.size
+    crop_x = (rot_w - length)/2
+    crop_x2 = crop_x + length
+    crop_y = (rot_h - line_w)/2
+    crop_y2 = crop_y + line_w
+    cropped = rotated.crop((crop_x, crop_y, crop_x2, crop_y2))
     return asarray(cropped)
 
 
-def pointsStringToXYlist(string):
+def points_string_to_xy_list(string):
     """
     Method for converting the string returned from
     omero.model.ShapeI.getPoints()
@@ -157,92 +153,88 @@ def pointsStringToXYlist(string):
     E.g: "points[309,427, 366,503, 190,491] points1[309,427, 366,503, 190,491]
     points2[309,427, 366,503, 190,491]"
     """
-    pointLists = string.strip().split("points")
-    if len(pointLists) < 2:
+    point_lists = string.strip().split("points")
+    if len(point_lists) < 2:
         logger.error("Unrecognised ROI shape 'points' string: %s" % string)
         return ""
-    firstList = pointLists[1]
-    xyList = []
-    for xy in firstList.strip(" []").split(", "):
+    first_list = point_lists[1]
+    xy_list = []
+    for xy in first_list.strip(" []").split(", "):
         x, y = xy.split(",")
-        xyList.append((int(x.strip()), int(y.strip())))
-    return xyList
+        xy_list.append((int(x.strip()), int(y.strip())))
+    return xy_list
 
 
-def polyLineKymograph(conn, scriptParams, image, polylines, lineWidth,
-                      dataset):
+def polyline_kymograph(conn, script_params, image, polylines, line_width,
+                       dataset):
     """
     Creates a new kymograph Image from one or more polylines.
 
     @param polylines:       map of theT: {theZ:theZ, points: list of (x,y)}
     """
     pixels = image.getPrimaryPixels()
-    sizeC = image.getSizeC()
-    sizeT = image.getSizeT()
+    size_c = image.getSizeC()
+    size_t = image.getSizeT()
 
-    use_all_times = "Use_All_Timepoints" in scriptParams and \
-        scriptParams['Use_All_Timepoints'] is True
+    use_all_times = "Use_All_Timepoints" in script_params and \
+        script_params['Use_All_Timepoints'] is True
     if len(polylines) == 1:
         use_all_times = True
 
     # for now, assume we're using ALL timepoints
     # need the first shape
-    firstShape = None
-    for t in range(sizeT):
+    first_shape = None
+    for t in range(size_t):
         if t in polylines:
-            firstShape = polylines[t]
+            first_shape = polylines[t]
             break
 
-    print "\nCreating Kymograph image from 'polyline' ROI. First polyline:", \
-        firstShape
-
-    def planeGen():
+    def plane_gen():
         """ Final image is single Z and T. Each plane is rows of T-slices """
-        for theC in range(sizeC):
-            shape = firstShape
-            tRows = []
-            for theT in range(sizeT):
+        for the_c in range(size_c):
+            shape = first_shape
+            t_rows = []
+            for the_t in range(size_t):
                 # update shape if specified for this timepoint
-                if theT in polylines:
-                    shape = polylines[theT]
+                if the_t in polylines:
+                    shape = polylines[the_t]
                 elif not use_all_times:
                     continue
-                lineData = []
+                line_data = []
                 points = shape['points']
-                theZ = shape['theZ']
+                the_z = shape['theZ']
                 for l in range(len(points)-1):
                     x1, y1 = points[l]
                     x2, y2 = points[l+1]
-                    ld = getLineData(pixels, x1, y1, x2,
-                                     y2, lineWidth, theZ, theC, theT)
-                    lineData.append(ld)
-                rowData = hstack(lineData)
-                tRows.append(rowData)
+                    ld = get_line_data(pixels, x1, y1, x2, y2, line_width,
+                                       the_z, the_c, the_t)
+                    line_data.append(ld)
+                row_data = hstack(line_data)
+                t_rows.append(row_data)
 
             # have to handle any mismatch in line lengths by padding shorter
             # rows
-            longest = max([row_array.shape[1] for row_array in tRows])
-            for t in range(len(tRows)):
-                t_row = tRows[t]
+            longest = max([row_array.shape[1] for row_array in t_rows])
+            for t in range(len(t_rows)):
+                t_row = t_rows[t]
                 row_height, row_length = t_row.shape
                 if row_length < longest:
                     padding = longest - row_length
                     pad_data = zeros((row_height, padding), dtype=t_row.dtype)
-                    tRows[t] = hstack([t_row, pad_data])
-            cData = vstack(tRows)
-            yield cData
+                    t_rows[t] = hstack([t_row, pad_data])
+            c_data = vstack(t_rows)
+            yield c_data
 
     name = "%s_kymograph" % image.getName()
     desc = "Kymograph generated from Image ID: %s, polyline: %s" \
-        % (image.getId(), firstShape['points'])
-    desc += "\nwith each timepoint being %s vertical pixels" % lineWidth
-    newImg = conn.createImageFromNumpySeq(
-        planeGen(), name, 1, sizeC, 1, description=desc,
+        % (image.getId(), first_shape['points'])
+    desc += "\nwith each timepoint being %s vertical pixels" % line_width
+    return conn.createImageFromNumpySeq(
+        plane_gen(), name, 1, size_c, 1, description=desc,
         dataset=dataset)
-    return newImg
 
 
-def linesKymograph(conn, scriptParams, image, lines, lineWidth, dataset):
+def lines_kymograph(conn, script_params, image, lines, line_width, dataset):
     """
     Creates a new kymograph Image from one or more lines.
     If one line, use this for every time point.
@@ -252,73 +244,70 @@ def linesKymograph(conn, scriptParams, image, lines, lineWidth, dataset):
     """
 
     pixels = image.getPrimaryPixels()
-    sizeC = image.getSizeC()
-    sizeT = image.getSizeT()
+    size_c = image.getSizeC()
+    size_t = image.getSizeT()
 
-    use_all_times = "Use_All_Timepoints" in scriptParams and \
-        scriptParams['Use_All_Timepoints'] is True
+    use_all_times = "Use_All_Timepoints" in script_params and \
+        script_params['Use_All_Timepoints'] is True
     if len(lines) == 1:
         use_all_times = True
 
     # need the first shape - Going to make all lines this length
-    firstLine = None
-    for t in range(sizeT):
+    first_line = None
+    for t in range(size_t):
         if t in lines:
-            firstLine = lines[t]
+            first_line = lines[t]
             break
 
-    print "\nCreating Kymograph image from 'line' ROI. First line:", firstLine
-
-    def planeGen():
+    def plane_gen():
         """ Final image is single Z and T. Each plane is rows of T-slices """
-        for theC in range(sizeC):
-            shape = firstLine
+        for the_c in range(size_c):
+            shape = first_line
             r_length = None           # set this for first line
-            tRows = []
-            for theT in range(sizeT):
-                if theT in lines:
-                    shape = lines[theT]
+            t_rows = []
+            for the_t in range(size_t):
+                if the_t in lines:
+                    shape = lines[the_t]
                 elif not use_all_times:
                     continue
-                theZ = shape['theZ']
+                the_z = shape['theZ']
                 x1, y1, x2, y2 = shape['x1'], shape['y1'], shape['x2'], \
                     shape['y2']
-                rowData = getLineData(
-                    pixels, x1, y1, x2, y2, lineWidth,
-                    theZ, theC, theT)
+                row_data = get_line_data(
+                    pixels, x1, y1, x2, y2, line_width,
+                    the_z, the_c, the_t)
                 # if the row is too long, crop - if it's too short, pad
-                row_height, row_length = rowData.shape
+                row_height, row_length = row_data.shape
                 if r_length is None:
                     r_length = row_length
                 if row_length < r_length:
                     padding = r_length - row_length
                     pad_data = zeros((row_height, padding),
-                                     dtype=rowData.dtype)
-                    rowData = hstack([rowData, pad_data])
+                                     dtype=row_data.dtype)
+                    row_data = hstack([row_data, pad_data])
                 elif row_length > r_length:
-                    rowData = rowData[:, 0:r_length]
-                tRows.append(rowData)
-            yield vstack(tRows)
+                    row_data = row_data[:, 0:r_length]
+                t_rows.append(row_data)
+            yield vstack(t_rows)
 
     name = "%s_kymograph" % image.getName()
     desc = "Kymograph generated from Image ID: %s, line: %s" \
-        % (image.getId(), firstLine)
-    desc += "\nwith each timepoint being %s vertical pixels" % lineWidth
-    newImg = conn.createImageFromNumpySeq(
-        planeGen(), name, 1, sizeC, 1, description=desc,
+        % (image.getId(), first_line)
+    desc += "\nwith each timepoint being %s vertical pixels" % line_width
+    return conn.createImageFromNumpySeq(
+        plane_gen(), name, 1, size_c, 1, description=desc,
         dataset=dataset)
-    return newImg
 
 
-def processImages(conn, scriptParams):
+def process_images(conn, script_params):
 
-    lineWidth = scriptParams['Line_Width']
-    newKymographs = []
+    line_width = script_params['Line_Width']
+    new_kymographs = []
     message = ""
 
     # Get the images
-    images, logMessage = scriptUtil.getObjects(conn, scriptParams)
-    message += logMessage
+    images, log_message = scriptUtil.getObjects(conn, script_params)
+    message += log_message
     if not images:
         return None, message
 
@@ -331,25 +320,23 @@ def processImages(conn, scriptParams):
 
     for image in images:
         if image.getSizeT() == 1:
-            print "Image: %s is not a movie (sizeT = 1)"\
-                " - Can't create Kymograph" % image.getId()
             continue
-        newImages = []      # kymographs derived from the current image.
-        cNames = []
+        new_images = []      # kymographs derived from the current image.
+        c_names = []
         colors = []
         for ch in image.getChannels():
-            cNames.append(ch.getLabel())
+            c_names.append(ch.getLabel())
             colors.append(ch.getColor().getRGB())
 
-        sizeT = image.getSizeT()
+        size_t = image.getSizeT()
         pixels = image.getPrimaryPixels()
 
         dataset = image.getParent()
         if dataset is not None and not dataset.canLink():
             dataset = None
 
-        roiService = conn.getRoiService()
-        result = roiService.findByImage(image.getId(), None)
+        roi_service = conn.getRoiService()
+        result = roi_service.findByImage(image.getId(), None)
 
         # kymograph strategy - Using Line and Polyline ROIs:
         # NB: Use ALL time points unless >1 shape AND 'use_all_timepoints' =
@@ -385,96 +372,94 @@ def processImages(conn, scriptParams):
                                 'y2': y2}
 
                 elif type(s) == omero.model.PolylineI:
-                    points = pointsStringToXYlist(s.getPoints().getValue())
+                    points = points_string_to_xy_list(s.getPoints().getValue())
                     polylines[t] = {'theZ': z, 'points': points}
 
             if len(lines) > 0:
-                newImg = linesKymograph(
-                    conn, scriptParams, image, lines, lineWidth, dataset)
-                newImages.append(newImg)
+                new_img = lines_kymograph(
+                    conn, script_params, image, lines, line_width, dataset)
+                new_images.append(new_img)
                 lines = []
             elif len(polylines) > 0:
-                newImg = polyLineKymograph(
-                    conn, scriptParams, image, polylines, lineWidth, dataset)
-                newImages.append(newImg)
-            else:
-                print "ROI: %s had no lines or polylines" \
-                    % roi.getId().getValue()
+                new_img = polyline_kymograph(
+                    conn, script_params, image, polylines, line_width, dataset)
+                new_images.append(new_img)
 
         # look-up the interval for each time-point
-        tInterval = None
-        infos = list(pixels.copyPlaneInfo(theC=0, theT=sizeT-1, theZ=0))
+        t_interval = None
+        infos = list(pixels.copyPlaneInfo(theC=0, theT=size_t-1, theZ=0))
         if len(infos) > 0 and infos[0].getDeltaT() is not None:
             duration = infos[0].getDeltaT(units="SECOND").getValue()
-            print "duration", duration
-            if sizeT == 1:
-                tInterval = duration
+            if size_t == 1:
+                t_interval = duration
             else:
-                tInterval = duration/(sizeT-1)
+                t_interval = duration/(size_t-1)
         elif pixels.timeIncrement is not None:
-            print "pixels.timeIncrement", pixels.timeIncrement
-            tInterval = pixels.timeIncrement
-        elif "Time_Increment" in scriptParams:
-            tInterval = scriptParams["Time_Increment"]
+            t_interval = pixels.timeIncrement
+        elif "Time_Increment" in script_params:
+            t_interval = script_params["Time_Increment"]
 
         pixel_size = None
         if pixels.physicalSizeX is not None:
             pixel_size = pixels.physicalSizeX
-        elif "Pixel_Size" in scriptParams:
-            pixel_size = scriptParams['Pixel_Size']
+        elif "Pixel_Size" in script_params:
+            pixel_size = script_params['Pixel_Size']
 
         # Save channel names and colors for each new image
-        for img in newImages:
-            print "Applying channel Names:", cNames, " Colors:", colors
+        for img in new_images:
             for i, c in enumerate(img.getChannels()):
                 lc = c.getLogicalChannel()
-                lc.setName(cNames[i])
+                lc.setName(c_names[i])
                 lc.save()
                 r, g, b = colors[i]
                 # need to reload channels to avoid optimistic lock on update
-                cObj = conn.getQueryService().get("Channel", c.id)
-                cObj.red = omero.rtypes.rint(r)
-                cObj.green = omero.rtypes.rint(g)
-                cObj.blue = omero.rtypes.rint(b)
-                cObj.alpha = omero.rtypes.rint(255)
-                conn.getUpdateService().saveObject(cObj)
+                c_obj = conn.getQueryService().get("Channel", c.id)
+                c_obj.red = omero.rtypes.rint(r)
+                c_obj.green = omero.rtypes.rint(g)
+                c_obj.blue = omero.rtypes.rint(b)
+                c_obj.alpha = omero.rtypes.rint(255)
+                conn.getUpdateService().saveObject(c_obj)
             img.resetRDefs()  # reset based on colors above
 
             # If we know pixel sizes, set them on the new image
-            if pixel_size is not None or tInterval is not None:
+            if pixel_size is not None or t_interval is not None:
                 px = conn.getQueryService().get("Pixels", img.getPixelsId())
                 microm = getattr(omero.model.enums.UnitsLength, "MICROMETER")
                 if pixel_size is not None:
                     pixel_size = omero.model.LengthI(pixel_size, microm)
                     px.setPhysicalSizeX(pixel_size)
-                if tInterval is not None:
-                    t_per_pixel = tInterval / lineWidth
+                if t_interval is not None:
+                    t_per_pixel = t_interval / line_width
                     t_per_pixel = omero.model.LengthI(t_per_pixel, microm)
                     px.setPhysicalSizeY(t_per_pixel)
                 conn.getUpdateService().saveObject(px)
-        newKymographs.extend(newImages)
+        new_kymographs.extend(new_images)
 
-    if not newKymographs:
+    if not new_kymographs:
         message += "No kymograph created. See 'Error' or 'Info' for details."
     else:
         if not dataset:
-            linkMessage = " but could not be attached"
+            link_message = " but could not be attached"
         else:
-            linkMessage = ""
+            link_message = ""
 
-        if len(newImages) == 1:
+        if len(new_images) == 1:
             message += "New kymograph created%s: %s." \
-                % (linkMessage, newImages[0].getName())
-        elif len(newImages) > 1:
+                % (link_message, new_images[0].getName())
+        elif len(new_images) > 1:
             message += "%s new kymographs created%s." \
-                % (len(newImages), linkMessage)
+                % (len(new_images), link_message)
 
-    return newKymographs, message
+    return new_kymographs, message
 
 
-if __name__ == "__main__":
+def run_script():
+    """
+    The main entry point of the script, as called by the client via the
+    scripting service, passing the required parameters.
+    """
 
-    dataTypes = [rstring('Image')]
+    data_types = [rstring('Image')]
 
     client = scripts.client(
         'Kymograph.py',
@@ -486,7 +471,7 @@ same sizeC as input.""",
         scripts.String(
             "Data_Type", optional=False, grouping="1",
             description="Choose source of images (only Image supported)",
-            values=dataTypes, default="Image"),
+            values=data_types, default="Image"),
 
         scripts.List(
             "IDs", optional=False, grouping="2",
@@ -518,21 +503,24 @@ same sizeC as input.""",
     )
 
     try:
-        scriptParams = client.getInputs(unwrap=True)
-        print scriptParams
+        script_params = client.getInputs(unwrap=True)
 
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
 
-        newImages, message = processImages(conn, scriptParams)
+        new_images, message = process_images(conn, script_params)
 
-        if newImages:
-            if len(newImages) == 1:
-                client.setOutput("New_Image", robject(newImages[0]._obj))
-            elif len(newImages) > 1:
+        if new_images:
+            if len(new_images) == 1:
+                client.setOutput("New_Image", robject(new_images[0]._obj))
+            elif len(new_images) > 1:
                 # return the first one
-                client.setOutput("First_Image", robject(newImages[0]._obj))
+                client.setOutput("First_Image", robject(new_images[0]._obj))
         client.setOutput("Message", rstring(message))
 
     finally:
         client.closeSession()
+
+
+if __name__ == "__main__":
+    run_script()

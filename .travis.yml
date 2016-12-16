@@ -2,5 +2,5 @@ language: python
 python:
   - "2.7"
   - "2.7_with_system_site_packages"
-install: pip install flake8
+install: pip install flake8 pycodestyle pep8-naming
 script: flake8 -v .
