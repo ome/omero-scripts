@@ -38,131 +38,14 @@ sizeC as input.
 
 from omero.gateway import BlitzGateway
 import omero
-import omero.util.script_utils as scriptUtil
+import omero.util.script_utils as script_util
+import omero.util.roi_handling_utils as roi_utils
 from omero.rtypes import rlong, rstring, robject, unwrap
 import omero.scripts as scripts
-from numpy import asarray, int32, math, zeros, hstack, vstack
+from numpy import zeros, hstack, vstack
 import logging
 
 logger = logging.getLogger('kymograph')
-
-
-def get_line_data(pixels, x1, y1, x2, y2, line_w=2, the_z=0, the_c=0, the_t=0):
-    """
-    Grabs pixel data covering the specified line, and rotates it horizontally
-    so that x1,y1 is to the left,
-    Returning a numpy 2d array. Used by Kymograph.py script.
-    Uses PIL to handle rotating and interpolating the data. Converts to numpy
-    to PIL and back (may change dtype.)
-
-    @param pixels:          PixelsWrapper object
-    @param x1, y1, x2, y2:  Coordinates of line
-    @param line_w:          Width of the line we want
-    @param the_z:           Z index within pixels
-    @param the_c:           Channel index
-    @param the_t:           Time index
-    """
-
-    size_x = pixels.getSizeX()
-    size_y = pixels.getSizeY()
-
-    line_x = x2-x1
-    line_y = y2-y1
-
-    rads = math.atan(float(line_x)/line_y)
-
-    # How much extra Height do we need, top and bottom?
-    extra_h = abs(math.sin(rads) * line_w)
-    bottom = int(max(y1, y2) + extra_h/2)
-    top = int(min(y1, y2) - extra_h/2)
-
-    # How much extra width do we need, left and right?
-    extra_w = abs(math.cos(rads) * line_w)
-    left = int(min(x1, x2) - extra_w)
-    right = int(max(x1, x2) + extra_w)
-
-    # What's the larger area we need? - Are we outside the image?
-    pad_left, pad_right, pad_top, pad_bottom = 0, 0, 0, 0
-    if left < 0:
-        pad_left = abs(left)
-        left = 0
-    x = left
-    if top < 0:
-        pad_top = abs(top)
-        top = 0
-    y = top
-    if right > size_x:
-        pad_right = right-size_x
-        right = size_x
-    w = int(right - left)
-    if bottom > size_y:
-        pad_bottom = bottom-size_y
-        bottom = size_y
-    h = int(bottom - top)
-    tile = (x, y, w, h)
-
-    # get the Tile
-    plane = pixels.getTile(the_z, the_c, the_t, tile)
-
-    # pad if we wanted a bigger region
-    if pad_left > 0:
-        data_h, data_w = plane.shape
-        pad_data = zeros((data_h, pad_left), dtype=plane.dtype)
-        plane = hstack((pad_data, plane))
-    if pad_right > 0:
-        data_h, data_w = plane.shape
-        pad_data = zeros((data_h, pad_right), dtype=plane.dtype)
-        plane = hstack((plane, pad_data))
-    if pad_top > 0:
-        data_h, data_w = plane.shape
-        pad_data = zeros((pad_top, data_w), dtype=plane.dtype)
-        plane = vstack((pad_data, plane))
-    if pad_bottom > 0:
-        data_h, data_w = plane.shape
-        pad_data = zeros((pad_bottom, data_w), dtype=plane.dtype)
-        plane = vstack((plane, pad_data))
-
-    pil = scriptUtil.numpy_to_image(plane, (plane.min(), plane.max()), int32)
-
-    # Now need to rotate so that x1,y1 is horizontally to the left of x2,y2
-    to_rotate = 90 - math.degrees(rads)
-
-    if x1 > x2:
-        to_rotate += 180
-    # filter=Image.BICUBIC see
-    # http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2172449/
-    rotated = pil.rotate(to_rotate, expand=True)
-    # rotated.show()
-
-    # finally we need to crop to the length of the line
-    length = int(math.sqrt(math.pow(line_x, 2) + math.pow(line_y, 2)))
-    rot_w, rot_h = rotated.size
-    crop_x = (rot_w - length)/2
-    crop_x2 = crop_x + length
-    crop_y = (rot_h - line_w)/2
-    crop_y2 = crop_y + line_w
-    cropped = rotated.crop((crop_x, crop_y, crop_x2, crop_y2))
-    return asarray(cropped)
-
-
-def points_string_to_xy_list(string):
-    """
-    Method for converting the string returned from
-    omero.model.ShapeI.getPoints()
-    into list of (x,y) points.
-    E.g: "points[309,427, 366,503, 190,491] points1[309,427, 366,503, 190,491]
-    points2[309,427, 366,503, 190,491]"
-    """
-    point_lists = string.strip().split("points")
-    if len(point_lists) < 2:
-        logger.error("Unrecognised ROI shape 'points' string: %s" % string)
-        return ""
-    first_list = point_lists[1]
-    xy_list = []
-    for xy in first_list.strip(" []").split(", "):
-        x, y = xy.split(",")
-        xy_list.append((int(x.strip()), int(y.strip())))
-    return xy_list
 
 
 def polyline_kymograph(conn, script_params, image, polylines, line_width,
@@ -206,8 +89,9 @@ def polyline_kymograph(conn, script_params, image, polylines, line_width,
                 for l in range(len(points)-1):
                     x1, y1 = points[l]
                     x2, y2 = points[l+1]
-                    ld = get_line_data(pixels, x1, y1, x2, y2, line_width,
-                                       the_z, the_c, the_t)
+                    ld = roi_utils.get_line_data(pixels, x1, y1, x2, y2,
+                                                 line_width, the_z, the_c,
+                                                 the_t)
                     line_data.append(ld)
                 row_data = hstack(line_data)
                 t_rows.append(row_data)
@@ -273,7 +157,7 @@ def lines_kymograph(conn, script_params, image, lines, line_width, dataset):
                 the_z = shape['theZ']
                 x1, y1, x2, y2 = shape['x1'], shape['y1'], shape['x2'], \
                     shape['y2']
-                row_data = get_line_data(
+                row_data = roi_utils.get_line_data(
                     pixels, x1, y1, x2, y2, line_width,
                     the_z, the_c, the_t)
                 # if the row is too long, crop - if it's too short, pad
@@ -306,7 +190,7 @@ def process_images(conn, script_params):
     message = ""
 
     # Get the images
-    images, log_message = scriptUtil.getObjects(conn, script_params)
+    images, log_message = script_util.getObjects(conn, script_params)
     message += log_message
     if not images:
         return None, message
@@ -372,7 +256,8 @@ def process_images(conn, script_params):
                                 'y2': y2}
 
                 elif type(s) == omero.model.PolylineI:
-                    points = points_string_to_xy_list(s.getPoints().getValue())
+                    points = roi_utils.points_string_to_xy_list(
+                            s.getPoints().getValue())
                     polylines[t] = {'theZ': z, 'points': points}
 
             if len(lines) > 0:

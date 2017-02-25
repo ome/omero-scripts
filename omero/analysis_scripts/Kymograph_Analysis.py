@@ -37,30 +37,11 @@ import omero
 from omero.rtypes import rlong, rstring, robject
 from omero.model import ImageAnnotationLinkI, ImageI
 import omero.scripts as scripts
-import omero.util.script_utils as scriptUtil
+import omero.util.script_utils as script_util
+import omero.util.roi_handling_utils as roi_utils
 import logging
 
 logger = logging.getLogger('kymograph_analysis')
-
-
-def points_string_to_xy_list(string):
-    """
-    Method for converting the string returned from
-    omero.model.ShapeI.getPoints()
-    into list of (x,y) points.
-    E.g: "points[309,427, 366,503, 190,491] points1[309,427, 366,503, 190,491]
-    points2[309,427, 366,503, 190,491]"
-    """
-    point_lists = string.strip().split("points")
-    if len(point_lists) < 2:
-        logger.error("Unrecognised ROI shape 'points' string: %s" % string)
-        return ""
-    first_list = point_lists[1]
-    xy_list = []
-    for xy in first_list.strip(" []").split(", "):
-        x, y = xy.split(",")
-        xy_list.append((int(x.strip()), int(y.strip())))
-    return xy_list
 
 
 def process_images(conn, script_params):
@@ -68,7 +49,7 @@ def process_images(conn, script_params):
     file_anns = []
     message = ""
     # Get the images
-    images, log_message = scriptUtil.getObjects(conn, script_params)
+    images, log_message = script_util.getObjects(conn, script_params)
     message += log_message
     if not images:
         return None, message
@@ -127,7 +108,8 @@ def process_images(conn, script_params):
 
                 elif type(s) == omero.model.PolylineI:
                     table_data += "\nPolyline ID: %s" % s.getId().getValue()
-                    points = points_string_to_xy_list(s.getPoints().getValue())
+                    points = roi_utils.points_string_to_xy_list(
+                             s.getPoints().getValue())
                     x_start, y_start = points[0]
                     for i in range(1, len(points)):
                         x1, y1 = points[i-1]
