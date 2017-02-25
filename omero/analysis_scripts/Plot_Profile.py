@@ -45,7 +45,7 @@ def process_polylines(conn, script_params, image, polylines, line_width, fout):
     """
     Output data from one or more polylines on an image. Attach csv to image.
 
-    @param polylines:       list of theT:T, theZ:Z, points: list of (x,y)}
+    @param polylines list of theT:T, theZ:Z, points: list of (x,y)}
     """
     pixels = image.getPrimaryPixels()
     the_cs = script_params['Channels']
@@ -169,12 +169,6 @@ def process_images(conn, script_params):
         else:
             script_params['Channels'] = range(size_c)
 
-        # channelMinMax = []
-        # for c in image.getChannels():
-        #     minC = c.getWindowMin()
-        #     maxC = c.getWindowMax()
-        #     channelMinMax.append((minC, maxC))
-
         roi_service = conn.getRoiService()
         result = roi_service.findByImage(image.getId(), None)
 
@@ -192,7 +186,7 @@ def process_images(conn, script_params):
                     t = the_t
                 if the_z is not None:
                     z = the_z
-                # TODO: Add some filter of shapes. E.g. text? / 'lines' only
+                # TODO: Add some filter of shapes e.g. text? / 'lines' only
                 # etc.
                 if type(s) == omero.model.LineI:
                     x1 = s.getX1().getValue()
@@ -281,7 +275,7 @@ and outputs the data as CSV files, for plotting in e.g. Excel.""",
 
         scripts.List(
             "Channels", grouping="4",
-            description="Optional list of Channels to process. E.g 1, 2. Use"
+            description="Optional list of Channels to process e.g. 1, 2. Use"
             " ALL Channels by default.").ofType(omero.rtypes.rint(0)),
 
         version="4.3.3",

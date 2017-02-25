@@ -357,7 +357,7 @@ same sizeC as input.""",
 
         scripts.List(
             "IDs", optional=False, grouping="2",
-            description="List of Image IDs to process.").ofType(rlong(0)),
+            description="List of Image IDs to process").ofType(rlong(0)),
 
         scripts.Int(
             "Line_Width", optional=False, grouping="3", default=4,
@@ -371,7 +371,7 @@ same sizeC as input.""",
         scripts.Float(
             "Time_Increment", grouping="5",
             description="If source movie has no time info, specify increment"
-            " per time point (secs)"),
+            " per time point (seconds)"),
 
         scripts.Float(
             "Pixel_Size", grouping="6",
