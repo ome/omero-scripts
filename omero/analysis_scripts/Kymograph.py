@@ -3,7 +3,7 @@
 """
 
 -----------------------------------------------------------------------------
-  Copyright (C) 2006-2016 University of Dundee. All rights reserved.
+  Copyright (C) 2006-2017 University of Dundee. All rights reserved.
 
 
   This program is free software; you can redistribute it and/or modify
@@ -30,10 +30,7 @@ sizeC as input.
 @author Will Moore
 <a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
 @version 4.3.3
-<small>
-(<b>Internal version:</b> $Revision: $Date: $)
-</small>
-@since 3.0-Beta4.3.3
+@since 3.0
 """
 
 from omero.gateway import BlitzGateway
