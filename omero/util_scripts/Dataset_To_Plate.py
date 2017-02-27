@@ -151,7 +151,7 @@ def datasets_to_plates(conn, script_params):
     message = ""
 
     # Get the datasets ID
-    datasets, log_message = script_utils.getObjects(conn, script_params)
+    datasets, log_message = script_utils.get_objects(conn, script_params)
     message += log_message
 
     def has_images_linked_to_well(dataset):

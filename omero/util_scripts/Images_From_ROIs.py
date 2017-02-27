@@ -368,7 +368,7 @@ def make_images_from_rois(conn, parameter_map):
     message = ""
 
     # Get the images
-    objects, log_message = script_utils.getObjects(conn, parameter_map)
+    objects, log_message = script_utils.get_objects(conn, parameter_map)
     message += log_message
     if not objects:
         return None, message

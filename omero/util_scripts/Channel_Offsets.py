@@ -186,7 +186,7 @@ def process_images(conn, script_params):
     message = ""
 
     # Get the images
-    images, log_message = script_utils.getObjects(conn, script_params)
+    images, log_message = script_utils.get_objects(conn, script_params)
     message += log_message
     if not images:
         return None, None, message

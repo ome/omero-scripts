@@ -348,7 +348,7 @@ def batch_image_export(conn, script_params):
 
     # Get the images or datasets
     message = ""
-    objects, log_message = script_utils.getObjects(conn, script_params)
+    objects, log_message = script_utils.get_objects(conn, script_params)
     message += log_message
     if not objects:
         return None, message
@@ -477,9 +477,9 @@ def batch_image_export(conn, script_params):
         output_display_name = "Batch export zip"
         namespace = NSCREATED + "/omero/export_scripts/Batch_Image_Export"
 
-    file_annotation, ann_message = script_utils.createLinkFileAnnotation(
-        conn, export_file, parent, output=output_display_name, ns=namespace,
-        mimetype=mimetype)
+    file_annotation, ann_message = script_utils.create_link_file_annotation(
+        conn, export_file, parent, output=output_display_name,
+        namespace=namespace, mimetype=mimetype)
     message += ann_message
     return file_annotation, message
 

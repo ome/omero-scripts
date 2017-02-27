@@ -357,7 +357,7 @@ def make_thumbnail_figure(conn, script_params):
     message = ""
 
     # Get the objects (images or datasets)
-    objects, log_message = scriptUtil.getObjects(conn, script_params)
+    objects, log_message = scriptUtil.get_objects(conn, script_params)
     message += log_message
     if not objects:
         return None, message
@@ -451,9 +451,10 @@ def make_thumbnail_figure(conn, script_params):
         mimetype = "image/jpeg"
 
     namespace = NSCREATED + "/omero/figure_scripts/Thumbnail_Figure"
-    file_annotation, fa_message = scriptUtil.createLinkFileAnnotation(
+    file_annotation, fa_message = scriptUtil.create_link_file_annotation(
         conn, output, parent, output="Thumbnail figure", mimetype=mimetype,
-        ns=namespace, desc=fig_legend, origFilePathAndName=figure_name)
+        namespace=namespace, description=fig_legend,
+        orig_file_path_and_name=figure_name)
     message += fa_message
 
     return file_annotation, message

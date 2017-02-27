@@ -141,7 +141,7 @@ def process_images(conn, script_params):
     message = ""
 
     # Get the images
-    images, log_message = script_util.getObjects(conn, script_params)
+    images, log_message = script_util.get_objects(conn, script_params)
     message += log_message
     if not images:
         return None, message
@@ -223,9 +223,9 @@ def process_images(conn, script_params):
                 process_polylines(
                     conn, script_params, image, polylines, line_width, f)
 
-        file_ann, fa_message = script_util.createLinkFileAnnotation(
+        file_ann, fa_message = script_util.create_link_file_annotation(
             conn, file_name, image, output="Line Plot csv (Excel) file",
-            mimetype="text/csv", desc=None)
+            mimetype="text/csv", description=None)
         if file_ann:
             file_anns.append(file_ann)
 

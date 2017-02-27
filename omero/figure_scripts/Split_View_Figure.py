@@ -524,7 +524,7 @@ def split_view_figure(conn, script_params):
         get_labels = get_image_names
 
     # Get the images
-    images, log_message = scriptUtil.getObjects(conn, script_params)
+    images, log_message = scriptUtil.get_objects(conn, script_params)
     message += log_message
     if not images:
         return None, message
@@ -666,10 +666,10 @@ def split_view_figure(conn, script_params):
     # attaching it to the omero_image, adding the
     # fig_legend as the fileAnnotation description.
     namespace = NSCREATED + "/omero/figure_scripts/Split_View_Figure"
-    file_annotation, fa_message = scriptUtil.createLinkFileAnnotation(
+    file_annotation, fa_message = scriptUtil.create_link_file_annotation(
         conn, output, omero_image, output="Split view figure",
-        mimetype=mimetype, ns=namespace, desc=fig_legend,
-        origFilePathAndName=figure_name)
+        mimetype=mimetype, namespace=namespace, description=fig_legend,
+        orig_file_path_and_name=figure_name)
     message += fa_message
 
     return file_annotation, message

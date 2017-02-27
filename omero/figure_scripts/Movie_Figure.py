@@ -395,7 +395,7 @@ def movie_figure(conn, command_args):
         get_labels = get_image_names
 
     # Get the images
-    images, log_message = scriptUtil.getObjects(conn, command_args)
+    images, log_message = scriptUtil.get_objects(conn, command_args)
     message += log_message
     if not images:
         return None, message
@@ -530,9 +530,10 @@ def movie_figure(conn, command_args):
         mimetype = "image/jpeg"
 
     namespace = NSCREATED + "/omero/figure_scripts/Movie_Figure"
-    file_annotation, fa_message = scriptUtil.createLinkFileAnnotation(
+    file_annotation, fa_message = scriptUtil.create_link_file_annotation(
         conn, output, omero_image, output="Movie figure", mimetype=mimetype,
-        ns=namespace, desc=fig_legend, origFilePathAndName=figure_name)
+        namespace=namespace, description=fig_legend,
+        orig_file_path_and_name=figure_name)
     message += fa_message
 
     return file_annotation, message
