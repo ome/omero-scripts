@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 -----------------------------------------------------------------------------
-  Copyright (C) 2006-2014 University of Dundee. All rights reserved.
+  Copyright (C) 2006-2017 University of Dundee. All rights reserved.
 
 
   This program is free software; you can redistribute it and/or modify
@@ -27,17 +27,13 @@ image per row, displayed as a split view with merged image.
 <a href="mailto:j.burel@dundee.ac.uk">j.burel@dundee.ac.uk</a>
 @author Donald MacDonald &nbsp;&nbsp;&nbsp;&nbsp;
 <a href="mailto:donald@lifesci.dundee.ac.uk">donald@lifesci.dundee.ac.uk</a>
-@version 3.0
-<small>
-(<b>Internal version:</b> $Revision: $Date: $)
-</small>
-@since 3.0-Beta4.1
+@since 3.0
 
 """
 
 import omero.scripts as scripts
 import omero.util.figureUtil as figUtil
-import omero.util.imageUtil as imgUtil
+import omero.util.image_utils as image_utils
 import omero.util.script_utils as scriptUtil
 import omero
 from omero.gateway import BlitzGateway
@@ -285,26 +281,26 @@ def get_split_view(conn, pixel_ids, z_start, z_end, split_indexes,
                 im = Image.new(mode, (size_x, size_y), (0, 0, 0))
             else:
                 im = Image.open(io.BytesIO(img))
-            i = imgUtil.resizeImage(im, width, height)
-            imgUtil.pasteImage(i, canvas, px, py)
+            i = image_utils.resize_image(im, width, height)
+            image_utils.paste_image(i, canvas, px, py)
             px = px + width + spacer
             col = col + 1
 
         # add combined image, after resizing and adding scale bar
         i = Image.open(io.BytesIO(overlay))
-        scaled_image = imgUtil.resizeImage(i, width, height)
+        scaled_image = image_utils.resize_image(i, width, height)
         if scalebar:
             x_indent = spacer
             y_indent = x_indent
             # if we've scaled to half size, zoom = 2
-            zoom = imgUtil.getZoomFactor(i.size, width, height)
+            zoom = image_utils.get_zoom_factor(i.size, width, height)
             # and the scale bar will be half size
             sbar = float(scalebar) / zoom
             status, log_msg = figUtil.addScalebar(
                 sbar, x_indent, y_indent, scaled_image, pixels, overlay_colour)
             log(log_msg)
 
-        imgUtil.pasteImage(scaled_image, canvas, px, py)
+        image_utils.paste_image(scaled_image, canvas, px, py)
 
         # most should be same width anyway
         total_width = max(total_width, canvas_width)
@@ -320,7 +316,7 @@ def get_split_view(conn, pixel_ids, z_start, z_end, split_indexes,
 
     row_y = spacer/2
     for row in row_panels:
-        imgUtil.pasteImage(row, figure_canvas, 0, row_y)
+        image_utils.paste_image(row, figure_canvas, 0, row_y)
         row_y = row_y + row.size[1]
 
     return figure_canvas
@@ -393,7 +389,7 @@ def make_split_view_figure(conn, pixel_ids, z_start, z_end, split_indexes,
         colour_channels, merged_indexes, merged_colours, width, height, spacer,
         algorithm, stepping, scalebar, overlay_colour)
 
-    font = imgUtil.getFont(fontsize)
+    font = image_utils.get_font(fontsize)
     mode = "RGB"
     white = (255, 255, 255)
     text_height = font.getsize("Textq")[1]
@@ -436,7 +432,7 @@ def make_split_view_figure(conn, pixel_ids, z_start, z_end, split_indexes,
     # add the split-view panel
     paste_x = left_text_width
     paste_y = top_text_height
-    imgUtil.pasteImage(sv, canvas, paste_x, paste_y)
+    image_utils.paste_image(sv, canvas, paste_x, paste_y)
 
     draw = ImageDraw.Draw(canvas)
 
@@ -444,7 +440,7 @@ def make_split_view_figure(conn, pixel_ids, z_start, z_end, split_indexes,
     # want it to be vertical. Rotate and paste the text canvas from above
     if image_labels:
         text_v = text_canvas.rotate(90)
-        imgUtil.pasteImage(text_v, canvas, spacer, top_text_height)
+        image_utils.paste_image(text_v, canvas, spacer, top_text_height)
 
     # add text to columns
     px = spacer + left_text_width
@@ -614,7 +610,7 @@ def split_view_figure(conn, script_params):
                 c_index = int(c)
             except ValueError:
                 continue
-            rgba = imgUtil.RGBIntToRGBA(rgb)
+            rgba = image_utils.rgb_int_to_rgba(rgb)
             merged_colours[c_index] = rgba
             merged_indexes.append(c_index)
         merged_indexes.sort()

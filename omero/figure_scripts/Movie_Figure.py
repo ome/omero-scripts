@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 -----------------------------------------------------------------------------
-  Copyright (C) 2006-2014 University of Dundee. All rights reserved.
+  Copyright (C) 2006-2017 University of Dundee. All rights reserved.
 
 
   This program is free software; you can redistribute it and/or modify
@@ -29,16 +29,12 @@ Saves the figure as a jpg or png attached to the first image in the figure.
 <a href="mailto:j.burel@dundee.ac.uk">j.burel@dundee.ac.uk</a>
 @author Donald MacDonald &nbsp;&nbsp;&nbsp;&nbsp;
 <a href="mailto:donald@lifesci.dundee.ac.uk">donald@lifesci.dundee.ac.uk</a>
-@version 3.0
-<small>
-(<b>Internal version:</b> $Revision: $Date: $)
-</small>
-@since 3.0-Beta4.1
+@since 3.0
 
 """
 
 import omero.scripts as scripts
-import omero.util.imageUtil as imgUtil
+import omero.util.image_utils as image_utils
 import omero.util.figureUtil as figUtil
 import omero.util.script_utils as scriptUtil
 from omero.gateway import BlitzGateway
@@ -189,14 +185,14 @@ def createmovie_figure(conn, pixel_ids, t_indexes, z_start, z_end, width,
                     rendered_img = re.renderCompressed(plane_def)
                 # create images and resize, add to list
                 image = Image.open(io.BytesIO(rendered_img))
-                resized_image = imgUtil.resizeImage(image, width, height)
+                resized_image = image_utils.resize_image(image, width, height)
                 rendered_images.append(resized_image)
 
         # make a canvas for the row of splitview images...
         # (will add time labels above each row)
         col_count = min(max_col_count, len(rendered_images))
         row_count = int(math.ceil(float(len(rendered_images)) / col_count))
-        font = imgUtil.getFont(width/12)
+        font = image_utils.get_font(width/12)
         font_height = font.getsize("Textq")[1]
         canvas_width = ((width + spacer) * col_count) + spacer
         canvas_height = row_count * (spacer/2 + font_height + spacer + height)
@@ -233,7 +229,8 @@ def createmovie_figure(conn, pixel_ids, t_indexes, z_start, z_end, width,
             x_indent = spacer
             y_indent = x_indent
             # if we've scaled to half size, zoom = 2
-            zoom = imgUtil.getZoomFactor(scaled_image.size, width, height)
+            zoom = image_utils.get_zoom_factor(scaled_image.size, width,
+                                               height)
             # and the scale bar will be half size
             sbar = float(scalebar) / zoom
             status, log_msg = figUtil.addScalebar(
@@ -245,7 +242,7 @@ def createmovie_figure(conn, pixel_ids, t_indexes, z_start, z_end, width,
         col_index = 0
         # paste the images in
         for i, img in enumerate(rendered_images):
-            imgUtil.pasteImage(img, canvas, px, py)
+            image_utils.paste_image(img, canvas, px, py)
             px = px + width + spacer
             col_index += 1
             if col_index >= max_col_count:
@@ -271,7 +268,7 @@ def createmovie_figure(conn, pixel_ids, t_indexes, z_start, z_end, width,
 
     row_y = spacer / 2
     for row in row_panels:
-        imgUtil.pasteImage(row, figure_canvas, 0, row_y)
+        image_utils.paste_image(row, figure_canvas, 0, row_y)
         row_y = row_y + row.size[1]
 
     return figure_canvas
@@ -297,7 +294,7 @@ def add_left_labels(panel_canvas, image_labels, row_index, width, spacer):
     # add lables to row...
     mode = "RGB"
     white = (255, 255, 255)
-    font = imgUtil.getFont(width/12)
+    font = image_utils.get_font(width/12)
     text_height = font.getsize("Sampleq")[1]
     text_gap = spacer / 2
 
@@ -332,13 +329,13 @@ def add_left_labels(panel_canvas, image_labels, row_index, width, spacer):
     # add the panels to the canvas
     paste_x = left_text_height
     paste_y = 0
-    imgUtil.pasteImage(panel_canvas, canvas, paste_x, paste_y)
+    image_utils.paste_image(panel_canvas, canvas, paste_x, paste_y)
 
     # add text to rows
     # want it to be vertical. Rotate and paste the text canvas from above
     if image_labels:
         text_v = text_canvas.rotate(90)
-        imgUtil.pasteImage(text_v, canvas, spacer/2, 0)
+        image_utils.paste_image(text_v, canvas, spacer/2, 0)
 
     return canvas
 
