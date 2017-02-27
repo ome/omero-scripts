@@ -610,7 +610,7 @@ def split_view_figure(conn, script_params):
                 c_index = int(c)
             except ValueError:
                 continue
-            rgba = image_utils.rgb_int_to_rgba(rgb)
+            rgba = image_utils.int_to_rgba(rgb)
             merged_colours[c_index] = rgba
             merged_indexes.append(c_index)
         merged_indexes.sort()
