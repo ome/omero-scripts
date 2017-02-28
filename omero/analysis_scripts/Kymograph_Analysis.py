@@ -104,8 +104,8 @@ def process_images(conn, script_params):
 
                 elif type(s) == omero.model.PolylineI:
                     table_data += "\nPolyline ID: %s" % s.getId().getValue()
-                    points = roi_utils.points_string_to_xy_list(
-                             s.getPoints().getValue())
+                    v = s.getPoints().getValue()
+                    points = roi_utils.points_string_to_xy_list(v)
                     x_start, y_start = points[0]
                     for i in range(1, len(points)):
                         x1, y1 = points[i-1]

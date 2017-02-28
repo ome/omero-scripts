@@ -253,8 +253,8 @@ def process_images(conn, script_params):
                                 'y2': y2}
 
                 elif type(s) == omero.model.PolylineI:
-                    points = roi_utils.points_string_to_xy_list(
-                            s.getPoints().getValue())
+                    v = s.getPoints().getValue()
+                    points = roi_utils.points_string_to_xy_list(v)
                     polylines[t] = {'theZ': z, 'points': points}
 
             if len(lines) > 0:
