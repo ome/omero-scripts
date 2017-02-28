@@ -239,7 +239,7 @@ def paint_dataset_canvas(conn, images, title, tag_ids=None,
                 tag_string = None
             sub_canvas = image_utils.paint_thumbnail_grid(
                 thumbnail_store, length,
-                spacing, tagset_pix_ids, col_count, topLabel=tag_string)
+                spacing, tagset_pix_ids, col_count, top_label=tag_string)
             tag_sub_panes.append(sub_canvas)
 
         for toptag_set in toptag_sets:
