@@ -35,7 +35,7 @@ project.
 """
 import omero.scripts as scripts
 from omero.gateway import BlitzGateway
-import omero.util.script_utils as scriptUtil
+import omero.util.script_utils as script_utils
 from omero.rtypes import rlong, rstring, robject
 import omero.util.image_utils as image_utils
 from omero.constants.namespaces import NSCREATED
@@ -357,7 +357,7 @@ def make_thumbnail_figure(conn, script_params):
     message = ""
 
     # Get the objects (images or datasets)
-    objects, log_message = scriptUtil.get_objects(conn, script_params)
+    objects, log_message = script_utils.get_objects(conn, script_params)
     message += log_message
     if not objects:
         return None, message
@@ -451,9 +451,9 @@ def make_thumbnail_figure(conn, script_params):
         mimetype = "image/jpeg"
 
     namespace = NSCREATED + "/omero/figure_scripts/Thumbnail_Figure"
-    file_annotation, fa_message = scriptUtil.create_link_file_annotation(
+    file_annotation, fa_message = script_utils.create_link_file_annotation(
         conn, output, parent, output="Thumbnail figure", mimetype=mimetype,
-        namespace=namespace, description=fig_legend,
+        description=fig_legend, namespace=namespace,
         orig_file_path_and_name=figure_name)
     message += fa_message
 

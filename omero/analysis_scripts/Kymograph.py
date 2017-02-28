@@ -35,7 +35,7 @@ sizeC as input.
 
 from omero.gateway import BlitzGateway
 import omero
-import omero.util.script_utils as script_util
+import omero.util.script_utils as script_utils
 import omero.util.roi_handling_utils as roi_utils
 from omero.rtypes import rlong, rstring, robject, unwrap
 import omero.scripts as scripts
@@ -187,7 +187,7 @@ def process_images(conn, script_params):
     message = ""
 
     # Get the images
-    images, log_message = script_util.get_objects(conn, script_params)
+    images, log_message = script_utils.get_objects(conn, script_params)
     message += log_message
     if not images:
         return None, message

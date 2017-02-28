@@ -36,7 +36,7 @@ Saves the figure as a jpg or png attached to the first image in the figure.
 import omero.scripts as scripts
 import omero.util.image_utils as image_utils
 import omero.util.figureUtil as figUtil
-import omero.util.script_utils as scriptUtil
+import omero.util.script_utils as script_utils
 from omero.gateway import BlitzGateway
 import omero
 from omero.rtypes import rint, rlong, rstring, robject, wrap
@@ -53,8 +53,8 @@ except ImportError:
     import Image
     import ImageDraw  # see ticket:2597
 
-COLOURS = scriptUtil.COLOURS    # name:(rgba) map
-OVERLAY_COLOURS = dict(COLOURS, **scriptUtil.EXTRA_COLOURS)
+COLOURS = script_utils.COLOURS    # name:(rgba) map
+OVERLAY_COLOURS = dict(COLOURS, **script_utils.EXTRA_COLOURS)
 
 log_lines = []    # make a log / legend of the figure
 
@@ -395,7 +395,7 @@ def movie_figure(conn, command_args):
         get_labels = get_image_names
 
     # Get the images
-    images, log_message = scriptUtil.get_objects(conn, command_args)
+    images, log_message = script_utils.get_objects(conn, command_args)
     message += log_message
     if not images:
         return None, message
@@ -530,7 +530,7 @@ def movie_figure(conn, command_args):
         mimetype = "image/jpeg"
 
     namespace = NSCREATED + "/omero/figure_scripts/Movie_Figure"
-    file_annotation, fa_message = scriptUtil.create_link_file_annotation(
+    file_annotation, fa_message = script_utils.create_link_file_annotation(
         conn, output, omero_image, output="Movie figure", mimetype=mimetype,
         namespace=namespace, description=fig_legend,
         orig_file_path_and_name=figure_name)
