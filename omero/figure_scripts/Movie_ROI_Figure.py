@@ -29,16 +29,12 @@ ROIs as zoomed panels beside the images.
 <a href="mailto:j.burel@dundee.ac.uk">j.burel@dundee.ac.uk</a>
 @author Donald MacDonald &nbsp;&nbsp;&nbsp;&nbsp;
 <a href="mailto:donald@lifesci.dundee.ac.uk">donald@lifesci.dundee.ac.uk</a>
-@version 3.0
-<small>
-(<b>Internal version:</b> $Revision: $Date: $)
-</small>
-@since 3.0-Beta4.1
+@since 3.0
 
 """
 
 import omero.scripts as scripts
-import omero.util.imageUtil as imgUtil
+import omero.util.image_utils as image_utils
 import omero.util.figureUtil as figUtil
 import omero.util.script_utils as scriptUtil
 from omero.gateway import BlitzGateway
@@ -206,7 +202,7 @@ def get_roi_movie_view(re, query_service, pixels, time_shape_map,
         if (col_count % max_columns) > 0:
             row_count += 1
         col_count = max_columns
-    font = imgUtil.getFont(font_size)
+    font = image_utils.get_font(font_size)
     text_height = font.getsize("Textq")[1]
     # no spaces around panels
     canvas_width = ((panel_width + spacer) * col_count) - spacer
@@ -227,7 +223,7 @@ def get_roi_movie_view(re, query_service, pixels, time_shape_map,
         label = time_labels[i]
         indent = (panel_width - (font.getsize(label)[0])) / 2
         draw.text((px+indent, text_y), label, font=font, fill=(0, 0, 0))
-        imgUtil.pasteImage(img, canvas, px, panel_y)
+        image_utils.paste_image(img, canvas, px, panel_y)
         if col == (col_count - 1):
             col = 0
             px = 0
@@ -384,7 +380,7 @@ def get_split_view(conn, image_ids, pixel_ids, merged_indexes, merged_colours,
         font_size = 24
     elif width > 200:
         font_size = 16
-    font = imgUtil.getFont(font_size)
+    font = image_utils.get_font(font_size)
     text_height = font.getsize("Textq")[1]
     max_count = 0
     for row in image_labels:
@@ -416,7 +412,7 @@ def get_split_view(conn, image_ids, pixel_ids, merged_indexes, merged_colours,
         # work out if any additional zoom is needed (if the full-sized image
         # is different size from primary image)
         full_size = (size_x, size_y)
-        image_zoom = imgUtil.getZoomFactor(full_size, width, height)
+        image_zoom = image_utils.get_zoom_factor(full_size, width, height)
         if image_zoom != 1.0:
             log("  Scaling down the full-size image by a factor of %F"
                 % image_zoom)
@@ -430,7 +426,8 @@ def get_split_view(conn, image_ids, pixel_ids, merged_indexes, merged_colours,
             stepping, font_size, max_columns, show_roi_duration)
 
         # and now zoom the full-sized merged image, add scalebar
-        merged_image = imgUtil.resizeImage(full_merged_image, width, height)
+        merged_image = image_utils.resize_image(full_merged_image, width,
+                                                height)
         if scalebar:
             x_indent = spacer
             y_indent = x_indent
@@ -471,12 +468,12 @@ def get_split_view(conn, image_ids, pixel_ids, merged_indexes, merged_colours,
         label_canvas = figUtil.getVerticalLabels(image_labels[row], font,
                                                  text_gap)
         v_offset = (image.size[1] - label_canvas.size[1]) / 2
-        imgUtil.pasteImage(label_canvas, figure_canvas, spacer / 2,
-                           row_y+top_spacers[row] + v_offset)
-        imgUtil.pasteImage(
+        image_utils.paste_image(label_canvas, figure_canvas, spacer / 2,
+                                row_y+top_spacers[row] + v_offset)
+        image_utils.paste_image(
             image, figure_canvas, left_text_width, row_y + top_spacers[row])
         x = left_text_width + width + spacer
-        imgUtil.pasteImage(roi_split_panes[row], figure_canvas, x, row_y)
+        image_utils.paste_image(roi_split_panes[row], figure_canvas, x, row_y)
         row_y = row_y + max(image.size[1] + top_spacers[row],
                             roi_split_panes[row].size[1]) + spacer
 

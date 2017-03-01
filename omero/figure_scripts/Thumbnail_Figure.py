@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 -----------------------------------------------------------------------------
-  Copyright (C) 2006-2014 University of Dundee. All rights reserved.
+  Copyright (C) 2006-2017 University of Dundee. All rights reserved.
 
 
   This program is free software; you can redistribute it and/or modify
@@ -30,18 +30,14 @@ project.
 <a href="mailto:j.burel@dundee.ac.uk">j.burel@dundee.ac.uk</a>
 @author Donald MacDonald &nbsp;&nbsp;&nbsp;&nbsp;
 <a href="mailto:donald@lifesci.dundee.ac.uk">donald@lifesci.dundee.ac.uk</a>
-@version 3.0
-<small>
-(<b>Internal version:</b> $Revision: $Date: $)
-</small>
-@since 3.0-Beta4.1
+@since 3.0
 
 """
 import omero.scripts as scripts
 from omero.gateway import BlitzGateway
 import omero.util.script_utils as scriptUtil
 from omero.rtypes import rlong, rstring, robject
-import omero.util.imageUtil as imgUtil
+import omero.util.image_utils as image_utils
 from omero.constants.namespaces import NSCREATED
 import os
 
@@ -150,7 +146,7 @@ def paint_dataset_canvas(conn, images, title, tag_ids=None,
 
     # set-up fonts
     fontsize = length/7 + 5
-    font = imgUtil.getFont(fontsize)
+    font = image_utils.get_font(fontsize)
     text_height = font.getsize("Textq")[1]
     top_spacer = spacing + text_height
     left_spacer = spacing + text_height
@@ -241,9 +237,9 @@ def paint_dataset_canvas(conn, images, title, tag_ids=None,
                 % (tag_string, len(tagset_pix_ids)))
             if not show_subset_labels:
                 tag_string = None
-            sub_canvas = imgUtil.paintThumbnailGrid(
+            sub_canvas = image_utils.paint_thumbnail_grid(
                 thumbnail_store, length,
-                spacing, tagset_pix_ids, col_count, topLabel=tag_string)
+                spacing, tagset_pix_ids, col_count, top_label=tag_string)
             tag_sub_panes.append(sub_canvas)
 
         for toptag_set in toptag_sets:
@@ -286,7 +282,7 @@ def paint_dataset_canvas(conn, images, title, tag_ids=None,
             p_x = left_spacer
             p_y = 0
             for pane in tag_sub_panes:
-                imgUtil.pasteImage(pane, tag_canvas, p_x, p_y)
+                image_utils.paste_image(pane, tag_canvas, p_x, p_y)
                 p_y += pane.size[1]
             if tag_text is not None:
                 draw = ImageDraw.Draw(tag_canvas)
@@ -305,7 +301,7 @@ def paint_dataset_canvas(conn, images, title, tag_ids=None,
         for image_id in ds_image_ids:
             log("  Name: %s  ID: %d" % (image_names[image_id], image_id))
             pixel_ids.append(image_pixel_map[image_id])
-        fig_canvas = imgUtil.paintThumbnailGrid(
+        fig_canvas = image_utils.paint_thumbnail_grid(
             thumbnail_store, length, spacing, pixel_ids, col_count)
         tag_panes.append(fig_canvas)
 
@@ -319,7 +315,7 @@ def paint_dataset_canvas(conn, images, title, tag_ids=None,
     p_x = 0
     p_y = top_spacer
     for pane in tag_panes:
-        imgUtil.pasteImage(pane, full_canvas, p_x, p_y)
+        image_utils.paste_image(pane, full_canvas, p_x, p_y)
         p_y += pane.size[1] + tagset_spacer
 
     # create dates for the image timestamps. If dates are not the same, show
@@ -427,7 +423,7 @@ def make_thumbnail_figure(conn, script_params):
     figure = Image.new("RGB", (fig_width, fig_height), WHITE)
     y = 0
     for ds in ds_canvases:
-        imgUtil.pasteImage(ds, figure, 0, y)
+        image_utils.paste_image(ds, figure, 0, y)
         y += ds.size[1]
 
     log("")
