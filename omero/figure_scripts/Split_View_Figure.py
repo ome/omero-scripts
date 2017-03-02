@@ -34,7 +34,7 @@ image per row, displayed as a split view with merged image.
 import omero.scripts as scripts
 import omero.util.figureUtil as figUtil
 import omero.util.image_utils as image_utils
-import omero.util.script_utils as scriptUtil
+import omero.util.script_utils as script_utils
 import omero
 from omero.gateway import BlitzGateway
 from omero.rtypes import rint, rlong, rstring, robject, wrap
@@ -50,8 +50,8 @@ except ImportError:
     import Image
     import ImageDraw  # see ticket:2597
 
-COLOURS = scriptUtil.COLOURS    # name:(rgba) map
-OVERLAY_COLOURS = dict(COLOURS, **scriptUtil.EXTRA_COLOURS)
+COLOURS = script_utils.COLOURS    # name:(rgba) map
+OVERLAY_COLOURS = dict(COLOURS, **script_utils.EXTRA_COLOURS)
 
 
 # keep track of log strings.
@@ -524,7 +524,7 @@ def split_view_figure(conn, script_params):
         get_labels = get_image_names
 
     # Get the images
-    images, log_message = scriptUtil.getObjects(conn, script_params)
+    images, log_message = script_utils.get_objects(conn, script_params)
     message += log_message
     if not images:
         return None, message
@@ -666,10 +666,10 @@ def split_view_figure(conn, script_params):
     # attaching it to the omero_image, adding the
     # fig_legend as the fileAnnotation description.
     namespace = NSCREATED + "/omero/figure_scripts/Split_View_Figure"
-    file_annotation, fa_message = scriptUtil.createLinkFileAnnotation(
+    file_annotation, fa_message = script_utils.create_link_file_annotation(
         conn, output, omero_image, output="Split view figure",
-        mimetype=mimetype, ns=namespace, desc=fig_legend,
-        origFilePathAndName=figure_name)
+        mimetype=mimetype, namespace=namespace, description=fig_legend,
+        orig_file_path_and_name=figure_name)
     message += fa_message
 
     return file_annotation, message

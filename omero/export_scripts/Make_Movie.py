@@ -56,7 +56,7 @@ params:
 """
 
 import omero.scripts as scripts
-import omero.util.script_utils as scriptUtil
+import omero.util.script_utils as script_utils
 import omero.util.figureUtil as figureUtil
 import omero
 import omero.min  # Constants etc.
@@ -80,8 +80,8 @@ except ImportError:
     import Image
     import ImageDraw  # see ticket:2597
 
-COLOURS = scriptUtil.COLOURS
-COLOURS.update(scriptUtil.EXTRA_COLOURS)    # name:(rgba) map
+COLOURS = script_utils.COLOURS
+COLOURS.update(script_utils.EXTRA_COLOURS)    # name:(rgba) map
 
 MPEG = 'MPEG'
 QT = 'Quicktime'
@@ -472,7 +472,7 @@ def write_movie(command_args, conn):
     raw_file_store = session.createRawFileStore()
 
     # Get the images
-    images, log_message = scriptUtil.getObjects(conn, command_args)
+    images, log_message = script_utils.get_objects(conn, command_args)
     message += log_message
     if not images:
         return None, message
@@ -631,15 +631,15 @@ def write_movie(command_args, conn):
     if not os.path.exists(output):
         return None, "Failed to create movie file: %s" % output
     if not command_args["Do_Link"]:
-        original_file = scriptUtil.createFile(
+        original_file = script_utils.create_file(
             update_service, output, mimetype, movie_name)
-        scriptUtil.uploadFile(raw_file_store, original_file, movie_name)
+        script_utils.upload_file(raw_file_store, original_file, movie_name)
         return original_file, message
 
     namespace = NSCREATED + "/omero/export_scripts/Make_Movie"
-    file_annotation, ann_message = scriptUtil.createLinkFileAnnotation(
-        conn, output, omero_image, ns=namespace,
-        mimetype=mimetype, origFilePathAndName=movie_name)
+    file_annotation, ann_message = script_utils.create_link_file_annotation(
+        conn, output, omero_image, namespace=namespace,
+        mimetype=mimetype, orig_file_path_and_name=movie_name)
     message += ann_message
     return file_annotation._obj, message
 

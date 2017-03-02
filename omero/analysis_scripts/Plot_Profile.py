@@ -33,7 +33,7 @@ from omero.gateway import BlitzGateway
 import omero
 from omero.rtypes import rstring, rlong, robject, unwrap
 import omero.scripts as scripts
-import omero.util.script_utils as script_util
+import omero.util.script_utils as script_utils
 import omero.util.roi_handling_utils as roi_utils
 from numpy import hstack, average
 import logging
@@ -141,7 +141,7 @@ def process_images(conn, script_params):
     message = ""
 
     # Get the images
-    images, log_message = script_util.getObjects(conn, script_params)
+    images, log_message = script_utils.get_objects(conn, script_params)
     message += log_message
     if not images:
         return None, message
@@ -223,9 +223,9 @@ def process_images(conn, script_params):
                 process_polylines(
                     conn, script_params, image, polylines, line_width, f)
 
-        file_ann, fa_message = script_util.createLinkFileAnnotation(
+        file_ann, fa_message = script_utils.create_link_file_annotation(
             conn, file_name, image, output="Line Plot csv (Excel) file",
-            mimetype="text/csv", desc=None)
+            mimetype="text/csv", description=None)
         if file_ann:
             file_anns.append(file_ann)
 

@@ -37,7 +37,7 @@ import omero
 import omero.scripts as scripts
 import omero.util.image_utils as image_utils
 import omero.util.figureUtil as figUtil
-import omero.util.script_utils as scriptUtil
+import omero.util.script_utils as script_utils
 from omero.gateway import BlitzGateway
 from omero.rtypes import rlong, robject, rstring, wrap, unwrap
 import os
@@ -53,8 +53,8 @@ except ImportError:
     import ImageDraw  # see ticket:2597
 
 
-COLOURS = scriptUtil.COLOURS    # name:(rgba) map
-OVERLAY_COLOURS = dict(COLOURS, **scriptUtil.EXTRA_COLOURS)
+COLOURS = script_utils.COLOURS    # name:(rgba) map
+OVERLAY_COLOURS = dict(COLOURS, **script_utils.EXTRA_COLOURS)
 
 log_strings = []
 
@@ -596,7 +596,7 @@ def roi_figure(conn, command_args):
         get_labels = get_image_names
 
     # Get the images
-    images, log_message = scriptUtil.getObjects(conn, command_args)
+    images, log_message = script_utils.get_objects(conn, command_args)
     message += log_message
     if not images:
         return None, message
@@ -799,10 +799,10 @@ def roi_figure(conn, command_args):
     # figLegend as the fileAnnotation description.
     # Returns the id of the originalFileLink child. (ID object, not value)
     namespace = NSCREATED + "/omero/figure_scripts/ROI_Split_Figure"
-    file_annotation, fa_message = scriptUtil.createLinkFileAnnotation(
+    file_annotation, fa_message = script_utils.create_link_file_annotation(
         conn, output, omero_image, output="ROI Split figure",
-        mimetype=mimetype, ns=namespace, desc=fig_legend,
-        origFilePathAndName=figure_name)
+        mimetype=mimetype, namespace=namespace, description=fig_legend,
+        orig_file_path_and_name=figure_name)
     message += fa_message
 
     return file_annotation, message

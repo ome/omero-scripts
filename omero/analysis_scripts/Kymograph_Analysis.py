@@ -33,7 +33,7 @@ import omero
 from omero.rtypes import rlong, rstring, robject
 from omero.model import ImageAnnotationLinkI, ImageI
 import omero.scripts as scripts
-import omero.util.script_utils as script_util
+import omero.util.script_utils as script_utils
 import omero.util.roi_handling_utils as roi_utils
 import logging
 
@@ -45,7 +45,7 @@ def process_images(conn, script_params):
     file_anns = []
     message = ""
     # Get the images
-    images, log_message = script_util.getObjects(conn, script_params)
+    images, log_message = script_utils.get_objects(conn, script_params)
     message += log_message
     if not images:
         return None, message

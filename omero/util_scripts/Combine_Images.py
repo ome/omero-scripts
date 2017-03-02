@@ -41,9 +41,9 @@ import omero.scripts as scripts
 from omero.gateway import BlitzGateway
 import omero.constants
 from omero.rtypes import rstring, rlong, robject
-import omero.util.script_utils as scriptUtil
+import omero.util.script_utils as script_utils
 
-COLOURS = scriptUtil.COLOURS
+COLOURS = script_utils.COLOURS
 
 DEFAULT_T_REGEX = "_T"
 DEFAULT_Z_REGEX = "_Z"
@@ -84,7 +84,7 @@ def get_plane(raw_pixel_store, pixels, the_z, the_c, the_t):
     # get the plane
     pixels_id = pixels.getId().getValue()
     raw_pixel_store.setPixelsId(pixels_id, True)
-    return scriptUtil.downloadPlane(
+    return script_utils.download_plane(
         raw_pixel_store, pixels, the_z, the_c, the_t)
 
 
@@ -367,7 +367,7 @@ def make_single_image(services, parameter_map, image_ids, dataset, colour_map):
                     pixel_sizes['y'].append(pixels.getPhysicalSizeY())
                 else:
                     plane_2d = zeros((size_y, size_x))
-                scriptUtil.uploadPlaneByRow(
+                script_utils.upload_plane_by_row(
                     raw_pixel_store_upload, plane_2d, the_z, the_c, the_t)
                 min_value = min(min_value, plane_2d.min())
                 max_value = max(max_value, plane_2d.max())
@@ -377,8 +377,9 @@ def make_single_image(services, parameter_map, image_ids, dataset, colour_map):
         rgba = COLOURS["White"]
         if the_c in colour_map:
             rgba = colour_map[the_c]
-        scriptUtil.resetRenderingSettings(rendering_engine, pixels_id, the_c,
-                                          min_value, max_value, rgba)
+        script_utils.reset_rendering_settings(rendering_engine, pixels_id,
+                                              the_c, min_value, max_value,
+                                              rgba)
 
     # rename new channels
     pixels = rendering_engine.getPixels()
@@ -441,7 +442,7 @@ def combine_images(conn, parameter_map):
 
     # Get images or datasets
     message = ""
-    objects, log_message = scriptUtil.getObjects(conn, parameter_map)
+    objects, log_message = script_utils.get_objects(conn, parameter_map)
     message += log_message
     if not objects:
         return None, message
