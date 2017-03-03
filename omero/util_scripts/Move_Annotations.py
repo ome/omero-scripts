@@ -23,6 +23,7 @@ import omero.scripts as scripts
 from omero.gateway import BlitzGateway
 from omero.model import WellAnnotationLinkI, WellI, ImageAnnotationLinkI
 from omero.rtypes import rstring, rlong
+from omero.constants.metadata import NSINSIGHTRATING
 
 
 ANN_TYPES = {
@@ -91,8 +92,11 @@ def move_annotations(conn, script_params):
     ann_type = script_params['Annotation_Type']
     if ann_type in ANN_TYPES:
         filter_type = ANN_TYPES[ann_type]
+    if ann_type == 'Rating':
+        ns = NSINSIGHTRATING
+    else:
+        ns = script_params.get('Namespace')
     remove_anns = script_params['Remove_Annotations']
-    ns = script_params.get('Namespace')
 
     # Get the Plates or Wells
     objects = conn.getObjects(dtype, ids)
