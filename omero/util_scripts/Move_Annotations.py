@@ -46,8 +46,9 @@ def move_well_annotations(conn, well, ann_type, remove_anns, ns):
     old_links = list(conn.getAnnotationLinks('Image', iids, ns=ns))
 
     # Filter by type
-    old_links = [l for l in old_links if (ann_type is None
-                            or (l.child.__class__.__name__ == ann_type))]
+    old_links = [l for l in old_links
+                 if (ann_type is None
+                     or (l.child.__class__.__name__ == ann_type))]
 
     link_ids = [l.id for l in old_links]
 
@@ -124,7 +125,7 @@ def move_annotations(conn, script_params):
     return ann_total
 
 
-def runScript():
+def run_script():
     """The main entry point of the script."""
     data_types = [rstring('Screen'), rstring('Plate'), rstring('Well')]
 
@@ -142,12 +143,12 @@ def runScript():
 
         scripts.List(
             "IDs", optional=False, grouping="2",
-            description="List of Screen IDs or Plate IDs").ofType(rlong(0)),
+            description="List of Screen, Plate or Well IDs").ofType(rlong(0)),
 
         scripts.String(
             "Annotation_Type", grouping="3",
-            description="Move All annotations OR just one type of annotation"
-            " Z below.", values=ann_types, default='All'),
+            description="Move All annotations OR just one type of annotation",
+            values=ann_types, default='All'),
 
         scripts.String(
             "Namespace", grouping="4",
@@ -186,4 +187,4 @@ def runScript():
         client.closeSession()
 
 if __name__ == "__main__":
-    runScript()
+    run_script()
