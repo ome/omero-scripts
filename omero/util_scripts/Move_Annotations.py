@@ -186,5 +186,6 @@ def run_script():
     finally:
         client.closeSession()
 
+
 if __name__ == "__main__":
     run_script()
