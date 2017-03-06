@@ -34,12 +34,16 @@ ANN_TYPES = {
     'Key-Value': 'MapAnnotationI'
 }
 
+def log(text):
+    """Handles logging statements in a single place."""
+    print text
+
 
 def move_well_annotations(conn, well, ann_type, remove_anns, ns):
     """Move annotations from Images in this Well onto the Well itself."""
-    print "Processing Well:", well.id, well.getWellPos()
+    log("Processing Well:", well.id, well.getWellPos())
     iids = [wellSample.getImage().id for wellSample in well.listChildren()]
-    print "  Image IDs:", iids
+    log("  Image IDs:", iids)
     if len(iids) == 0:
         return 0
 
@@ -61,7 +65,7 @@ def move_well_annotations(conn, well, ann_type, remove_anns, ns):
 
     new_links = []
     for l in old_links:
-        print "    Annotation:", l.child.id.val, l.child.__class__.__name__
+        log("    Annotation:", l.child.id.val, l.child.__class__.__name__)
         link = WellAnnotationLinkI()
         link.parent = WellI(well.id, False)
         link.child = l.child
@@ -69,17 +73,17 @@ def move_well_annotations(conn, well, ann_type, remove_anns, ns):
     try:
         conn.getUpdateService().saveArray(new_links)
     except Exception, ex:
-        print "Failed to create links: ", ex.message
+        log("Failed to create links: ", ex.message)
         return 0
 
     if remove_anns:
-        print "Deleting ImageAnnotation links...", link_ids
+        log("Deleting ImageAnnotation links...", link_ids)
         try:
             for link_id in link_ids:
                 to_delete = ImageAnnotationLinkI(link_id, False)
                 conn.getUpdateService().deleteObject(to_delete)
         except Exception, ex:
-            print "Failed to delete links: ", ex.message
+            log("Failed to delete links: ", ex.message)
     return len(new_links)
 
 
@@ -115,7 +119,7 @@ def move_annotations(conn, script_params):
         elif dtype == 'Screen':
             for screen in objects:
                 plates.extend(list(screen.listChildren()))
-        print "Found Plates:", plates
+        log("Found Plates:", plates)
         for plate in plates:
             for well in plate.listChildren():
                 ann_count = move_well_annotations(conn, well, filter_type,
@@ -169,7 +173,7 @@ def run_script():
         conn = BlitzGateway(client_obj=client)
 
         script_params = client.getInputs(unwrap=True)
-        print script_params
+        log(script_params)
 
         # call the main script
         anns_moved = move_annotations(conn, script_params)
