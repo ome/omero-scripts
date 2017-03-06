@@ -34,6 +34,7 @@ ANN_TYPES = {
     'Key-Value': 'MapAnnotationI'
 }
 
+
 def log(text):
     """Handles logging statements in a single place."""
     print text
