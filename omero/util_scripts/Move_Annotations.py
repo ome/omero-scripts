@@ -21,7 +21,10 @@
 
 import omero.scripts as scripts
 from omero.gateway import BlitzGateway
-from omero.model import WellAnnotationLinkI, WellI, ImageAnnotationLinkI
+from omero.model import ExperimenterI, \
+                        ImageAnnotationLinkI, \
+                        WellAnnotationLinkI, \
+                        WellI
 from omero.rtypes import rstring, rlong
 from omero.constants.metadata import NSINSIGHTRATING
 
@@ -35,9 +38,9 @@ ANN_TYPES = {
 }
 
 
-def log(text):
-    """Handles logging statements in a single place."""
-    print text
+def log(*args):
+    """Handle logging statements in a single place."""
+    print args
 
 
 def move_well_annotations(conn, well, ann_type, remove_anns, ns):
@@ -57,11 +60,19 @@ def move_well_annotations(conn, well, ann_type, remove_anns, ns):
 
     link_ids = [l.id for l in old_links]
 
-    # Remove duplicate annotations
     links_dict = {}
-    for l in old_links:
-        ann = l.child
-        links_dict[ann.id.val] = l
+    # If current user is Admin, we preserve ownership of annotation links
+    # Therefore, annotations must be unique per LINK-OWNER
+    if conn.isAdmin():
+        for l in old_links:
+            ann = l.child
+            unique_key = "%s_%s" % (l.details.owner.id.val, ann.id.val)
+            links_dict[unique_key] = l
+    # Otherwise, annotations must simply be unique
+    else:
+        for l in old_links:
+            ann = l.child
+            links_dict[ann.id.val] = l
     old_links = links_dict.values()
 
     new_links = []
@@ -70,6 +81,9 @@ def move_well_annotations(conn, well, ann_type, remove_anns, ns):
         link = WellAnnotationLinkI()
         link.parent = WellI(well.id, False)
         link.child = l.child
+        if conn.isAdmin():
+            ownerId = l.details.owner.id.val
+            link.details.owner = ExperimenterI(ownerId, False)
         new_links.append(link)
     try:
         conn.getUpdateService().saveArray(new_links)
