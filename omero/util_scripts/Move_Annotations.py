@@ -97,8 +97,8 @@ def move_well_annotations(conn, well, ann_type, remove_anns, ns):
         link.child = l.child
         # If Admin, the new link Owner is same as old link Owner
         if conn.isAdmin():
-            ownerId = l.details.owner.id.val
-            link.details.owner = ExperimenterI(ownerId, False)
+            owner_id = l.details.owner.id.val
+            link.details.owner = ExperimenterI(owner_id, False)
         new_links.append(link)
     try:
         conn.getUpdateService().saveArray(new_links)
