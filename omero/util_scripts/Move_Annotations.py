@@ -25,6 +25,7 @@ from omero.model import ExperimenterI, \
                         ImageAnnotationLinkI, \
                         WellAnnotationLinkI, \
                         WellI
+from omero.sys import ParametersI, Filter
 from omero.rtypes import rstring, rlong
 from omero.constants.metadata import NSINSIGHTRATING
 
@@ -38,20 +39,27 @@ ANN_TYPES = {
 }
 
 
-def log(*args):
+def log(text):
     """Handle logging statements in a single place."""
-    print args
+    print text
 
 
 def move_well_annotations(conn, well, ann_type, remove_anns, ns):
     """Move annotations from Images in this Well onto the Well itself."""
-    log("Processing Well:", well.id, well.getWellPos())
+    log("Processing Well: %s %s" % (well.id, well.getWellPos()))
     iids = [wellSample.getImage().id for wellSample in well.listChildren()]
-    log("  Image IDs:", iids)
+    log("  Image IDs: %s" % iids)
     if len(iids) == 0:
         return 0
 
-    old_links = list(conn.getAnnotationLinks('Image', iids, ns=ns))
+    # Params to query links. If not Admin, only work with our own links
+    params = ParametersI()
+    if not conn.isAdmin():
+        params.theFilter = Filter()
+        params.theFilter.ownerId = rlong(conn.getUserId())
+
+    old_links = list(conn.getAnnotationLinks('Image', iids,
+                                             ns=ns, params=params))
 
     # Filter by type
     old_links = [l for l in old_links
@@ -60,27 +68,34 @@ def move_well_annotations(conn, well, ann_type, remove_anns, ns):
 
     link_ids = [l.id for l in old_links]
 
+    def get_key(ann_link, with_owner=False):
+        # We use ann's 'key' to avoid adding duplicate annotations
+        # Key includes link owner (allows multiple links with different owners)
+        ann = ann_link.child
+        return "%s_%s" % (ann_link.details.owner.id.val, ann.id.val)
+
     links_dict = {}
-    # If current user is Admin, we preserve ownership of annotation links
-    # Therefore, annotations must be unique per LINK-OWNER
-    if conn.isAdmin():
-        for l in old_links:
-            ann = l.child
-            unique_key = "%s_%s" % (l.details.owner.id.val, ann.id.val)
-            links_dict[unique_key] = l
-    # Otherwise, annotations must simply be unique
-    else:
-        for l in old_links:
-            ann = l.child
-            links_dict[ann.id.val] = l
+    # Remove duplicate annotations according to get_key(l)
+    for l in old_links:
+        links_dict[get_key(l, conn.isAdmin())] = l
+
     old_links = links_dict.values()
+
+    # Find existing links on Well so we don't try to duplicate them
+    existing_well_links = list(conn.getAnnotationLinks('Well', [well.id],
+                                                       ns=ns, params=params))
+    existing_well_keys = [get_key(l) for l in existing_well_links]
 
     new_links = []
     for l in old_links:
-        log("    Annotation:", l.child.id.val, l.child.__class__.__name__)
+        if get_key(l) in existing_well_keys:
+            continue
+        log("    Annotation: %s %s" % (l.child.id.val,
+                                       l.child.__class__.__name__))
         link = WellAnnotationLinkI()
         link.parent = WellI(well.id, False)
         link.child = l.child
+        # If Admin, the new link Owner is same as old link Owner
         if conn.isAdmin():
             ownerId = l.details.owner.id.val
             link.details.owner = ExperimenterI(ownerId, False)
@@ -88,17 +103,17 @@ def move_well_annotations(conn, well, ann_type, remove_anns, ns):
     try:
         conn.getUpdateService().saveArray(new_links)
     except Exception, ex:
-        log("Failed to create links: ", ex.message)
+        log("Failed to create links: %s" % ex.message)
         return 0
 
     if remove_anns:
-        log("Deleting ImageAnnotation links...", link_ids)
+        log("Deleting ImageAnnotation links... %s" % link_ids)
         try:
             for link_id in link_ids:
                 to_delete = ImageAnnotationLinkI(link_id, False)
                 conn.getUpdateService().deleteObject(to_delete)
         except Exception, ex:
-            log("Failed to delete links: ", ex.message)
+            log("Failed to delete links: %s" % ex.message)
     return len(new_links)
 
 
@@ -134,7 +149,7 @@ def move_annotations(conn, script_params):
         elif dtype == 'Screen':
             for screen in objects:
                 plates.extend(list(screen.listChildren()))
-        log("Found Plates:", plates)
+        log("Found Plates: %s" % [p.id for p in plates])
         for plate in plates:
             for well in plate.listChildren():
                 ann_count = move_well_annotations(conn, well, filter_type,
@@ -153,7 +168,11 @@ def run_script():
 
     client = scripts.client(
         'Move_Annotations.py',
-        """Move Annotations from SPW Images to their parent Wells.""",
+        """
+For Screen/Plate/Well data, this script moves your Annotations from Images to
+their parent Wells. If you are an Admin, this will also move annotations that
+other users have added, creating links that belong to the same users.
+    """,
 
         scripts.String(
             "Data_Type", optional=False, grouping="1",
