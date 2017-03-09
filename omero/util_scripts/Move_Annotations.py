@@ -26,7 +26,7 @@ from omero.model import ExperimenterI, \
                         WellAnnotationLinkI, \
                         WellI
 from omero.sys import ParametersI, Filter
-from omero.rtypes import rstring, rlong
+from omero.rtypes import rstring, rlong, robject
 from omero.constants.metadata import NSINSIGHTRATING
 
 
@@ -131,10 +131,10 @@ def move_annotations(conn, script_params):
         ns = NSINSIGHTRATING
     else:
         ns = script_params.get('Namespace')
-    remove_anns = script_params['Remove_Annotations']
+    remove_anns = script_params['Remove_Annotations_From_Images']
 
     # Get the Plates or Wells
-    objects = conn.getObjects(dtype, ids)
+    objects = list(conn.getObjects(dtype, ids))
 
     ann_total = 0
 
@@ -145,7 +145,7 @@ def move_annotations(conn, script_params):
             ann_total += ann_count
     else:
         if dtype == 'Plate':
-            plates = list(objects)
+            plates = objects
         elif dtype == 'Screen':
             for screen in objects:
                 plates.extend(list(screen.listChildren()))
@@ -156,7 +156,7 @@ def move_annotations(conn, script_params):
                                                   remove_anns, ns)
                 ann_total += ann_count
 
-    return ann_total
+    return objects, ann_total
 
 
 def run_script():
@@ -210,11 +210,16 @@ other users have added, creating links that belong to the same users.
         log(script_params)
 
         # call the main script
-        anns_moved = move_annotations(conn, script_params)
+        objects, anns_moved = move_annotations(conn, script_params)
 
-        message = ""
         # return 'Message' to client
-        if anns_moved is not None:
+        message = ""
+        if len(objects) == 0:
+            message = ("Found no %ss with IDs: %s" %
+                       (script_params['Data_Type'], script_params['IDs']))
+        else:
+            client.setOutput("Target", robject(objects[0]._obj))
+        if anns_moved > 0:
             message = "Moved %s Annotations" % anns_moved
         else:
             message = "No annotations moved. See info."
