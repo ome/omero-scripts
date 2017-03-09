@@ -193,9 +193,9 @@ other users have added, creating links that belong to the same users.
             description="Filter annotations by namespace"),
 
         scripts.Bool(
-            "Remove_Annotations", grouping="5",
+            "Remove_Annotations_From_Images", grouping="5",
             description="If false, annotations will remain linked to Images",
-            default=True),
+            default=False),
 
         version="5.3.0",
         authors=["William Moore", "OME Team"],
