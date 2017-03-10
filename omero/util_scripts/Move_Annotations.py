@@ -185,7 +185,7 @@ other users have added, creating links that belong to the same users.
 
         scripts.String(
             "Annotation_Type", grouping="3",
-            description="Move All annotations OR just one type of annotation",
+            description="Move all annotations OR just one type of annotation",
             values=ann_types, default='All'),
 
         scripts.String(
