@@ -25,6 +25,7 @@ from omero.model import ExperimenterI, \
                         ImageAnnotationLinkI, \
                         WellAnnotationLinkI, \
                         WellI
+from omero.cmd import Delete2
 from omero.sys import ParametersI, Filter
 from omero.rtypes import rstring, rlong, robject
 from omero.constants.metadata import NSINSIGHTRATING
@@ -109,9 +110,10 @@ def move_well_annotations(conn, well, ann_type, remove_anns, ns):
     if remove_anns:
         log("Deleting ImageAnnotation links... %s" % link_ids)
         try:
-            for link_id in link_ids:
-                to_delete = ImageAnnotationLinkI(link_id, False)
-                conn.getUpdateService().deleteObject(to_delete)
+            delete = Delete2(targetObjects={'ImageAnnotationLink': link_ids})
+            handle = conn.c.sf.submit(delete)
+            conn.c.waitOnCmd(handle, loops=10, ms=500, failonerror=True,
+                             failontimeout=False, closehandle=False)
         except Exception, ex:
             log("Failed to delete links: %s" % ex.message)
     return len(new_links)
