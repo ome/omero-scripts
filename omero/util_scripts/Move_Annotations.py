@@ -22,9 +22,8 @@
 import omero.scripts as scripts
 from omero.gateway import BlitzGateway
 from omero.model import ExperimenterI, \
-                        ImageAnnotationLinkI, \
-                        WellAnnotationLinkI, \
-                        WellI
+    WellAnnotationLinkI, \
+    WellI
 from omero.cmd import Delete2
 from omero.sys import ParametersI, Filter
 from omero.rtypes import rstring, rlong, robject
