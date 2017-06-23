@@ -439,7 +439,7 @@ def make_split_view_figure(conn, pixel_ids, z_start, z_end, split_indexes,
     # add text to rows
     # want it to be vertical. Rotate and paste the text canvas from above
     if image_labels:
-        text_v = text_canvas.rotate(90)
+        text_v = text_canvas.rotate(90, expand=True)
         image_utils.paste_image(text_v, canvas, spacer, top_text_height)
 
     # add text to columns

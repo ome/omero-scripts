@@ -334,7 +334,7 @@ def add_left_labels(panel_canvas, image_labels, row_index, width, spacer):
     # add text to rows
     # want it to be vertical. Rotate and paste the text canvas from above
     if image_labels:
-        text_v = text_canvas.rotate(90)
+        text_v = text_canvas.rotate(90, expand=True)
         image_utils.paste_image(text_v, canvas, spacer/2, 0)
 
     return canvas
