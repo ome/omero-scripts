@@ -21,4 +21,4 @@ cp -r omero OMERO.server/lib/scripts
 VALUE=$(readlink -f OMERO.server)
 export PYTHONPATH=$VALUE/lib/python:$VALUE/lib/testlib
 export ICE_CONFIG=$VALUE/etc/ice.config
-python pytest -m test/integration/
+python -m pytest test/integration/
