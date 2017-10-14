@@ -15,7 +15,7 @@ before_install:
   - pip install restructuredtext_lint
   - pip install flake8 pycodestyle pep8-naming
   - flake8 .
-  - rst-lint README.md
+  # - rst-lint README.md
   - export PATH=/usr/bin/:$PATH
   - sudo apt-get install -y zeroc-ice35
   - pip install --upgrade pip setuptools
