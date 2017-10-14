@@ -4,7 +4,6 @@ set -e
 set -u
 set -x
 
-pip install pytest
 pip install omego
 
 # to avoid error message
@@ -15,10 +14,10 @@ pip install "Pillow<3.4"
 omego install --managedb --dbhost localhost --dbname omero --prestartfile $HOME/config.omero -v --release 5.4.0 --ice 3.5 --no-web
 
 
-# run the test
-rm -rf OMERO.server/lib/scripts/omero
-cp -r omero OMERO.server/lib/scripts
+# run the tests
 VALUE=$(readlink -f OMERO.server)
-export PYTHONPATH=$VALUE/lib/python:$VALUE/lib/testlib
-export ICE_CONFIG=$VALUE/etc/ice.config
-python -m pytest test/integration/
+# remove the scripts and copy the modified scripts
+rm -rf $VALUE/lib/scripts/omero
+cp -r omero $VALUE/lib/scripts
+export PYTHONPATH=$VALUE/lib/python
+python setup.py test -t test/integration -i $VALUE/etc/ice.config -v
