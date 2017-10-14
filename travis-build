@@ -1,0 +1,24 @@
+#! /bin/bash
+
+set -e
+set -u
+set -x
+
+pip install pytest
+pip install omego
+
+# to avoid error message
+pip install "numpy>=1.9"
+pip install "Pillow<3.4"
+
+# Install the server
+omego install --managedb --dbhost localhost --dbname omero --prestartfile $HOME/config.omero -v --release 5.4.0 --ice 3.5 --no-web
+
+
+# run the test
+rm -rf OMERO.server/lib/scripts/omero
+cp -r omero OMERO.server/lib/scripts
+VALUE=$(readlink -f OMERO.server)
+export PYTHONPATH=$VALUE/lib/python:$VALUE/lib/testlib
+export ICE_CONFIG=$VALUE/etc/ice.config
+python pytest -m test/integration/

@@ -1,6 +1,37 @@
 language: python
-python:
-  - "2.7"
-  - "2.7_with_system_site_packages"
-install: pip install flake8 pycodestyle pep8-naming
-script: flake8 -v .
+
+virtualenv:
+  system_site_packages: true
+
+# This (sudo: false) is needed to "run on container-based infrastructure" on
+# which cache: is available
+# http://docs.travis-ci.com/user/workers/container-based-infrastructure/
+sudo: required
+
+addons:
+  postgresql: "9.6"
+
+before_install:
+  - pip install restructuredtext_lint
+  - pip install flake8 pycodestyle pep8-naming
+  - flake8 .
+  - rst-lint README.md
+  - export PATH=/usr/bin/:$PATH
+  - sudo apt-get install -y zeroc-ice35
+  - pip install --upgrade pip setuptools
+
+before_script:
+    - psql -c "create user omero with password 'omero';" -U postgres
+    - psql -c "create database omero with owner omero;" -U postgres
+    #- psql -c "select 1;" -U omero -h localhost omero
+    - mkdir $HOME/OMERO
+    - echo "config set omero.data.dir $HOME/OMERO" > $HOME/config.omero
+    - echo "config set omero.db.name omero" >> $HOME/config.omero
+    # required so the server can start
+    - echo "config set Ice.IPv6 0" >> $HOME/config.omero
+
+script:
+  # The installation is run in the virtual env
+  # Required to explicitly activate it
+  - source $HOME/virtualenv/python2.7_with_system_site_packages/bin/activate
+  - ./travis-build
