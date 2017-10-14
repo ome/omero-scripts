@@ -18,7 +18,7 @@ before_install:
   # - rst-lint README.md
   - export PATH=/usr/bin/:$PATH
   - sudo apt-get install -y zeroc-ice35
-  - pip install --upgrade pip setuptools
+  #- pip install --upgrade pip setuptools
 
 before_script:
     - psql -c "create user omero with password 'omero';" -U postgres
