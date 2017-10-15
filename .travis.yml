@@ -18,11 +18,12 @@ before_install:
   # - rst-lint README.md
   - export PATH=/usr/bin/:$PATH
   - sudo apt-get install -y zeroc-ice35
-  - pip install --upgrade pip setuptools
+  #- pip install --upgrade pip setuptools
 
 before_script:
     - psql -c "create user omero with password 'omero';" -U postgres
     - psql -c "create database omero with owner omero;" -U postgres
+    #- psql -c "select 1;" -U omero -h localhost omero
     - mkdir $HOME/OMERO
     - echo "config set omero.data.dir $HOME/OMERO" > $HOME/config.omero
     - echo "config set omero.db.name omero" >> $HOME/config.omero

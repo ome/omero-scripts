@@ -14,6 +14,7 @@ pip install "Pillow<3.4"
 omego install --managedb --dbhost localhost --dbname omero --prestartfile $HOME/config.omero -v --release 5.4.0 --ice 3.5 --no-web
 
 
+OMERO.server/bin/omero admin diagnostics;
 # run the tests
 VALUE=$(readlink -f OMERO.server)
 # remove the scripts and copy the modified scripts
