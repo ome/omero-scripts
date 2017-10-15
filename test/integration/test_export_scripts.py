@@ -59,7 +59,7 @@ class TestExportScripts(ScriptTest):
 
         client, user = self.new_client_and_user()
         # x,y,z,c,t
-        image = self.create_test_image(100, 100, 1, 1, 1, client.getSession())
+        image = self.create_test_image(100, 100, 5, 1, 5, client.getSession())
         image_ids = []
         image_ids.append(omero.rtypes.rlong(image.id.val))
         args = {
