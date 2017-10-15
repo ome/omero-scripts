@@ -23,6 +23,7 @@ before_install:
   - export PATH=/usr/bin/:$PATH
   - sudo apt-get install -y zeroc-ice35
   - sudo apt-get install -y python-{pillow,numpy,tables}
+  - sudo apt-get install -y mencoder
 
 
 before_script:
