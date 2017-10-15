@@ -4,6 +4,8 @@ set -e
 set -u
 set -x
 
+OMERO_VERSION=${OMERO_VERSION:-5.4.0}
+
 pip install omego
 
 # to avoid error message
@@ -11,7 +13,7 @@ pip install "numpy>=1.9"
 pip install "Pillow<3.4"
 
 # Install the server
-omego install --managedb --dbhost localhost --dbname omero --prestartfile $HOME/config.omero -v --release 5.4.0 --ice 3.5 --no-web
+omego install --managedb --dbhost localhost --dbname omero --prestartfile $HOME/config.omero -v --release $OMERO_VERSION--ice 3.5 --no-web
 
 
 OMERO.server/bin/omero admin diagnostics;

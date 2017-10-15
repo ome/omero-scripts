@@ -11,6 +11,10 @@ sudo: required
 addons:
   postgresql: "9.6"
 
+env:
+  matrix:
+    - OMERO_VERSION=5.4.0
+
 before_install:
   - pip install restructuredtext_lint
   - pip install flake8 pycodestyle pep8-naming
@@ -18,7 +22,6 @@ before_install:
   # - rst-lint README.md
   - export PATH=/usr/bin/:$PATH
   - sudo apt-get install -y zeroc-ice35
-  #- pip install --upgrade pip setuptools
 
 before_script:
     - psql -c "create user omero with password 'omero';" -U postgres
@@ -34,4 +37,4 @@ script:
   # The installation is run in the virtual env
   # Required to explicitly activate it
   - source $HOME/virtualenv/python2.7_with_system_site_packages/bin/activate
-  - ./travis-build
+  - OMERO_VERSION=$OMERO_VERSION ./travis-build
