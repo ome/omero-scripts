@@ -59,12 +59,13 @@ class TestExportScripts(ScriptTest):
 
         client, user = self.new_client_and_user()
         # x,y,z,c,t
-        image = self.create_test_image(100, 100, 5, 1, 5, client.getSession())
+        image = self.create_test_image(10, 10, 2, 1, 2, client.getSession())
         image_ids = []
         image_ids.append(omero.rtypes.rlong(image.id.val))
         args = {
             "Data_Type": omero.rtypes.rstring("Image"),
-            "IDs": omero.rtypes.rlist(image_ids)
+            "IDs": omero.rtypes.rlist(image_ids),
+            "Movie_Name": omero.rtypes.rstring("test_make_movie")
         }
         ann = run_script(client, script_id, args, "File_Annotation")
         c = self.new_client(user=user)
