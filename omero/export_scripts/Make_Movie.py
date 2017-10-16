@@ -333,7 +333,7 @@ def calculate_ranges(size_z, size_t, command_args):
     plane_map = {}
     if "Plane_Map" not in command_args:
         z_start = 0
-        z_end = size_z
+        z_end = size_z-1
         if "Z_Start" in command_args and command_args["Z_Start"] >= 0 and \
                 command_args["Z_Start"] < size_z:
             z_start = command_args["Z_Start"]
@@ -627,6 +627,7 @@ def write_movie(command_args, conn):
     output = "localfile.%s" % ext
     build_avi(mw, mh, filelist, frames_per_sec, output, format)
     mimetype = formatMimetypes[format]
+    omero_image._re.close()
 
     if not os.path.exists(output):
         return None, "Failed to create movie file: %s" % output
