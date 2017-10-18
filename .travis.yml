@@ -19,7 +19,7 @@ before_install:
   - pip install restructuredtext_lint
   - pip install flake8 pycodestyle pep8-naming
   - flake8 .
-  # - rst-lint README.md
+  - rst-lint README.rst
   - export PATH=/usr/bin/:$PATH
   - sudo apt-get install -y zeroc-ice35
   - sudo apt-get install -y python-{pillow,numpy,tables}
@@ -29,7 +29,6 @@ before_install:
 before_script:
     - psql -c "create user omero with password 'omero';" -U postgres
     - psql -c "create database omero with owner omero;" -U postgres
-    #- psql -c "select 1;" -U omero -h localhost omero
     - mkdir $HOME/OMERO
     - echo "config set omero.data.dir $HOME/OMERO" > $HOME/config.omero
     - echo "config set omero.db.name omero" >> $HOME/config.omero
