@@ -2,12 +2,13 @@ OMERO Core Scripts
 ==================
 
 This directory contains OMERO scripts which use the
-OMERO.scripts API. All scripts (e.g. "*.py") present in the
+OMERO.scripts API. All scripts (e.g. ``*.p``) present in the
 directory will be automatically distributed with all binary
 builds. Which file-endings will be detected and how they
 will be launched are both configured centrally in the server.
-".py", ".jy", and ".m" (MATLAB) files should all be detected
+``.py``, ``.jy", and ``.m`` (MATLAB) files should all be detected
 by default starting with OMERO 5.
+
 
 Categories
 ----------
