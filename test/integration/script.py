@@ -56,6 +56,24 @@ def run_script(client, script_id, args, key=None):
         orig_file = results['stderr'].getValue()
         v = "Script generated StdErr in file:", orig_file.getId().getValue()
         logging.debug(v)
+        store = client.sf.createRawFileStore()
+        id = orig_file.getId().getValue()
+        of = client.sf.getQueryService().get("OriginalFile", id)
+        try:
+            store.setFileId(id)
+            file_size = of.getSize().getValue()
+            max_block_size = 10000
+            cnt = 0
+            file_path = of.getName().getValue()
+            block_size = min(max_block_size, file_size)
+            with open(file_path, 'w'):
+                while cnt < file_size:
+                    block = store.read(cnt, block_size)
+                    cnt = cnt + block_size
+                    print (block)
+        finally:
+            store.close()
+
         assert orig_file.getId().getValue() > 0
     if key and key in results:
         return results[key]
