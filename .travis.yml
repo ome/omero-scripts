@@ -22,7 +22,9 @@ before_install:
   - rst-lint README.rst
   - export PATH=/usr/bin/:$PATH
   - sudo apt-get install -y zeroc-ice35
+  # populate metadata
   - sudo apt-get install -y python-{pillow,numpy,tables}
+  # for make movie
   - sudo apt-get install -y mencoder
 
 
