@@ -59,7 +59,7 @@ def add_image_to_plate(conn, image, plate_id, column, row, remove_from=None):
         ws.well = well
         well.addWellSample(ws)
         update_service.saveObject(ws)
-    except:
+    except Exception:
         return False
 
     # remove from Datast

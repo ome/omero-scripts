@@ -484,7 +484,7 @@ def movie_figure(conn, command_args):
                 scalebar = None
             else:
                 log("Scalebar is %d microns" % scalebar)
-        except:
+        except ValueError:
             log("Invalid value for scalebar: %s" % str(sb))
             scalebar = None
 

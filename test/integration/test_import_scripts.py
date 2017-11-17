@@ -56,10 +56,10 @@ class TestImportScripts(ScriptTest):
         fa = conn.createFileAnnfromLocalFile(cvs_file, mimetype="text/csv")
         assert fa is not None
         assert fa.id > 0
-        l = omero.model.PlateAnnotationLinkI()
-        l.setParent(plate)
-        l.setChild(omero.model.FileAnnotationI(fa.id, False))
-        client.getSession().getUpdateService().saveAndReturnObject(l)
+        link = omero.model.PlateAnnotationLinkI()
+        link.setParent(plate)
+        link.setChild(omero.model.FileAnnotationI(fa.id, False))
+        client.getSession().getUpdateService().saveAndReturnObject(link)
         # run the script
         plate_ids = []
         plate_ids.append(omero.rtypes.rlong(plate.id.val))
@@ -106,11 +106,11 @@ class TestImportScripts(ScriptTest):
         fa = conn.createFileAnnfromLocalFile(cvs_file, mimetype="text/csv")
         assert fa is not None
         assert fa.id > 0
-        l = omero.model.ScreenAnnotationLinkI()
-        l.setParent(omero.model.ScreenI(screen_id, False))
-        l.setChild(omero.model.FileAnnotationI(fa.id, False))
-        l = update_service.saveAndReturnObject(l)
-        assert l.id.val > 0
+        link = omero.model.ScreenAnnotationLinkI()
+        link.setParent(omero.model.ScreenI(screen_id, False))
+        link.setChild(omero.model.FileAnnotationI(fa.id, False))
+        link = update_service.saveAndReturnObject(link)
+        assert link.id.val > 0
         # run the script
         screen_ids = []
         screen_ids.append(spl.getParent().id)

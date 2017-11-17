@@ -57,7 +57,7 @@ def log(text):
     # Handle unicode
     try:
         text = text.encode('utf8')
-    except:
+    except UnicodeEncodeError:
         pass
     log_strings.append(str(text))
 
@@ -373,7 +373,7 @@ def batch_image_export(conn, script_params):
     exp_dir = os.path.join(curr_dir, folder_name)
     try:
         os.mkdir(exp_dir)
-    except:
+    except OSError:
         pass
     # max size (default 12kx12k)
     size = conn.getDownloadAsMaxSizeSetting()
