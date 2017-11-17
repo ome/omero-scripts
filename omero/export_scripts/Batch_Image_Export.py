@@ -602,7 +602,8 @@ See http://help.openmicroscopy.org/export.html#batch""",
         conn = BlitzGateway(client_obj=client)
 
         script_params = client.getInputs(unwrap=True)
-        log(script_params)
+        for key, value in script_params.iteritems():
+            log("%s:%s" % (key, value))
 
         # call the main script - returns a file annotation wrapper
         file_annotation, message = batch_image_export(conn, script_params)
