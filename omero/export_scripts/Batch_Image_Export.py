@@ -57,7 +57,7 @@ def log(text):
     # Handle unicode
     try:
         text = text.encode('utf8')
-    except:
+    except UnicodeEncodeError:
         pass
     log_strings.append(str(text))
 
@@ -373,7 +373,7 @@ def batch_image_export(conn, script_params):
     exp_dir = os.path.join(curr_dir, folder_name)
     try:
         os.mkdir(exp_dir)
-    except:
+    except OSError:
         pass
     # max size (default 12kx12k)
     size = conn.getDownloadAsMaxSizeSetting()
@@ -602,7 +602,8 @@ See http://help.openmicroscopy.org/export.html#batch""",
         conn = BlitzGateway(client_obj=client)
 
         script_params = client.getInputs(unwrap=True)
-        log(script_params)
+        for key, value in script_params.iteritems():
+            log("%s:%s" % (key, value))
 
         # call the main script - returns a file annotation wrapper
         file_annotation, message = batch_image_export(conn, script_params)
