@@ -137,11 +137,9 @@ def get_rectangles(conn, image_id):
     result = roi_service.findByImage(image_id, None)
 
     for roi in result.rois:
-        z_start = None
-        z_end = 0
-        t_start = None
-        t_end = 0
         x = None
+        z_indexes = []
+        t_indexes = []
         for shape in roi.copyShapes():
             if type(shape) == omero.model.RectangleI:
                 # check t range and z range for every rectangle
@@ -149,28 +147,22 @@ def get_rectangles(conn, image_id):
                 # https://www.openmicroscopy.org/site/support/omero5.2/developers/Model/EveryObject.html#shape
                 the_t = unwrap(shape.getTheT())
                 the_z = unwrap(shape.getTheZ())
-                t = 0
-                z = 0
                 if the_t is not None:
-                    t = the_t
+                    t_indexes.append(the_t)
                 if the_z is not None:
-                    z = the_z
+                    z_indexes.append(the_z)
 
-                if t_start is None:
-                    t_start = t
-                if z_start is None:
-                    z_start = z
-                t_start = min(t, t_start)
-                t_end = max(t, t_end)
-                z_start = min(z, z_start)
-                z_end = max(z, z_end)
                 if x is None:   # get x, y, width, height for first rect only
                     x = int(shape.getX().getValue())
                     y = int(shape.getY().getValue())
                     width = int(shape.getWidth().getValue())
                     height = int(shape.getHeight().getValue())
-        # if we have found any rectangles at all...
-        if z_start is not None:
+        # if we have found any rectangles at all for this ROI...
+        if x is not None:
+            t_start = min(t_indexes) if t_indexes else None
+            t_end = max(t_indexes) if t_indexes else None
+            z_start = min(z_indexes) if z_indexes else None
+            z_end = max(z_indexes) if z_indexes else None
             rois.append((x, y, width, height, z_start, z_end, t_start, t_end))
 
     return rois
@@ -198,6 +190,7 @@ def process_image(conn, image_id, parameter_map):
         parent_project = parent_dataset.getParent()
 
     image_name = image.getName()
+    print "Processing image", image.getId(), image_name
     update_service = conn.getUpdateService()
 
     pixels = image.getPrimaryPixels()
@@ -276,6 +269,16 @@ def process_image(conn, image_id, parameter_map):
         for index, r in enumerate(rois):
             new_name = "%s_%0d" % (image_name, index)
             x, y, w, h, z1, z2, t1, t2 = r
+
+            if z1 is None:
+                z1 = 0
+                z2 = image.getSizeZ() - 1
+            if t1 is None:
+                t1 = 0
+                t2 = image.getSizeT() - 1
+
+            print "  ROI: x: %s, y: %s, w: %s, h: %s, z: %s-%s, t: %s-%s" % (
+                x, y, w, h, z1, z2, t1, t2)
 
             description = "Created from image:"\
                 " \n  Name: %s\n  Image ID: %d"\
@@ -439,7 +442,7 @@ def run_script():
         'Images_From_ROIs.py',
         """Crop an Image using Rectangular ROIs, to create new Images.
 ROIs that extend across Z and T will crop according to the Z and T limits
-of each ROI.
+of each ROI. If NO Z set, use all Z planes. If NO T set, use all T planes.
 If you choose to 'make an image stack' from all the ROIs, the script \
 will create a single new Z-stack image with a single plane from each ROI.
 ROIs that are 'Big', typically over 3k x 3k pixels will create 'tiled'
