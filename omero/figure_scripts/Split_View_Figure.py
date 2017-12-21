@@ -65,7 +65,7 @@ def log(text):
     # Handle unicode
     try:
         text = text.encode('utf8')
-    except:
+    except UnicodeEncodeError:
         pass
     log_strings.append(text)
 

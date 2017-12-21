@@ -2,3 +2,4 @@
 .omero
 *.pyc
 .gitignore
+*.DS_Store*
