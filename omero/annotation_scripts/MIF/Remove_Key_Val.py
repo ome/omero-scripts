@@ -23,8 +23,8 @@
 ------------------------------------------------------------------------------
 @author Christian Evenhuis
 <a href="mailto:christian.evenhuis@gmail.com">christian.evenhuis@gmail.com</a>
-@version 4.4
-@since 4.4
+@version 5.3.3
+@since   5.3.3
 
 """
 from __future__ import print_function
@@ -130,7 +130,7 @@ if __name__ == "__main__":
             description="The new description to set for each Image in the"
             " Dataset"),
 
-        version="0.1",
+        version="5.3.3",
         authors=["Christian Evenhuis", "MIF"],
         institutions=["University of Technology Sydney"],
         contact="christian.evenhuis@gmail.com"
