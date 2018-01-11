@@ -1,87 +1,21 @@
-OMERO User Scripts
-==================
+MIF developed scripts for OMERO
+===========================
 
-Installation
-------------
+This is a collection of python scripts written for 
+the [OMERO](https://www.openmicroscopy.org/omero/) installation in the 
+[Microbial Imaging Facility](https://www.uts.edu.au/about/faculty-science/microbial-imaging-facility/about-us) (MIF),
+which is part of the [ithree institute](https://www.uts.edu.au/research-and-teaching/our-research/ithree-institute)
+at the [University of Technology Sydney](ihttps://www.uts.edu.au).
 
-1. Change into the scripts location of your OMERO installation
+These scripts are primarily for the handling of metadata.  Details and instructions can be found on the [wiki]()
 
-        cd OMERO_DIST/lib/scripts
+The scripts were developed using the following resources:
 
-2. Clone the repository with a unique name (e.g. "useful_scripts")
+* [Script sharing site]
+(https://www-legacy.openmicroscopy.org/site/community/scripts)
+* [Scripting documentation]
+(https://docs.openmicroscopy.org/omero/5.3.3/developers/scripts/style-guide.html)
 
-        git clone https://github.com/THISREPOSITORY/omero-user-scripts.git UNIQUE_NAME
-
-3. Update your list of installed scripts by examining the list of scripts
-   in OMERO.insight or OMERO.web, or by running the following command
-
-        path/to/bin/omero script list
-
-Upgrading
----------
-
-1. Change into the repository location cloned into during installation
-
-        cd OMERO_DIST/lib/scripts/UNIQUE_NAME
-
-2. Update the repository to the latest version
-
-        git pull --rebase
-
-3. Update your list of installed scripts by examining the list of scripts
-   in OMERO.insight or OMERO.web, or by running the following command
-
-        path/to/bin/omero script list
-
-Developer Installation
-----------------------
-
-1. Fork [omero-user-scripts](https://github.com/ome/omero-user-scripts/fork) in your own GitHub account
-
-2. Change into the scripts location of your OMERO installation
-
-        cd OMERO_DIST/lib/scripts
-
-3. Clone the repository
-
-        git clone git@github.com:YOURGITUSER/omero-user-scripts.git YOUR_SCRIPTS
-
-Adding a script
----------------
-
-1. Choose a naming scheme for your scripts. The name of the clone
-   (e.g. "YOUR_SCRIPTS"), the script name, and all sub-directories will be shown
-   to your users in the UI, so think about script organization upfront.
-
-   a. If you don't plan to have many scripts, then you need not have any sub-directories
-      and can place scripts directly under YOUR_SCRIPTS.
-
-   b. Otherwise, create a suitable sub-directory. Examples of directories in use can be
-      found in the [official scripts](https://github.com/ome/scripts) repository.
-
-2. Place your script in the chosen directory:
-  * If you have an existing script, simply save it.
-  * Otherwise, copy [Example.txt](Example.txt) and edit it in place. (Don't use git mv)
-
-3. Add the file to git, commit, and push.
-
-Testing your script
--------------------
-
-1. List the current scripts in the system
-
-        path/to/bin/omero script list
-
-2. List the parameters
-
-        path/to/bin/omero script params SCRIPT_ID
-
-3. Launch the script
-
-        path/to/bin/omero script launch SCRIPT_ID
-
-4. See the [developer documentation](https://docs.openmicroscopy.org/latest/omero/developers/scripts/)
-   for more information on testing and modifying your scripts.
 
 Legal
 -----
@@ -101,20 +35,22 @@ Base OMERO User Scripts repository
 4.4
 
 ###### Maximum version ######
-5.0
+5.4
 
 ###### Owner(s) ######
-The OME Team
+Christian Evenhuis
 
 ###### Institution ######
-Open Microscopy Environment
+Microbial Imaging Facility
+University of Technology Sydeny
 
 ###### URL ######
-http://openmicroscopy.org/info/scripts
+https://www.uts.edu.au/about/faculty-science/microbial-imaging-facility/about-us
 
 ###### Email ######
-ome-devel@lists.openmicroscopy.org.uk
+christian.evenhuis@gmail.com
 
 ###### Description ######
 Example script repository to be cloned, modified, and extended.
 This text may be used on OME resources to explain your scripts.
+
