@@ -9,7 +9,7 @@ at the [University of Technology Sydney](ihttps://www.uts.edu.au).
 
 These scripts are primarily for the handling of metadata.  Details and instructions can be found on the [wiki](https://github.com/evenhuis/omero-user-scripts/wiki)
 
-* [wiki](https://github.com/evenhuis/omero-user-scripts/wiki/Adding-key-value-pairs)
+* [Add_Key_Val.py](https://github.com/evenhuis/omero-user-scripts/wiki/Adding-key-value-pairs)
 
 The scripts were developed using the following resources:
 
