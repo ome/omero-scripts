@@ -231,7 +231,10 @@ def process_image(conn, image_id, parameter_map):
             for r in rois:
                 x, y, w, h, z1, z2, t1, t2 = r
                 tile = (x, y, width, height)
-                zct_tile_list.append((z1, c, t1, tile))
+                theZ = z1 if z1 is not None else 0
+                theT = t1 if t1 is not None else 0
+                zct_tile_list.append((theZ, c, theT, tile))
+            print 'image_stack zct_tile_list:', zct_tile_list
             for t in pixels.getTiles(zct_tile_list):
                 yield t
 
