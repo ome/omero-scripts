@@ -83,7 +83,7 @@ class TestUtilScripts(ScriptTest):
         assert combine_img is not None
         assert combine_img.getValue().id.val > 0
 
-@pytest.mark.parametrize("imageStack", [True, False])
+    @pytest.mark.parametrize("imageStack", [True, False])
     def test_images_from_rois(self, imageStack):
         script_id = super(TestUtilScripts, self).get_script(images_from_rois)
         assert script_id > 0
@@ -94,7 +94,7 @@ class TestUtilScripts(ScriptTest):
         size_x = 100
         size_y = 100
         size_z = 5
-        image = self.create_test_image(size_x, size_y, size_z, 1, 1)    # x,y,z,c,t
+        image = self.create_test_image(size_x, size_y, size_z, 1, 1)
         image_id = image.id.val
         image_ids = []
         image_ids.append(omero.rtypes.rlong(image_id))
