@@ -7,7 +7,9 @@ the [OMERO](https://www.openmicroscopy.org/omero/) installation in the
 which is part of the [ithree institute](https://www.uts.edu.au/research-and-teaching/our-research/ithree-institute)
 at the [University of Technology Sydney](ihttps://www.uts.edu.au).
 
-These scripts are primarily for the handling of metadata.  Details and instructions can be found on the [wiki]()
+These scripts are primarily for the handling of metadata.  Details and instructions can be found on the [wiki](https://github.com/evenhuis/omero-user-scripts/wiki)
+
+* [Add_Key_Val.py](https://github.com/evenhuis/omero-user-scripts/wiki/Adding-key-value-pairs)
 
 The scripts were developed using the following resources:
 
