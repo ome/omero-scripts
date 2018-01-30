@@ -28,6 +28,7 @@ from omero.rtypes import unwrap, rstring, rlong, robject
 
 DEFAULT_FILE_NAME = "roi_intensities.csv"
 
+
 def get_export_data(conn, script_params, image):
     """Get pixel data for shapes on image and returns list of dicts."""
     roi_service = conn.getRoiService()
