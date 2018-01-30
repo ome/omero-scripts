@@ -13,10 +13,8 @@ These scripts are primarily for the handling of metadata.  Details and instructi
 
 The scripts were developed using the following resources:
 
-* [Script sharing site]
-(https://www-legacy.openmicroscopy.org/site/community/scripts)
-* [Scripting documentation]
-(https://docs.openmicroscopy.org/omero/5.3.3/developers/scripts/style-guide.html)
+* [Script sharing site](https://www-legacy.openmicroscopy.org/site/community/scripts)
+* [Scripting documentation](https://docs.openmicroscopy.org/omero/5.3.3/developers/scripts/style-guide.html)
 
 
 Legal
