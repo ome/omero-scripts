@@ -38,85 +38,18 @@ from omero.cmd import Delete2
 from omero.rtypes import rlong, rstring, robject
 import omero.scripts as scripts
 import copy
-
+from collections import OrderedDict
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def AddMapAnnotations(conn, dtype, Id ):
+def GetExistingMapAnnotions( obj ):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    dataset = conn.getObject(dtype,int(Id))
-    description = dataset.getDescription().splitlines()
-
-    modes ={ "default" :"Summary",
-             "global"  :"global key-value",
-             "filename":"filename key-value"}
-    mode = 'default'
-
-    file_keys = {}		
-    global_kv = []
-    for line in description:
-        # 1. See if this is a mode string
-        for key,value in modes.iteritems():
-            match = re.search( "^#\s+{}".format(value),line)
-            if( match is not None ):
-                mode = key
-                continue
-
-        if( mode == 'default' ):
-            pass
-
-        if( mode == 'global' ):
-            # split the line for the kay value pair
-            match = re.search("^\s*(\S+)\s*:\s*(\S+)",line)
-            if( match is not None ):
-                key = match.group(1)
-                val = match.group(2)
-                global_kv.append([key,val])
-
-        if( mode == 'filename' ):
-             match = re.search( "^\s*template\s+(\S+)",line)
-             if( match is not None ):
-                 template = match.group(1)
-                 print(template)
-                           # Start line
-                           #    | /----white space
-                           #    | |full stop|    
-                           #    V V      V  V        
-             match = re.search("^\s*(\d)\.\s+(\S+)",line)
-                           #          ^        ^           
-                           #       position   key
-             if( match is not None ):
-                 i = match.group(1)
-                 file_keys[i] = match.group(2)
-
-    # convert the template to a regexp
-                                 # not white space 
-                                 # or undersciore
-    template= template.replace("%","([^\s_]+)")
-    template= template.replace("x","[^\s_]")
-    regexp = re.compile(template)
-
-    # now add the key value pairs to the dataset
-    map_ann = omero.gateway.MapAnnotationWrapper(conn)
-    namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
-    map_ann.setNs(namespace)    
-    map_ann.setValue(global_kv)
-    map_ann.save()
-    dataset.linkAnnotation(map_ann)
-
-    # at the metadata to the images
-    for image in dataset.listChildren():
-        filename = image.getName()
-        match = regexp.search(filename)
-        file_kv = copy.deepcopy(global_kv)
-        for i,key in file_keys.iteritems():
-            file_kv.append( [key, match.group(int(i))] )
-        map_ann = omero.gateway.MapAnnotationWrapper(conn)
-        namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
-        map_ann.setNs(namespace)
-        map_ann.setValue(file_kv)
-        map_ann.save()
-        image.linkAnnotation(map_ann)
-    return
+    ord_dict = OrderedDict()
+    for ann in obj.listAnnotations():
+        if( isinstance(ann, omero.gateway.MapAnnotationWrapper) ):
+            kvs = ann.getValue()
+            for k,v in kvs:
+                ord_dict[k] = v
+    return ord_dict 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def RemoveMapAnnotations(conn, dtype, Id ):
@@ -139,6 +72,137 @@ def RemoveMapAnnotations(conn, dtype, Id ):
     except Exception, ex:
         print("Failed to delete links: {}".format(ex.message))
     return
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+def AddMapAnnotations(conn, dtype, Id ):
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ''' 
+    * Reads information from the 'Dataset Details' field, 
+    * constructs key-val data 
+    * attaches it to the dataset and the images contained in it
+    '''
+    dataset = conn.getObject(dtype,int(Id))
+    if( not ( dataset.canAnnotate() and dataset.canLink() ) ):
+        message = "You don't have permission to add annotations to {}".format(dataset.getName()) 
+        client.setOutput("Message", rstring(message) )
+        return 
+
+    description = dataset.getDescription().splitlines()
+
+    modes ={"Summary"            : "default" , 
+            "global key-value"   : "global"  ,
+            "filename key-value" : "filename",
+            "end key-value"      : "default"  }
+    mode = 'default'
+
+    global_kv = OrderedDict()   # stores the global key value pairs
+    file_keys = OrderedDict()   # stores the 'slot' and key for the file keys
+    template  = None 
+
+    for line in description:
+        # 1. See if this is a mode string
+        for key,value in modes.iteritems():
+            match = re.search( "^#\s+{}".format(key),line.lower())
+            if( match is not None ):
+                mode = value
+                print("match",mode)
+                continue
+
+        if( mode == 'default' ):
+            pass
+
+        if( mode == 'global' ):
+            # split the line for the kay value pair
+            match = re.search("^\s*(\S+)\s*:\s*(\S+)",line)
+            if( match is not None ):
+                key = match.group(1)
+                val = match.group(2)
+                global_kv[key]=val
+                print("Found global match")
+                print(key,val)
+
+        if( mode == 'filename' ):
+             match = re.search( "^\s*template\s+(\S+)",line)
+             if( match is not None ):
+                 template = match.group(1)
+                 print("New template {}".format(template) )
+                           # Start line
+                           #    | /----white space
+                           #    | |full stop|    
+                           #    V V      V  V        
+             match = re.search("^\s*(\d)\.\s+(\S+)",line)
+                           #          ^        ^           
+                           #       position   key
+             if( match is not None ):
+                 i = match.group(1)
+                 file_keys[i] = match.group(2)
+
+    print("Global k-v's")
+    for k,v in global_kv.iteritems():
+        print( k,v)
+
+    # convert the template to a regexp
+                                 # not white space 
+                                 # or undersciore
+    print("What is the template?")
+    print(template)
+    if( template is not None ):
+        template= template.replace("%","([^\s_]+)")
+        template= template.replace("x","[^\s_]")
+        regexp = re.compile(template)
+
+    # now add the key value pairs to the dataset
+    existing_kv = GetExistingMapAnnotions(dataset)
+    if( existing_kv != global_kv ):
+        RemoveMapAnnotations( conn, 'dataset', dataset.getId()  )
+        map_ann = omero.gateway.MapAnnotationWrapper(conn)
+        namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
+        map_ann.setNs(namespace)    
+        map_ann.setValue(  [  [k,v] for k,v in global_kv.iteritems() ] )
+        map_ann.save()
+        dataset.linkAnnotation(map_ann)
+
+    # at the metadata to the images
+    for image in dataset.listChildren():
+        if( not ( image.canAnnotate() and image.canLink() ) ):
+            message = "You don't have permission to add annotations to {}".format(image.getName()) 
+            client.setOutput("Message", rstring(message) )
+            return 
+
+        existing_kv = GetExistingMapAnnotions(image)
+        updated_kv  = copy.deepcopy(global_kv)
+
+        if( template is not None ): 
+            # apply the template to the file name
+            filename = image.getName()
+            match = regexp.search(filename)
+            # extract the keys
+            for i,key in file_keys.iteritems():
+                val = match.group(int(i))
+                updated_kv[key] =  val
+
+        print("existing_kv")
+        for k,v in existing_kv.iteritems():
+            print("  {} : {}".format(k,v))             
+        print("updated_kv")
+        for k,v in updated_kv.iteritems():
+            print("  {} : {}".format(k,v))    
+        print("Are they the same?",existing_kv == updated_kv )
+
+
+        if( existing_kv != updated_kv ):
+            print("The key-values pairs are different")
+            RemoveMapAnnotations( conn, 'image', image.getId()  )
+            map_ann = omero.gateway.MapAnnotationWrapper(conn)
+            namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
+            map_ann.setNs(namespace)
+            # convert the ordered dict to a list of lists
+            map_ann.setValue([  [k,v] for k,v in updated_kv.iteritems() ] )
+            map_ann.save()
+            image.linkAnnotation(map_ann)
+    return
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def getObjects(conn, scriptParams):
