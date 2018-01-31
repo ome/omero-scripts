@@ -193,14 +193,14 @@ def populate_metadata(client, conn, script_params):
                 else:
                     print("No change change in kv's")
 
-    return "Added {} kv paires to {}/{} files  ".format(len(header)-1,nimg_updated,len(dict_name_id))
+    return "Added {} kv pairs to {}/{} files  ".format(len(header)-1,nimg_updated,len(dict_name_id))
 
 
 def run_script():
 
     data_types = [rstring('Dataset')]
     client = scripts.client(
-        'Add_Key_Val_from_csv'
+        'Add_Key_Val_from_csv',
         """
     This script processes a csv file, attached to a Dataset
         """,
@@ -217,9 +217,9 @@ def run_script():
             "File_Annotation", grouping="3",
             description="File ID containing metadata to populate."),
 
-        authors=["Emil Rozbicki", "OME Team"],
-        institutions=["Glencoe Software Inc."],
-        contact="ome-users@lists.openmicroscopy.org.uk",
+        authors=["Christian Evenhuis"],
+        institutions=["MIF UTS"],
+        contact="christian.evenhuis@gmail.com"
     )
 
     try:
