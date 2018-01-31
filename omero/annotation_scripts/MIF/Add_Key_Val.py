@@ -30,6 +30,7 @@
 """
 from __future__ import print_function
 
+import sys
 import re
 
 from omero.gateway import BlitzGateway
@@ -135,7 +136,7 @@ def AddMapAnnotations(conn, dtype, Id ):
                            #          ^        ^           
                            #       position   key
              if( match is not None ):
-                 i = match.group(1)
+                 i = int(match.group(1))
                  file_keys[i] = match.group(2)
 
     print("Global k-v's")
@@ -145,11 +146,13 @@ def AddMapAnnotations(conn, dtype, Id ):
     # convert the template to a regexp
                                  # not white space 
                                  # or undersciore
-    print("What is the template?")
-    print(template)
     if( template is not None ):
-        template= template.replace("%","([^\s_]+)")
-        template= template.replace("x","[^\s_]")
+        print("What is the template?")
+        template="^{}$".format(template)
+        print(template)
+        template= template.replace("*","([^\s_]+)")
+        template= template.replace("?","[^\s_]")
+        print(template)
         regexp = re.compile(template)
 
     # now add the key value pairs to the dataset
@@ -164,6 +167,9 @@ def AddMapAnnotations(conn, dtype, Id ):
         dataset.linkAnnotation(map_ann)
 
     # at the metadata to the images
+    nimg=dataset.countChildren()
+    nimg_updated=0
+    nkv_tot=0
     for image in dataset.listChildren():
         if( not ( image.canAnnotate() and image.canLink() ) ):
             message = "You don't have permission to add annotations to {}".format(image.getName()) 
@@ -177,10 +183,17 @@ def AddMapAnnotations(conn, dtype, Id ):
             # apply the template to the file name
             filename = image.getName()
             match = regexp.search(filename)
+
             # extract the keys
-            for i,key in file_keys.iteritems():
-                val = match.group(int(i))
-                updated_kv[key] =  val
+            #for i,key in file_keys.iteritems():
+            #    val = match.group(int(i))
+            #    updated_kv[key] =  val
+            if( match is not None ):
+                for i,val in enumerate(match.groups()):
+                    i1 = i+1
+                    if( i1 in file_keys ):
+                        key=file_keys[i1]
+                        updated_kv[key] = val
 
         print("existing_kv")
         for k,v in existing_kv.iteritems():
@@ -201,7 +214,10 @@ def AddMapAnnotations(conn, dtype, Id ):
             map_ann.setValue([  [k,v] for k,v in updated_kv.iteritems() ] )
             map_ann.save()
             image.linkAnnotation(map_ann)
-    return
+
+            nimg_updated=nimg_updated+1
+            nkv_tot = nkv_tot+len(updated_kv)-len(existing_kv)
+    return "Added a total of {} kv pairs to {}/{} files  ".format(nkv_tot,nimg_updated,nimg)
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -283,7 +299,8 @@ if __name__ == "__main__":
 
         for ds in datasets:
             print(ds.getName())
-            AddMapAnnotations( conn, 'Dataset', ds.getId() )
+            message = AddMapAnnotations( conn, 'Dataset', ds.getId() )
+            client.setOutput("Message", rstring(message))
 
 
         ## now handle the result, displaying message and returning image if
