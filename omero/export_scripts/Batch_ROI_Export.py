@@ -31,9 +31,20 @@ DEFAULT_FILE_NAME = "roi_intensities.csv"
 
 def get_export_data(conn, script_params, image):
     """Get pixel data for shapes on image and returns list of dicts."""
+    print "Image ID %s: %s" % (image.id, image.name)
     roi_service = conn.getRoiService()
     all_planes = script_params["Export_All_Planes"]
+    size_c = image.getSizeC()
+    # Channels index
     channels = script_params.get("Channels", [1])
+    ch_indexes = []
+    for ch in channels:
+        if ch < 1 or ch > size_c:
+            print "Channel index: %s out of range 1 - %s" % (ch, size_c)
+        else:
+            # User input is 1-based
+            ch_indexes.append(ch - 1)
+
     ch_names = image.getChannelLabels()
 
     result = roi_service.findByImage(image.getId(), None)
@@ -43,50 +54,46 @@ def get_export_data(conn, script_params, image):
     for roi in result.rois:
         for shape in roi.copyShapes():
             label = unwrap(shape.getTextValue())
-            label = "" if label is None else label
+            # wrap label in double quotes in case it contains comma
+            label = "" if label is None else '"%s"' % label
             shape_type = shape.__class__.__name__.rstrip('I')
             # If shape has no Z or T, we may go through all planes...
             the_z = unwrap(shape.theZ)
-            if the_z is not None:
-                z_indexes = [the_z]
-            elif all_planes:
+            z_indexes = [the_z]
+            if the_z is None and all_planes:
                 z_indexes = range(image.getSizeZ())
-            else:
-                z_indexes = [image.getDefaultZ()]
             # Same for T...
             the_t = unwrap(shape.theT)
-            if the_t is not None:
-                t_indexes = [the_t]
-            elif all_planes:
+            t_indexes = [the_t]
+            if the_t is None and all_planes:
                 t_indexes = range(image.getSizeT())
-            else:
-                t_indexes = [image.getDefaultT()]
 
             # get pixel intensities
             for z in z_indexes:
                 for t in t_indexes:
-                    stats = roi_service.getShapeStatsRestricted([shape.id.val],
-                                                                z, t,
-                                                                channels)
-                    for ch_index in channels:
-                        c = ch_index - 1    # User input is 1-based
+                    if z is None or t is None:
+                        stats = None
+                    else:
+                        stats = roi_service.getShapeStatsRestricted(
+                            [shape.id.val], z, t, ch_indexes)
+                    for c, ch in enumerate(ch_indexes):
+                        ch_index = stats[0].channelIds[c]
                         export_data.append({
                             "Image ID": image.getId(),
-                            "Image Name": image.getName(),
+                            "Image Name": '"%s"' % image.getName(),
                             "ROI ID": roi.id.val,
                             "Shape ID": shape.id.val,
                             "Shape": shape_type,
                             "Label": label,
                             "Z": z,
                             "T": t,
-                            "C": c,
-                            "Channel": ch_names[c],
-                            "Points": stats[0].pointsCount[c],
-                            "Min": stats[0].min[c],
-                            "Max": stats[0].max[c],
-                            "Sum": stats[0].sum[c],
-                            "Mean": stats[0].mean[c],
-                            "Std dev": stats[0].stdDev[c]
+                            "Channel": ch_names[ch_index],
+                            "Points": stats[0].pointsCount[c] if stats else "",
+                            "Min": stats[0].min[c] if stats else "",
+                            "Max": stats[0].max[c] if stats else "",
+                            "Sum": stats[0].sum[c] if stats else "",
+                            "Mean": stats[0].mean[c] if stats else "",
+                            "Std dev": stats[0].stdDev[c] if stats else ""
                         })
     return export_data
 
@@ -99,7 +106,6 @@ COLUMN_NAMES = ["Image ID",
                 "Label",
                 "Z",
                 "T",
-                "C",
                 "Channel",
                 "Points",
                 "Min",
