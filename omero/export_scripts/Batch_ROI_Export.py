@@ -61,7 +61,7 @@ def get_export_data(conn, script_params, image):
             label = unwrap(shape.getTextValue())
             # wrap label in double quotes in case it contains comma
             label = "" if label is None else '"%s"' % label
-            shape_type = shape.__class__.__name__.rstrip('I')
+            shape_type = shape.__class__.__name__.rstrip('I').lower()
             # If shape has no Z or T, we may go through all planes...
             the_z = unwrap(shape.theZ)
             z_indexes = [the_z]
@@ -83,40 +83,40 @@ def get_export_data(conn, script_params, image):
                             [shape.id.val], z, t, ch_indexes)
                     for c, ch_index in enumerate(ch_indexes):
                         export_data.append({
-                            "Image ID": image.getId(),
-                            "Image Name": '"%s"' % image.getName(),
-                            "ROI ID": roi.id.val,
-                            "Shape ID": shape.id.val,
-                            "Shape": shape_type,
-                            "Label": label,
-                            "Z": z + 1 if z is not None else "",
-                            "T": t + 1 if t is not None else "",
-                            "Channel": ch_names[ch_index],
-                            "Points": stats[0].pointsCount[c] if stats else "",
-                            "Min": stats[0].min[c] if stats else "",
-                            "Max": stats[0].max[c] if stats else "",
-                            "Sum": stats[0].sum[c] if stats else "",
-                            "Mean": stats[0].mean[c] if stats else "",
-                            "Std dev": stats[0].stdDev[c] if stats else ""
+                            "image_id": image.getId(),
+                            "image_name": '"%s"' % image.getName(),
+                            "roi_id": roi.id.val,
+                            "shape_id": shape.id.val,
+                            "type": shape_type,
+                            "text": label,
+                            "z": z + 1 if z is not None else "",
+                            "t": t + 1 if t is not None else "",
+                            "channel": ch_names[ch_index],
+                            "points": stats[0].pointsCount[c] if stats else "",
+                            "min": stats[0].min[c] if stats else "",
+                            "max": stats[0].max[c] if stats else "",
+                            "sum": stats[0].sum[c] if stats else "",
+                            "mean": stats[0].mean[c] if stats else "",
+                            "std_dev": stats[0].stdDev[c] if stats else ""
                         })
     return export_data
 
 
-COLUMN_NAMES = ["Image ID",
-                "Image Name",
-                "ROI ID",
-                "Shape ID",
-                "Shape",
-                "Label",
-                "Z",
-                "T",
-                "Channel",
-                "Points",
-                "Min",
-                "Max",
-                "Sum",
-                "Mean",
-                "Std dev"]
+COLUMN_NAMES = ["image_id",
+                "image_name",
+                "roi_id",
+                "shape_id",
+                "type",
+                "text",
+                "z",
+                "t",
+                "channel",
+                "points",
+                "min",
+                "max",
+                "sum",
+                "mean",
+                "std_dev"]
 
 
 def write_csv(conn, export_data, script_params):
