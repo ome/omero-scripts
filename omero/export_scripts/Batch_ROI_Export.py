@@ -82,7 +82,6 @@ def get_export_data(conn, script_params, image):
                         stats = roi_service.getShapeStatsRestricted(
                             [shape.id.val], z, t, ch_indexes)
                     for c, ch_index in enumerate(ch_indexes):
-                        # ch_index = stats[0].channelIds[c]
                         export_data.append({
                             "Image ID": image.getId(),
                             "Image Name": '"%s"' % image.getName(),
