@@ -29,9 +29,14 @@ from omero.rtypes import unwrap, rstring, rlong, robject
 DEFAULT_FILE_NAME = "roi_intensities.csv"
 
 
+def log(data):
+    """Handle logging or printing in one place."""
+    print data
+
+
 def get_export_data(conn, script_params, image):
     """Get pixel data for shapes on image and returns list of dicts."""
-    print "Image ID %s: %s" % (image.id, image.name)
+    log("Image ID %s..." % image.id)
     roi_service = conn.getRoiService()
     all_planes = script_params["Export_All_Planes"]
     size_c = image.getSizeC()
@@ -40,7 +45,7 @@ def get_export_data(conn, script_params, image):
     ch_indexes = []
     for ch in channels:
         if ch < 1 or ch > size_c:
-            print "Channel index: %s out of range 1 - %s" % (ch, size_c)
+            log("Channel index: %s out of range 1 - %s" % (ch, size_c))
         else:
             # User input is 1-based
             ch_indexes.append(ch - 1)
@@ -76,8 +81,8 @@ def get_export_data(conn, script_params, image):
                     else:
                         stats = roi_service.getShapeStatsRestricted(
                             [shape.id.val], z, t, ch_indexes)
-                    for c, ch in enumerate(ch_indexes):
-                        ch_index = stats[0].channelIds[c]
+                    for c, ch_index in enumerate(ch_indexes):
+                        # ch_index = stats[0].channelIds[c]
                         export_data.append({
                             "Image ID": image.getId(),
                             "Image Name": '"%s"' % image.getName(),
@@ -85,8 +90,8 @@ def get_export_data(conn, script_params, image):
                             "Shape ID": shape.id.val,
                             "Shape": shape_type,
                             "Label": label,
-                            "Z": z,
-                            "T": t,
+                            "Z": z + 1,
+                            "T": t + 1,
                             "Channel": ch_names[ch_index],
                             "Points": stats[0].pointsCount[c] if stats else "",
                             "Min": stats[0].min[c] if stats else "",
@@ -146,7 +151,7 @@ def batch_roi_export(conn, script_params):
         for dataset in conn.getObjects("Dataset", script_params['IDs']):
             images.extend(list(dataset.listChildren()))
 
-    print "Processing %s images..." % len(images)
+    log("Processing %s images..." % len(images))
     if len(images) == 0:
         return None
 
@@ -201,7 +206,8 @@ def run_script():
         conn = BlitzGateway(client_obj=client)
 
         script_params = client.getInputs(unwrap=True)
-        print "script_params", script_params
+        log("script_params:")
+        log(script_params)
 
         # call the main script
         result = batch_roi_export(conn, script_params)
