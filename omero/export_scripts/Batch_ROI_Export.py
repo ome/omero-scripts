@@ -90,8 +90,8 @@ def get_export_data(conn, script_params, image):
                             "Shape ID": shape.id.val,
                             "Shape": shape_type,
                             "Label": label,
-                            "Z": z + 1,
-                            "T": t + 1,
+                            "Z": z + 1 if z is not None else "",
+                            "T": t + 1 if t is not None else "",
                             "Channel": ch_names[ch_index],
                             "Points": stats[0].pointsCount[c] if stats else "",
                             "Min": stats[0].min[c] if stats else "",
@@ -141,6 +141,13 @@ def write_csv(conn, export_data, script_params):
     return file_ann
 
 
+def link_images(images, file_ann):
+    """Link the File Annotation to each image."""
+    for i in images:
+        if i.canAnnotate():
+            i.linkAnnotation(file_ann)
+
+
 def batch_roi_export(conn, script_params):
     """Main entry point. Get images, process them and return result."""
     images = []
@@ -162,6 +169,7 @@ def batch_roi_export(conn, script_params):
 
     # Write to csv
     file_ann = write_csv(conn, export_data, script_params)
+    link_images(images, file_ann)
     message = "Exported %s shapes" % len(export_data)
     return file_ann, message
 
