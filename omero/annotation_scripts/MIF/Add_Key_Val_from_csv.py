@@ -175,9 +175,11 @@ def populate_metadata(client, conn, script_params):
 
                 for i in range(1,len(row)):  # first entry is the filename
                     key = header[i].strip()
-                    val = row[i].strip()
-                    if( len(val) > 0 ):
-                        updated_kv[key] = val
+                    vals = row[i].strip().split(';')
+                    if( len(vals) > 0 ):
+                        for val in vals:
+                            if( len(val)>0 ): updated_kv[key] = val
+                          
 
                 if( existing_kv != updated_kv ):
                     nimg_updated = nimg_updated + 1
