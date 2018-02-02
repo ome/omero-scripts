@@ -581,7 +581,7 @@ def roi_figure(conn, command_args):
         w = command_args["Width"]
         try:
             width = int(w)
-        except:
+        except ValueError:
             log("Invalid width: %s Using default value: %d" % (str(w), size_x))
 
     height = size_y
@@ -589,7 +589,7 @@ def roi_figure(conn, command_args):
         h = command_args["Height"]
         try:
             height = int(h)
-        except:
+        except ValueError:
             log("Invalid height: %s Using default value" % (str(h), size_y))
 
     log("Image dimensions for all panels (pixels): width: %d  height: %d"
@@ -632,7 +632,7 @@ def roi_figure(conn, command_args):
                 scalebar = None
             else:
                 log("Scalebar is %d microns" % scalebar)
-        except:
+        except ValueError:
             log("Invalid value for scalebar: %s" % str(sb))
             scalebar = None
 

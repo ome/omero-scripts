@@ -142,7 +142,7 @@ def new_image_with_channel_offsets(conn, image_id, channel_offsets,
                 try:
                     plane = pixels.getPlane(*zct_list[i])
                     dt = plane.dtype
-                except:
+                except Exception:
                     # E.g. the Z-index is out of range - Simply supply an
                     # array of zeros.
                     if dt is None:

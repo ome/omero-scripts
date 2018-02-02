@@ -489,7 +489,7 @@ def combine_images(conn, parameter_map):
     for s in services:
         try:
             s.close()
-        except:
+        except Exception:
             pass
 
     if output_images:
