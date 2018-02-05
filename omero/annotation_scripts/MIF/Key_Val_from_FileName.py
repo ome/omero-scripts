@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
- MIF/Add_Key_Val.py
+ MIF/Key_Val_from_FileName.py
 
  Adds key-value (kv) metadata to images in a dataset in two ways:
-    1. common set of kv pairs from the desciption
-    2. at the file level kv from parsing the filename
+    1. at the file level kv from parsing the filename
+    2. common set of kv pairs from the dataset desciption
  The information is found by parsing the description text for the data set
 
 -----------------------------------------------------------------------------
@@ -252,7 +252,7 @@ if __name__ == "__main__":
     # Good practice to put url here to give users more guidance on how to run
     # your script.
     client = scripts.client(
-        'Add_Key_Vals.py',
+        'Key_Val_from_FileName.py',
         (" Adds key-value metadata pairs to images in a data set from "
          " the description for a dataset or collections of datasets"
          " k-v pairs taken from the dataset description"
@@ -269,11 +269,6 @@ if __name__ == "__main__":
         scripts.List(
             "IDs", optional=False, grouping="2",
             description="List of Dataset IDs or Image IDs").ofType(rlong(0)),
-
-        scripts.String(
-            "New_Description", grouping="3",
-            description="The new description to set for each Image in the"
-            " Dataset"),
 
         version="5.3",
         authors=["Christian Evenhuis", "MIF"],
