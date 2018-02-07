@@ -52,6 +52,9 @@ def get_export_data(conn, script_params, image):
 
     ch_names = image.getChannelLabels()
 
+    ch_names = [ch_name.replace(",", ".") for ch_name in ch_names]
+    image_name = image.getName().replace(",", ".")
+
     result = roi_service.findByImage(image.getId(), None)
 
     export_data = []
@@ -60,7 +63,7 @@ def get_export_data(conn, script_params, image):
         for shape in roi.copyShapes():
             label = unwrap(shape.getTextValue())
             # wrap label in double quotes in case it contains comma
-            label = "" if label is None else '"%s"' % label
+            label = "" if label is None else '"%s"' % label.replace(",", ".")
             shape_type = shape.__class__.__name__.rstrip('I').lower()
             # If shape has no Z or T, we may go through all planes...
             the_z = unwrap(shape.theZ)
@@ -84,7 +87,7 @@ def get_export_data(conn, script_params, image):
                     for c, ch_index in enumerate(ch_indexes):
                         export_data.append({
                             "image_id": image.getId(),
-                            "image_name": '"%s"' % image.getName(),
+                            "image_name": '"%s"' % image_name,
                             "roi_id": roi.id.val,
                             "shape_id": shape.id.val,
                             "type": shape_type,
