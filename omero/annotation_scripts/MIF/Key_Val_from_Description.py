@@ -6,7 +6,7 @@
  Adds key-value (kv) metadata to images in a dataset in two ways:
     1. at the file level kv from parsing the filename
     2. common set of kv pairs from the dataset desciption
- The information is found by parsing the description text for the data set
+ The information is found by parsing the Description text for the data set
 
 -----------------------------------------------------------------------------
   Copyright (C) 2018
@@ -49,7 +49,9 @@ def GetExistingMapAnnotions( obj ):
         if( isinstance(ann, omero.gateway.MapAnnotationWrapper) ):
             kvs = ann.getValue()
             for k,v in kvs:
-                ord_dict[k] = v
+                if k not in ord_dict:
+                    ord_dict[k]=set()
+                ord_dict[k].add(v)
     return ord_dict 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -76,6 +78,94 @@ def RemoveMapAnnotations(conn, dtype, Id ):
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+def AddKeysToMatchingFiles( conn, Id, global_kv, template, file_keys, spec_kv=None ):
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    dataset = conn.getObject("Dataset",Id)
+
+    # compile the regexp
+    if( template is not None ):
+        template="^{}$".format(template)
+        template= template.replace("*","([^\s_\/]+)")
+        template= template.replace("?","[^\s_\/]")
+        regexp = re.compile(template)
+
+    # add the metadata to the images
+    nimg=dataset.countChildren()
+    nimg_updated=0
+    nkv_added=0
+    for image in dataset.listChildren():
+        if( not ( image.canAnnotate() and image.canLink() ) ):
+            message = "You don't have permission to add annotations to {}".format(image.getName())
+            client.setOutput("Message", rstring(message) )
+            return
+
+        existing_kv = GetExistingMapAnnotions(image)
+        updated_kv  = copy.deepcopy(existing_kv)
+        for key,vals in global_kv.iteritems():
+            if key not in updated_kv: updated_kv[key] = set()
+            for val in vals:
+                updated_kv[key].add(val)
+
+        if( template is not None ):
+            # apply the template to the file name
+            name = image.getName()
+
+            # this adds directory path to filename
+            # is probably better to extend name of file with path first
+            #path = os.path.dirname(image.getImportedImageFilePaths()['client_paths'][0])
+            #filename = path+"/"+name
+
+            filename=name
+            match = regexp.search(filename)
+
+            if( match is not None ):
+                print("Match found",filename)
+                for i,val in enumerate(match.groups()):
+                    i1 = i
+                    if( i1 in file_keys ):
+                        key = file_keys[i1]
+                        if key not in updated_kv: updated_kv[key] = set()
+                        updated_kv[key].add(val)
+
+                if( spec_kv is not None ):
+                    for key,vals in spec_kv.iteritems():
+                        if key not in updated_kv: updated_kv[key] = set()
+                        for val in vals:
+                            updated_kv[key].add(val)
+
+
+        #print("existing_kv")
+        #for k,v in existing_kv.iteritems():
+        #    print("  {} : {}".format(k,v))
+        #print("updated_kv")
+        #for k,v in updated_kv.iteritems():
+        #    print("  {} : {}".format(k,v))
+        #print("Are they the same?",existing_kv == updated_kv )
+        nold = sum(map( len, existing_kv.values()))
+        nnew = sum(map( len, updated_kv.values()))
+
+
+        if( existing_kv != updated_kv ):
+            RemoveMapAnnotations( conn, 'image', image.getId()  )
+            map_ann = omero.gateway.MapAnnotationWrapper(conn)
+            namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
+            map_ann.setNs(namespace)
+            # convert the ordered dict to a list of lists
+            kv_list=[]
+            for k,vset in updated_kv.iteritems():
+                for v in vset:
+                    kv_list.append( [k,v] )
+            map_ann.setValue( kv_list )
+            map_ann.save()
+            image.linkAnnotation(map_ann)
+
+            nimg_updated = nimg_updated+1
+
+    return nimg_updated,nold,nnew
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def AddMapAnnotations(conn, dtype, Id ):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ''' 
@@ -99,15 +189,39 @@ def AddMapAnnotations(conn, dtype, Id ):
 
     global_kv = OrderedDict()   # stores the global key value pairs
     file_keys = OrderedDict()   # stores the 'slot' and key for the file keys
+    spec_kv   = OrderedDict()   # stores the file specific kv's
     template  = None 
 
+    nimg_updated=0
+    nkv_tot=0
     for line in description:
         # 1. See if this is a mode string
         for key,value in modes.iteritems():
             match = re.search( "^#\s+{}".format(key),line.lower())
             if( match is not None ):
+                print(">>>",mode,value)
+                # start a new filename block
+                if( mode!='filename' and value=='filename' ):
+                    file_keys = OrderedDict()
+                    spec_kv = OrderedDict()
+                    template  = None
+
+
+
+                # end a filename block
+                if( mode=='filename' and value!='filename' ):
+                    print("Trigger parse fileanames")
+                    print(spec_kv)
+                    nimg_up,nold,nnew = AddKeysToMatchingFiles( conn, Id, OrderedDict(), template, file_keys, spec_kv )
+                    nimg_updated=nimg_updated+nimg_up
+                    nkv_tot = nkv_tot + nnew-nold
+                    print("filename {} {}".format(nimg_up,nold,nnew))
+                if( mode=='global' and value!='global' ):                
+                    # Add globals to all the images
+                    nimg_up, nold, nnew =  AddKeysToMatchingFiles( conn, Id, global_kv, None, file_keys )
+                    print("Global:  {}  {}".format(nimg_up,nnew-nold))
+
                 mode = value
-                print("match",mode)
                 continue
 
         if( mode == 'default' ):
@@ -119,15 +233,18 @@ def AddMapAnnotations(conn, dtype, Id ):
             if( match is not None ):
                 key = match.group(1)
                 val = match.group(2)
-                global_kv[key]=val
-                print("Found global match")
-                print(key,val)
+                if( key not in global_kv ): global_kv[key]=set()
+                global_kv[key].add(val)
 
         if( mode == 'filename' ):
-             match = re.search( "^\s*template\s+(\S+)",line)
-             if( match is not None ):
-                 template = match.group(1)
+             # the template
+             match = re.search( "^\s*(\S+)\s+(\S+)",line)
+             if( match and (match.group(1).lower()=='template') ):
+                 template = match.group(2)
                  print("New template {}".format(template) )
+
+
+             # file templated kvs
                            # Start line
                            #    | /----white space
                            #    | |full stop|    
@@ -136,25 +253,19 @@ def AddMapAnnotations(conn, dtype, Id ):
                            #          ^        ^           
                            #       position   key
              if( match is not None ):
-                 i = int(match.group(1))
+                 i = int(match.group(1))-1
                  file_keys[i] = match.group(2)
 
-    print("Global k-v's")
-    for k,v in global_kv.iteritems():
-        print( k,v)
-
-    # convert the template to a regexp
-                                 # not white space 
-                                 # or underscore
-                                 # or filesep
-    if( template is not None ):
-        print("What is the template?")
-        template="{}$".format(template)
-        print(template)
-        template= template.replace("*","([^\s_\/]+)")
-        template= template.replace("?","[^\s_\/]")
-        print(template)
-        regexp = re.compile(template)
+             # file specific kvs
+             match = re.search("^\s*(\S+)\s*:\s*(\S+)",line)
+             if( match is not None ):
+                 key = match.group(1)
+                 val = match.group(2)
+                 if( key not in spec_kv ): spec_kv[key]=set()
+                 spec_kv[key].add(val)
+    #print("Global k-v's")
+    #for k,v in global_kv.iteritems():
+    #    print( k,v)
 
     # now add the key value pairs to the dataset
     existing_kv = GetExistingMapAnnotions(dataset)
@@ -163,64 +274,77 @@ def AddMapAnnotations(conn, dtype, Id ):
         map_ann = omero.gateway.MapAnnotationWrapper(conn)
         namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
         map_ann.setNs(namespace)    
-        map_ann.setValue(  [  [k,v] for k,v in global_kv.iteritems() ] )
+        # convert the ordered dict to a list of lists
+        kv_list=[]
+        for k,vset in global_kv.iteritems():
+            for v in vset:
+                kv_list.append( [k,v] )
+        map_ann.setValue( kv_list )        
         map_ann.save()
         dataset.linkAnnotation(map_ann)
 
+
+
     # add the metadata to the images
-    nimg=dataset.countChildren()
-    nimg_updated=0
-    nkv_tot=0
-    for image in dataset.listChildren():
-        if( not ( image.canAnnotate() and image.canLink() ) ):
-            message = "You don't have permission to add annotations to {}".format(image.getName()) 
-            client.setOutput("Message", rstring(message) )
-            return 
+    if( True ):  
+        #AddKeysToMatchingFiles( conn, Id, global_kv, template, file_keys )    
+        return "Added a total of {} kv pairs to {}/{} files  ".format(nkv_tot,nimg_updated,len(list(dataset.listChildren())))
 
-        existing_kv = GetExistingMapAnnotions(image)
-        updated_kv  = copy.deepcopy(global_kv)
+    else:
+        nimg=dataset.countChildren()
+        nimg_updated=0
+        nkv_tot=0
+        for image in dataset.listChildren():
+            if( not ( image.canAnnotate() and image.canLink() ) ):
+                message = "You don't have permission to add annotations to {}".format(image.getName()) 
+                client.setOutput("Message", rstring(message) )
+                return 
 
-        if( template is not None ): 
-            # apply the template to the file name
-            name = image.getName()
-            path = os.path.dirname(image.getImportedImageFilePaths()['client_paths'][0])
-            filename = path+"/"+name
-            match = regexp.search(filename)
+            existing_kv = GetExistingMapAnnotions(image)
+            updated_kv  = copy.deepcopy(global_kv)
 
-            # extract the keys
-            #for i,key in file_keys.iteritems():
-            #    val = match.group(int(i))
-            #    updated_kv[key] =  val
-            if( match is not None ):
-                for i,val in enumerate(match.groups()):
-                    i1 = i+1
-                    if( i1 in file_keys ):
-                        key=file_keys[i1]
-                        updated_kv[key] = val
+            if( template is not None ): 
+                # apply the template to the file name
+                name = image.getName()
+                path = os.path.dirname(image.getImportedImageFilePaths()['client_paths'][0])
+                filename = path+"/"+name
+                match = regexp.search(filename)
 
-        print("existing_kv")
-        for k,v in existing_kv.iteritems():
-            print("  {} : {}".format(k,v))             
-        print("updated_kv")
-        for k,v in updated_kv.iteritems():
-            print("  {} : {}".format(k,v))    
-        print("Are they the same?",existing_kv == updated_kv )
+                if( match is not None ):
+                    for i,val in enumerate(match.groups()):
+                        i1 = i+1
+                        if( i1 in file_keys ):
+                            key = file_keys[i1]
+                            if key not in updated_kv: updated_kv[key] = set()
+                            updated_kv[key].add(val)
+
+            print("existing_kv")
+            for k,v in existing_kv.iteritems():
+                print("  {} : {}".format(k,v))             
+            print("updated_kv")
+            for k,v in updated_kv.iteritems():
+                print("  {} : {}".format(k,v))    
+            print("Are they the same?",existing_kv == updated_kv )
 
 
-        if( existing_kv != updated_kv ):
-            print("The key-values pairs are different")
-            RemoveMapAnnotations( conn, 'image', image.getId()  )
-            map_ann = omero.gateway.MapAnnotationWrapper(conn)
-            namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
-            map_ann.setNs(namespace)
-            # convert the ordered dict to a list of lists
-            map_ann.setValue([  [k,v] for k,v in updated_kv.iteritems() ] )
-            map_ann.save()
-            image.linkAnnotation(map_ann)
+            if( existing_kv != updated_kv ):
+                print("The key-values pairs are different")
+                RemoveMapAnnotations( conn, 'image', image.getId()  )
+                map_ann = omero.gateway.MapAnnotationWrapper(conn)
+                namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
+                map_ann.setNs(namespace)
+                # convert the ordered dict to a list of lists
+                kv_list=[]
+                for k,vset in updated_kv.iteritems():
+                    for v in vset:
+                        kv_list.append( [k,v] )            
+                map_ann.setValue( kv_list )
+                map_ann.save()
+                image.linkAnnotation(map_ann)
 
-            nimg_updated=nimg_updated+1
-            nkv_tot = nkv_tot+len(updated_kv)-len(existing_kv)
-    return "Added a total of {} kv pairs to {}/{} files  ".format(nkv_tot,nimg_updated,nimg)
+                nimg_updated=nimg_updated+1
+                nkv_tot = nkv_tot+len(updated_kv)-len(existing_kv)
+        return "Added a total of {} kv pairs to {}/{} files  ".format(nkv_tot,nimg_updated,nimg)
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -255,7 +379,7 @@ if __name__ == "__main__":
     # Good practice to put url here to give users more guidance on how to run
     # your script.
     client = scripts.client(
-        'Key_Val_from_FileName.py',
+        'Key_Val_from_Description.py',
         (" Adds key-value metadata pairs to images in a data set from "
          " the description for a dataset or collections of datasets"
          " k-v pairs taken from the dataset description"
