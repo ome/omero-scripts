@@ -187,6 +187,7 @@ def populate_metadata(client, conn, script_params):
                     remove_MapAnnotations( conn, 'Image', img.getId()  )
                     map_ann = omero.gateway.MapAnnotationWrapper(conn)
                     namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
+                    namesoace = omero.constants.metadata.NSBULKANNOTATIONS 
                     map_ann.setNs(namespace)
                     # convert the ordered dict to a list of lists
                     map_ann.setValue([  [k,v] for k,v in updated_kv.iteritems() ] )

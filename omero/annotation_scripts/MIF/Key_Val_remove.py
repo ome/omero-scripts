@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
- MIF/Remove_Key_Value.py"
+ MIF/Key_Value_remove.py"
 
  Remove all key-value  pairs from:
    * selected image(s)
