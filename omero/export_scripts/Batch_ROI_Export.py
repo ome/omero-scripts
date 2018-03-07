@@ -227,7 +227,8 @@ def run_script():
             message = "No images found"
         else:
             file_ann, message = result
-            client.setOutput("File_Annotation", robject(file_ann._obj))
+            if file_ann is not None:
+                client.setOutput("File_Annotation", robject(file_ann._obj))
 
         client.setOutput("Message", rstring(message))
 
