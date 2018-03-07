@@ -194,7 +194,7 @@ def run_script():
             description="List of Dataset IDs or Image IDs").ofType(rlong(0)),
 
         scripts.List(
-            "Channels", grouping="3", default=[1L,2L,3L,4L],
+            "Channels", grouping="3", default=[1L, 2L, 3L, 4L],
             description="Indecies of Channels to measure intensity."
             ).ofType(rlong(0)),
 
