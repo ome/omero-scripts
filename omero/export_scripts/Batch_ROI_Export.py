@@ -200,7 +200,8 @@ def run_script():
 
         scripts.Bool(
             "Export_All_Planes", grouping="4",
-            description="Export all Z and T planes for shapes without Z / T?",
+            description=("Export all Z and T planes for shapes "
+                         "where Z and T are not set?"),
             default=False),
 
         scripts.String(
