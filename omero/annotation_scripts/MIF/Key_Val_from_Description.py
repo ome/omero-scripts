@@ -142,8 +142,9 @@ def AddKeysToMatchingFiles( conn, Id, global_kv, template, file_keys, spec_kv=No
         #for k,v in updated_kv.iteritems():
         #    print("  {} : {}".format(k,v))
         #print("Are they the same?",existing_kv == updated_kv )
-        nold = sum(map( len, existing_kv.values()))
-        nnew = sum(map( len, updated_kv.values()))
+        nold_i = sum(map( len, existing_kv.values()))
+        nnew_i = sum(map( len, updated_kv.values()))
+        nkv_added = nkv_added+(nnew_i+nold_i)
 
 
         if( existing_kv != updated_kv ):
@@ -162,7 +163,7 @@ def AddKeysToMatchingFiles( conn, Id, global_kv, template, file_keys, spec_kv=No
 
             nimg_updated = nimg_updated+1
 
-    return nimg_updated,nold,nnew
+    return nimg_updated,nkv_added
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -193,43 +194,46 @@ def AddMapAnnotations(conn, dtype, Id ):
     template  = None 
 
     nimg_updated=0
-    nkv_tot=0
+    nkv_updated=0
     for line in description:
         # 1. See if this is a mode string
-        for key,value in modes.iteritems():
-            match = re.search( "^#\s+{}".format(key),line.lower())
-            if( match is not None ):
-                print(">>>",mode,value)
-                # start a new filename block
-                if( mode!='filename' and value=='filename' ):
-                    file_keys = OrderedDict()
-                    spec_kv = OrderedDict()
-                    template  = None
+        match = re.search( "^#\s*(\S+\s+\S+)",line.lower())
+        if( match is not None and match.group(1) in modes ):
+            value = modes[match.group(1)]
+
+            # start a new filename block
+            if( mode!='filename' and value=='filename' ):
+                file_keys = OrderedDict()
+                spec_kv = OrderedDict()
+                template  = None
 
 
 
-                # end a filename block
-                if( mode=='filename' and value!='filename' ):
-                    print("Trigger parse fileanames")
-                    print(spec_kv)
-                    nimg_up,nold,nnew = AddKeysToMatchingFiles( conn, Id, OrderedDict(), template, file_keys, spec_kv )
-                    nimg_updated=nimg_updated+nimg_up
-                    nkv_tot = nkv_tot + nnew-nold
-                    print("filename {} {}".format(nimg_up,nold,nnew))
-                if( mode=='global' and value!='global' ):                
-                    # Add globals to all the images
-                    nimg_up, nold, nnew =  AddKeysToMatchingFiles( conn, Id, global_kv, None, file_keys )
-                    print("Global:  {}  {}".format(nimg_up,nnew-nold))
+            # end a filename block
+            if( mode=='filename' and value!='filename' ):
+                print("Trigger parse fileanames")
+                print(spec_kv)
+                nimg_up,nadd = AddKeysToMatchingFiles( conn, Id, OrderedDict(), template, file_keys, spec_kv )
+                print("filename {} {}".format(nimg_up,nadd))
+                nimg_updated=nimg_updated+nimg_up
+                nkv_updated =nkv_updated +nadd
 
-                mode = value
-                continue
+            # end a global block
+            if( mode=='global' and value!='global' ):                
+                # Add globals to all the images
+                nimg_up, nadd =  AddKeysToMatchingFiles( conn, Id, global_kv, None, file_keys )
+                print("Global:  {}  {}".format(nimg_up,nadd))
+                nimg_updated=nimg_updated+nimg_up
+                nkv_updated =nkv_updated +nadd
+
+            mode = value
 
         if( mode == 'default' ):
             pass
 
         if( mode == 'global' ):
             # split the line for the kay value pair
-            match = re.search("^\s*(\S+)\s*:\s*(\S+)",line)
+            match = re.search("^\s*(\S+)\s*:\s*(.*)",line)
             if( match is not None ):
                 key = match.group(1)
                 val = match.group(2)
@@ -273,6 +277,7 @@ def AddMapAnnotations(conn, dtype, Id ):
         RemoveMapAnnotations( conn, 'dataset', dataset.getId()  )
         map_ann = omero.gateway.MapAnnotationWrapper(conn)
         namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
+        #namespace = "openmicroscopy.org/mapr/gene"
         map_ann.setNs(namespace)    
         # convert the ordered dict to a list of lists
         kv_list=[]
@@ -288,7 +293,7 @@ def AddMapAnnotations(conn, dtype, Id ):
     # add the metadata to the images
     if( True ):  
         #AddKeysToMatchingFiles( conn, Id, global_kv, template, file_keys )    
-        return "Added a total of {} kv pairs to {}/{} files  ".format(nkv_tot,nimg_updated,len(list(dataset.listChildren())))
+        return "Added a total of {} kv pairs to {}/{} files  ".format(nkv_updated,nimg_updated,len(list(dataset.listChildren())))
 
     else:
         nimg=dataset.countChildren()
