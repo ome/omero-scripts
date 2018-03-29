@@ -151,6 +151,7 @@ def AddKeysToMatchingFiles( conn, Id, global_kv, template, file_keys, spec_kv=No
             RemoveMapAnnotations( conn, 'image', image.getId()  )
             map_ann = omero.gateway.MapAnnotationWrapper(conn)
             namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
+            namespace = "openmicroscopy.org/mapr/gene" 
             map_ann.setNs(namespace)
             # convert the ordered dict to a list of lists
             kv_list=[]
@@ -277,7 +278,7 @@ def AddMapAnnotations(conn, dtype, Id ):
         RemoveMapAnnotations( conn, 'dataset', dataset.getId()  )
         map_ann = omero.gateway.MapAnnotationWrapper(conn)
         namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
-        #namespace = "openmicroscopy.org/mapr/gene"
+        namespace = "openmicroscopy.org/mapr/gene"
         map_ann.setNs(namespace)    
         # convert the ordered dict to a list of lists
         kv_list=[]
@@ -336,8 +337,10 @@ def AddMapAnnotations(conn, dtype, Id ):
                 print("The key-values pairs are different")
                 RemoveMapAnnotations( conn, 'image', image.getId()  )
                 map_ann = omero.gateway.MapAnnotationWrapper(conn)
-                namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
+                namespace ="openmicroscopy.org/mapr/gene"
                 map_ann.setNs(namespace)
+                print("Namespace")
+                print(map_ann)
                 # convert the ordered dict to a list of lists
                 kv_list=[]
                 for k,vset in updated_kv.iteritems():
@@ -346,6 +349,7 @@ def AddMapAnnotations(conn, dtype, Id ):
                 map_ann.setValue( kv_list )
                 map_ann.save()
                 image.linkAnnotation(map_ann)
+
 
                 nimg_updated=nimg_updated+1
                 nkv_tot = nkv_tot+len(updated_kv)-len(existing_kv)
