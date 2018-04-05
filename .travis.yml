@@ -1,8 +1,5 @@
 language: python
 
-virtualenv:
-  system_site_packages: true
-
 sudo: required
 
 services:
@@ -12,4 +9,4 @@ before_install:
   - git clone --recurse-submodules git://github.com/openmicroscopy/omero-test-infra .omero
 
 script:
-  - .omero/scripts-docker
+  - .omero/docker scripts

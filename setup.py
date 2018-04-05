@@ -66,7 +66,7 @@ class PyTest(test_command):
 
 
 version = '0.1.0'
-url = "https://github.com/ome/omero-cli-render/"
+url = "https://github.com/ome/scripts/"
 
 setup(
     version=version,
