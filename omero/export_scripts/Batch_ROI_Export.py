@@ -123,7 +123,7 @@ COLUMN_NAMES = ["image_id",
 
 
 def write_csv(conn, export_data, script_params):
-    """Write the list of data to a csv file & create file annotation."""
+    """Write the list of data to a CSV file & create file annotation."""
     file_name = script_params.get("File_Name", "")
     if len(file_name) == 0:
         file_name = DEFAULT_FILE_NAME
@@ -182,7 +182,7 @@ def run_script():
 
     client = scripts.client(
         'Batch_ROI_Export.py',
-        """Export ROI intensities for selected Images""",
+        """Export ROI intensities for selected Images as a CSV file.""",
 
         scripts.String(
             "Data_Type", optional=False, grouping="1",
@@ -206,7 +206,7 @@ def run_script():
 
         scripts.String(
             "File_Name", grouping="5", default=DEFAULT_FILE_NAME,
-            description="Name of the exported csv file"),
+            description="Name of the exported CSV file"),
 
         authors=["William Moore", "OME Team"],
         institutions=["University of Dundee"],
