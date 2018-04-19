@@ -123,7 +123,7 @@ COLUMN_NAMES = ["image_id",
 
 
 def write_csv(conn, export_data, script_params):
-    """Write the list of data to a CSV file & create file annotation."""
+    """Write the list of data to a CSV file and create a file annotation."""
     file_name = script_params.get("File_Name", "")
     if len(file_name) == 0:
         file_name = DEFAULT_FILE_NAME
