@@ -138,9 +138,7 @@ def write_csv(conn, export_data, script_params):
     with open(file_name, 'w') as csv_file:
         csv_file.write("\n".join(csv_rows))
 
-    file_ann = conn.createFileAnnfromLocalFile(file_name,
-                                               mimetype="text/csv")
-    return file_ann
+    return conn.createFileAnnfromLocalFile(file_name, mimetype="text/csv")
 
 
 def link_images(images, file_ann):
