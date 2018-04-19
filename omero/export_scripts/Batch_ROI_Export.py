@@ -195,7 +195,7 @@ def run_script():
 
         scripts.List(
             "Channels", grouping="3", default=[1L, 2L, 3L, 4L],
-            description="Indecies of Channels to measure intensity."
+            description="Indices of Channels to measure intensity."
             ).ofType(rlong(0)),
 
         scripts.Bool(
