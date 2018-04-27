@@ -141,11 +141,11 @@ def write_csv(conn, export_data, script_params):
     return conn.createFileAnnfromLocalFile(file_name, mimetype="text/csv")
 
 
-def link_images(images, file_ann):
-    """Link the File Annotation to each image."""
-    for i in images:
-        if i.canAnnotate():
-            i.linkAnnotation(file_ann)
+def link_annotation(objects, file_ann):
+    """Link the File Annotation to each object."""
+    for o in objects:
+        if o.canAnnotate():
+            o.linkAnnotation(file_ann)
 
 
 def batch_roi_export(conn, script_params):
@@ -169,7 +169,11 @@ def batch_roi_export(conn, script_params):
 
     # Write to csv
     file_ann = write_csv(conn, export_data, script_params)
-    link_images(images, file_ann)
+    if script_params['Data_Type'] == "Dataset":
+        datasets = conn.getObjects("Dataset", script_params['IDs'])
+        link_annotation(datasets, file_ann)
+    else:
+        link_annotation(images, file_ann)
     message = "Exported %s shapes" % len(export_data)
     return file_ann, message
 
