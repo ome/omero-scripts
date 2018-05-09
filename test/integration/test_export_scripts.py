@@ -128,8 +128,8 @@ class TestExportScripts(ScriptTest):
         expected = ("image_id,image_name,roi_id,shape_id,type,text,"
                     "z,t,channel,points,min,max,sum,mean,std_dev\n"
                     "%s,\"%s\",%s,%s,polygon,\"%s\",%s,0,%s,") % (
-                    image.id.val, image_name, roi.id.val,
-                    polygon.id.val, label_text, zt, points_min_max_sum_mean)
+            image.id.val, image_name, roi.id.val,
+            polygon.id.val, label_text, zt, points_min_max_sum_mean)
         assert csv_text.startswith(expected)
 
     @pytest.mark.broken(
