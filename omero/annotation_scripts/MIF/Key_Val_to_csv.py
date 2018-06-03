@@ -73,12 +73,15 @@ def attach_csv_file( conn, obj, data ):
     # A key can appear multiple times, for example multiple dyes can be used
     key_union=OrderedDict()
     for img_n,img_kv in data.iteritems():
+        print(img_n)
         for key, vset  in img_kv.iteritems():
+            print(key,len(vset))
             key_union[key] = max(key_union.get(key,0),len(vset))
 
 
     all_keys = key_union.keys()
     tfile = os.fdopen(fd, 'w')
+    print(all_keys)
 
     # convience function to write a csv line
     def to_csv( ll ):
@@ -90,6 +93,8 @@ def attach_csv_file( conn, obj, data ):
     header = ['filename']
     for key,count in key_union.iteritems():
         header.extend( [key]*count )      # keys can repear
+    print(header)
+    return
     tfile.write( to_csv( header ) )
 
     for filename,kv_dict in data.iteritems():
@@ -152,10 +157,15 @@ def run_script():
 
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
+        print("connection made")
 
         dataType = script_params["Data_Type"]
+        print(dataType)
         ids      = script_params["IDs"]
         datasets = list(conn.getObjects(dataType, ids))    # generator of images or datasets
+        print(ids)
+        print("datasets:")
+        print( datasets )
         for ds in datasets:
             # name of the file
             csv_name = "{}_metadata_out.csv".format(ds.getName()) 
@@ -171,9 +181,11 @@ def run_script():
                             handle = conn.c.sf.submit(delete)
                             conn.c.waitOnCmd(handle, loops=10, ms=500, failonerror=True,
                                          failontimeout=False, closehandle=False)
-                            print("Deleted")
+                            print("Deleted existing csv")
                         except Exception, ex:
-                            print("Failed to delete links: {}".format(ex.message))
+                            print("Failed to delete existing csv: {}".format(ex.message))
+                else:
+                    print("No exisiting file")
        
             #                                 filename         key          multiple vals
             # assemble the metadata into an OrderedDict of ( OrderedDict of Sets          )
