@@ -48,6 +48,8 @@ def download_dataset( conn, Id, path, orig=False, tif=False ):
                 name = orig.getName()
                 file_path = os.path.join( reldir, name)
 
+                print name, orig.getId(),orig.canDownload()
+
                 if( not os.path.exists( file_path)  ):
                     with open(str(file_path), 'w') as f:
                         for chunk in orig.getFileInChunks():
@@ -77,6 +79,9 @@ def download_file( conn, Id, reldir, new_name ):
     for orig in img.getImportedImageFiles():
         name,ext = os.path.splitext(orig.getName())
         file_path = os.path.join( reldir, new_name+ext)
+        print name
+        print orig.getId()
+        print orig.canDownload()
 
         if( not os.path.exists( file_path)  ):
             with open(str(file_path), 'w') as f:

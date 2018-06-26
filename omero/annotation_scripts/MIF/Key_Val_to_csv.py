@@ -68,20 +68,15 @@ def attach_csv_file( conn, obj, data ):
     # create the tmp directory
     tmp_dir = tempfile.mkdtemp(prefix='MIF_meta')
     (fd, tmp_file) = tempfile.mkstemp(dir=tmp_dir, text=True)
+    tfile = os.fdopen(fd, 'w')
 
     # get the list of  keys and maximum number of occurences
     # A key can appear multiple times, for example multiple dyes can be used
     key_union=OrderedDict()
     for img_n,img_kv in data.iteritems():
-        print(img_n)
         for key, vset  in img_kv.iteritems():
-            print(key,len(vset))
             key_union[key] = max(key_union.get(key,0),len(vset))
-
-
     all_keys = key_union.keys()
-    tfile = os.fdopen(fd, 'w')
-    print(all_keys)
 
     # convience function to write a csv line
     def to_csv( ll ):
@@ -89,32 +84,28 @@ def attach_csv_file( conn, obj, data ):
         fmstr = "{}, "*(nl-1)+"{}\n"
         return fmstr.format(*ll)
 
-    # construct the header of the 
+    # construct the header of the CSV file
     header = ['filename']
     for key,count in key_union.iteritems():
-        header.extend( [key]*count )      # keys can repear
-    print(header)
-    return
+        header.extend( [key]*count )      # keys can repeat multiple times
     tfile.write( to_csv( header ) )
 
+    # write the keys values for each file
     for filename,kv_dict in data.iteritems():
-        row = [filename]
+        row    = [""]*len(header)   # empty row 
+        row[0] = filename
         for key,vset, in kv_dict.iteritems():
-            row.extend(vset)        # add the keys
-
-            nv = len(vset)              # number of values in the set
-            nvmax = key_union[key]      # max number of values in all the rows
-            row.extend([""]*(nvmax-nv)) # fill out the empty slots
+            n0   = header.index(key)     # first occurence of key in header
+            for i,val in enumerate(vset):
+                row[n0+i] = val
         tfile.write( to_csv( row ) )
     tfile.close()
-
 
     name = "{}_metadata_out.csv".format(obj.getName())
     # link it to the object
     ann = conn.createFileAnnfromLocalFile(
         tmp_file, origFilePathAndName=name,
         ns='MIF_test' )
-
     ann = obj.linkAnnotation(ann)
 
     # remove the tmp file
@@ -197,6 +188,7 @@ def run_script():
 
             # attach the data
             mess = attach_csv_file( conn, ds, kv_dict )
+            print(mess)
         mess="done" 
         client.setOutput("Message", rstring(mess))
 
