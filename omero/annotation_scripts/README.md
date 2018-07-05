@@ -42,9 +42,10 @@ Add the following to the activate.d/env_vars.sh:
 	#!/bin/sh
 	export ORIGPATH=$PATH
 	export ORIGPYTHONPATH=$PYTHONPATH
-	export OMERO_PREFIX=~/Dropbox/MIF/OMERO/downloads_5.4.1/OMERO.py-5.4.1-ice36-b75
-	export PATH=$PATH:$PYTHONPATH:$OMERO_PREFIX/bin
-	export PYTHONPATH=$PYTHONPATH:$OMERO_PREFIX/lib/python
+
+   export OMERO_PREFIX=~/Dropbox/MIF/OMERO/downloads_5.4.1/OMERO.py-5.4.1-ice36-b75
+   export PATH=$PATH:$OMERO_PREFIX/lib/python:$OMERO_PREFIX/bin
+   export PYTHONPATH=$PYTHONPATH:$OMERO_PREFIX/lib/python:$OMERO_PREFIX/bin
 	
 This appends the OMERO library to the search path.  And the following in deactivate.d/env_vars.sh restores the path variabeles
 
