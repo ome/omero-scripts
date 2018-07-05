@@ -18,17 +18,18 @@ The scripts were developed using the following resources:
 
 # Installing OMERO CLI for 5.4.1
 
-## 1 Create a virtual env for python 2.7:
+## 1. Create a virtual env for python 2.7:
 	conda create -n OMERO_CLI python=2.7 anaconda
-## Down the package from: 
+## 2. Download the package from: 
 Get the "OMERO python" package download 
 
 * [https://www.openmicroscopy.org/omero/downloads/](https://www.openmicroscopy.org/omero/downloads/)
 
 or directly from this [link](http://downloads.openmicroscopy.org/omero/5.4.1/artifacts/OMERO.py-5.4.1-ice36-b75.zip).	
-# install the ICE library
+## 3. Install the ICE library
 	pip install zeroc-ice==3.6.4
 
+## 4. Add conda paths
 Add the path to the library. Instructions from [conda webpage](https://conda.io/docs/user-guide/tasks/manage-environments.html#saving-environment-variables)
 
 	cd /Users/evenhuis/anaconda3/envs/OMERO_5.4_CLI
