@@ -16,6 +16,47 @@ The scripts were developed using the following resources:
 * [Script sharing site](https://www-legacy.openmicroscopy.org/site/community/scripts)
 * [Scripting documentation](https://docs.openmicroscopy.org/omero/5.3.3/developers/scripts/style-guide.html)
 
+# Installing OMERO CLI for 5.4.1
+
+## 1 Create a virtual env for python 2.7:
+	conda create -n OMERO_CLI python=2.7 anaconda
+## Down the package from: 
+Get the "OMERO python" package download 
+
+* [https://www.openmicroscopy.org/omero/downloads/](https://www.openmicroscopy.org/omero/downloads/)
+
+or directly from this [link](http://downloads.openmicroscopy.org/omero/5.4.1/artifacts/OMERO.py-5.4.1-ice36-b75.zip).	
+# install the ICE library
+	pip install zeroc-ice==3.6.4
+
+Add the path to the library. Instructions from [conda webpage](https://conda.io/docs/user-guide/tasks/manage-environments.html#saving-environment-variables)
+
+	cd /Users/evenhuis/anaconda3/envs/OMERO_5.4_CLI
+	mkdir -p ./etc/conda/activate.d
+	mkdir -p ./etc/conda/deactivate.d
+	touch ./etc/conda/activate.d/env_vars.sh
+	touch ./etc/conda/deactivate.d/env_vars.sh
+	
+Add the following to the activate.d/env_vars.sh:
+	
+	#!/bin/sh
+	export ORIGPATH=$PATH
+	export ORIGPYTHONPATH=$PYTHONPATH
+	export OMERO_PREFIX=~/Dropbox/MIF/OMERO/downloads_5.4.1/OMERO.py-5.4.1-ice36-b75
+	export PATH=$PATH:$PYTHONPATH:$OMERO_PREFIX/bin
+	export PYTHONPATH=$PYTHONPATH:$OMERO_PREFIX/lib/python
+	
+This appends the OMERO library to the search path.  And the following in deactivate.d/env_vars.sh restores the path variabeles
+
+	export PATH=$ORIGPATH
+	export PYTHONPATH=$ORIGPYTHONPATH
+
+	unset ORIGPATH
+	unset ORIGPYTHONPATH
+	
+
+
+
 
 Legal
 -----
