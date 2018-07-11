@@ -78,7 +78,7 @@ unset ORIGPYTHONPATH
 
 1. Example
 ```bash
-OMERO_USERNAME='USERNAME' OMERO_USER_PASSWORD='PASSWORD' OMERO_APP_URL='omero-app-dev.research.uts.edu.au' python download_files.py -h
+OMERO_USERNAME='USERNAME' OMERO_USER_PASSWORD='PASSWORD' OMERO_APP_URL='omero-app.server.edu' python download_files.py -h
 ```
 Result:
 ```bash
@@ -102,14 +102,14 @@ optional arguments:
 
 2. Example
 ```bash
-OMERO_USERNAME='***REMOVED***' OMERO_USER_PASSWORD='***REMOVED***' OMERO_APP_URL='omero-app.research.uts.edu.au' python download_files.py -d 2071 -p 759 -o
+OMERO_USERNAME='USERNAME' OMERO_USER_PASSWORD='PASSWORD' OMERO_APP_URL='omero-app.server.edu' python download_files.py -d 2071 -p 759 -o
 ```
 ```bash
 
 omero-app.research.uts.edu.au
 Current user:
    ID: 2
-   Username: ***REMOVED***
+   Username: 135553
    Full Name: Moises Sacal Bonequi
 ['2071']
 moises-dataset/
