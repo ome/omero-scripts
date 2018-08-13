@@ -112,6 +112,7 @@ def polyline_kymograph(conn, script_params, image, polylines, line_width,
                                                  line_width, the_z, the_c,
                                                  the_t)
                     line_data.append(ld)
+                line_data.reverse()
                 row_data = hstack(line_data)
                 t_rows.append(row_data)
 
