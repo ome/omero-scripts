@@ -45,6 +45,28 @@ import logging
 logger = logging.getLogger('kymograph')
 
 
+def points_string_to_xy_list(string):
+    """
+    Method for converting the string returned from
+    omero.model.ShapeI.getPoints() into list of (x,y) points
+    e.g. "points[309,427, 366,503, 190,491]"
+    """
+    point_lists = string.strip().split("points")
+    if len(point_lists) < 2:
+        if len(point_lists) == 1 and point_lists[0]:
+            xys = point_lists[0].split()
+            xy_list = [tuple(map(float, xy.split(','))) for xy in xys]
+            return xy_list
+        raise ValueError("Unrecognised ROI shape 'points' string: %s" % string)
+
+    first_list = point_lists[1]
+    xy_list = []
+    for xy in first_list.strip(" []").split(", "):
+        x, y = xy.split(",")
+        xy_list.append((int(x.strip()), int(y.strip())))
+    return xy_list
+
+
 def polyline_kymograph(conn, script_params, image, polylines, line_width,
                        dataset):
     """
@@ -254,7 +276,7 @@ def process_images(conn, script_params):
 
                 elif type(s) == omero.model.PolylineI:
                     v = s.getPoints().getValue()
-                    points = roi_utils.points_string_to_xy_list(v)
+                    points = points_string_to_xy_list(v)
                     polylines[t] = {'theZ': z, 'points': points}
 
             if len(lines) > 0:
