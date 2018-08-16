@@ -1,55 +1,150 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+# -----------------------------------------------------------------------------
+#   Copyright (C) 2006-2017 University of Dundee. All rights reserved.
+
+
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+#   You should have received a copy of the GNU General Public License along
+#   with this program; if not, write to the Free Software Foundation, Inc.,
+#   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+# ------------------------------------------------------------------------------
+
 """
+This script processes Images, with Line or PolyLine ROIs to create kymographs.
 
------------------------------------------------------------------------------
-  Copyright (C) 2006-2017 University of Dundee. All rights reserved.
-
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or
-  (at your option) any later version.
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write to the Free Software Foundation, Inc.,
-  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
-------------------------------------------------------------------------------
-
-This script processes Images, which have Line or PolyLine ROIs to create
-kymographs.
 Kymographs are created in the form of new OMERO Images, single Z and T, same
 sizeC as input.
-
-
-@author Will Moore
-<a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
-@version 4.3.3
-@since 3.0
 """
+
+
+# @author Will Moore
+# <a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
+# @version 4.3.3
+# @since 3.0
+
 
 from omero.gateway import BlitzGateway
 import omero
 import omero.util.script_utils as script_utils
-import omero.util.roi_handling_utils as roi_utils
 from omero.rtypes import rlong, rstring, robject, unwrap
 import omero.scripts as scripts
-from numpy import zeros, hstack, vstack
+from numpy import zeros, hstack, vstack, asarray, math
 import logging
+from PIL import Image
+from cStringIO import StringIO
 
 logger = logging.getLogger('kymograph')
 
 
+def get_line_data(image, x1, y1, x2, y2, line_w=2, the_z=0, the_c=0, the_t=0):
+    """
+    Grab pixel data covering the specified line, and rotates it horizontally.
+
+    Uses current rendering settings and returns 8-bit data.
+    Rotates it so that x1,y1 is to the left,
+    Returning a numpy 2d array. Used by Kymograph.py script.
+    Uses PIL to handle rotating and interpolating the data. Converts to numpy
+    to PIL and back (may change dtype.)
+
+    @param pixels:          PixelsWrapper object
+    @param x1, y1, x2, y2:  Coordinates of line
+    @param line_w:          Width of the line we want
+    @param the_z:           Z index within pixels
+    @param the_c:           Channel index
+    @param the_t:           Time index
+    """
+    size_x = image.getSizeX()
+    size_y = image.getSizeY()
+
+    line_x = x2-x1
+    line_y = y2-y1
+
+    rads = math.atan(float(line_x)/line_y)
+
+    # How much extra Height do we need, top and bottom?
+    extra_h = abs(math.sin(rads) * line_w)
+    bottom = int(max(y1, y2) + extra_h/2)
+    top = int(min(y1, y2) - extra_h/2)
+
+    # How much extra width do we need, left and right?
+    extra_w = abs(math.cos(rads) * line_w)
+    left = int(min(x1, x2) - extra_w)
+    right = int(max(x1, x2) + extra_w)
+
+    # What's the larger area we need? - Are we outside the image?
+    pad_left, pad_right, pad_top, pad_bottom = 0, 0, 0, 0
+    if left < 0:
+        pad_left = abs(left)
+        left = 0
+    x = left
+    if top < 0:
+        pad_top = abs(top)
+        top = 0
+    y = top
+    if right > size_x:
+        pad_right = right-size_x
+        right = size_x
+    w = int(right - left)
+    if bottom > size_y:
+        pad_bottom = bottom-size_y
+        bottom = size_y
+    h = int(bottom - top)
+
+    # get the Tile - render single channel white
+    image.set_active_channels([the_c + 1], None, ['FFFFFF'])
+    jpeg_data = image.renderJpegRegion(the_z, the_t, x, y, w, h)
+    pil = Image.open(StringIO(jpeg_data))
+
+    # pad if we wanted a bigger region
+    if pad_left > 0 or pad_right > 0 or pad_top > 0 or pad_bottom > 0:
+        img_w, img_h = pil.size
+        new_w = img_w + pad_left + pad_right
+        new_h = img_h + pad_top + pad_bottom
+        canvas = Image.new('RGB', (new_w, new_h), '#ff0000')
+        canvas.paste(pil, (pad_left, pad_top))
+        pil = canvas
+
+    # Now need to rotate so that x1,y1 is horizontally to the left of x2,y2
+    to_rotate = 90 - math.degrees(rads)
+
+    if x1 > x2:
+        to_rotate += 180
+    # filter=Image.BICUBIC see
+    # http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2172449/
+    rotated = pil.rotate(to_rotate, expand=True)
+
+    # finally we need to crop to the length of the line
+    length = int(math.sqrt(math.pow(line_x, 2) + math.pow(line_y, 2)))
+    rot_w, rot_h = rotated.size
+    crop_x = (rot_w - length)/2
+    crop_x2 = crop_x + length
+    crop_y = (rot_h - line_w)/2
+    crop_y2 = crop_y + line_w
+    cropped = rotated.crop((crop_x, crop_y, crop_x2, crop_y2))
+
+    # return numpy array
+    rgb_plane = asarray(cropped)
+    # greyscale image. r, g, b all same. Just use first
+    return rgb_plane[::, ::, 0]
+
+
 def points_string_to_xy_list(string):
     """
-    Method for converting the string returned from
-    omero.model.ShapeI.getPoints() into list of (x,y) points
-    e.g. "points[309,427, 366,503, 190,491]"
+    Convert string to list of (x,y) points.
+
+    Expects string in format generated from omero.model.ShapeI.getPoints()
+    e.g. "points[309,427, 366,503]" to [(309,427), (366,503)]
     """
     point_lists = string.strip().split("points")
     if len(point_lists) < 2:
@@ -70,11 +165,10 @@ def points_string_to_xy_list(string):
 def polyline_kymograph(conn, script_params, image, polylines, line_width,
                        dataset):
     """
-    Creates a new kymograph Image from one or more polylines.
+    Create a new kymograph Image from one or more polylines.
 
     @param polylines:       map of theT: {theZ:theZ, points: list of (x,y)}
     """
-    pixels = image.getPrimaryPixels()
     size_c = image.getSizeC()
     size_t = image.getSizeT()
 
@@ -92,7 +186,7 @@ def polyline_kymograph(conn, script_params, image, polylines, line_width,
             break
 
     def plane_gen():
-        """ Final image is single Z and T. Each plane is rows of T-slices """
+        """Final image is single Z and T. Each plane is rows of T-slices."""
         for the_c in range(size_c):
             shape = first_shape
             t_rows = []
@@ -108,9 +202,9 @@ def polyline_kymograph(conn, script_params, image, polylines, line_width,
                 for l in range(len(points)-1):
                     x1, y1 = points[l]
                     x2, y2 = points[l+1]
-                    ld = roi_utils.get_line_data(pixels, x1, y1, x2, y2,
-                                                 line_width, the_z, the_c,
-                                                 the_t)
+                    ld = get_line_data(image, x1, y1, x2, y2,
+                                          line_width, the_z, the_c,
+                                          the_t)
                     line_data.append(ld)
                 line_data.reverse()
                 row_data = hstack(line_data)
@@ -140,14 +234,13 @@ def polyline_kymograph(conn, script_params, image, polylines, line_width,
 
 def lines_kymograph(conn, script_params, image, lines, line_width, dataset):
     """
-    Creates a new kymograph Image from one or more lines.
+    Create a new kymograph Image from one or more lines.
+
     If one line, use this for every time point.
     If multiple lines, use the first one for length and all the remaining ones
     for x1,y1 and direction, making all subsequent lines the same length as
     the first.
     """
-
-    pixels = image.getPrimaryPixels()
     size_c = image.getSizeC()
     size_t = image.getSizeT()
 
@@ -164,7 +257,7 @@ def lines_kymograph(conn, script_params, image, lines, line_width, dataset):
             break
 
     def plane_gen():
-        """ Final image is single Z and T. Each plane is rows of T-slices """
+        """Final image is single Z and T. Each plane is rows of T-slices."""
         for the_c in range(size_c):
             shape = first_line
             r_length = None           # set this for first line
@@ -177,8 +270,8 @@ def lines_kymograph(conn, script_params, image, lines, line_width, dataset):
                 the_z = shape['theZ']
                 x1, y1, x2, y2 = shape['x1'], shape['y1'], shape['x2'], \
                     shape['y2']
-                row_data = roi_utils.get_line_data(
-                    pixels, x1, y1, x2, y2, line_width,
+                row_data = get_line_data(
+                    image, x1, y1, x2, y2, line_width,
                     the_z, the_c, the_t)
                 # if the row is too long, crop - if it's too short, pad
                 row_height, row_length = row_data.shape
@@ -204,7 +297,7 @@ def lines_kymograph(conn, script_params, image, lines, line_width, dataset):
 
 
 def process_images(conn, script_params):
-
+    """Process each image passed to script, generating new Kymograph images."""
     line_width = script_params['Line_Width']
     new_kymographs = []
     message = ""
@@ -360,10 +453,10 @@ def process_images(conn, script_params):
 
 def run_script():
     """
-    The main entry point of the script, as called by the client via the
-    scripting service, passing the required parameters.
-    """
+    The main entry point of the script, as called by the client.
 
+    Called via the scripting service, passing the required parameters.
+    """
     data_types = [rstring('Image')]
 
     client = scripts.client(
