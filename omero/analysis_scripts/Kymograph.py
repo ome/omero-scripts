@@ -67,10 +67,10 @@ def get_line_data(image, x1, y1, x2, y2, line_w=2, the_z=0, the_c=0, the_t=0):
     size_x = image.getSizeX()
     size_y = image.getSizeY()
 
-    line_x = x2-x1
-    line_y = y2-y1
+    line_x = x2 - x1
+    line_y = y2 - y1
 
-    rads = math.atan(float(line_x)/line_y)
+    rads = math.atan2(line_y, line_x)
 
     # How much extra Height do we need, top and bottom?
     extra_h = abs(math.sin(rads) * line_w)
@@ -116,10 +116,8 @@ def get_line_data(image, x1, y1, x2, y2, line_w=2, the_z=0, the_c=0, the_t=0):
         pil = canvas
 
     # Now need to rotate so that x1,y1 is horizontally to the left of x2,y2
-    to_rotate = 90 - math.degrees(rads)
+    to_rotate = math.degrees(rads)
 
-    if x1 > x2:
-        to_rotate += 180
     # filter=Image.BICUBIC see
     # http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2172449/
     rotated = pil.rotate(to_rotate, expand=True)
@@ -206,7 +204,6 @@ def polyline_kymograph(conn, script_params, image, polylines, line_width,
                                           line_width, the_z, the_c,
                                           the_t)
                     line_data.append(ld)
-                line_data.reverse()
                 row_data = hstack(line_data)
                 t_rows.append(row_data)
 
