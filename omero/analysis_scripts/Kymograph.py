@@ -201,8 +201,7 @@ def polyline_kymograph(conn, script_params, image, polylines, line_width,
                     x1, y1 = points[l]
                     x2, y2 = points[l+1]
                     ld = get_line_data(image, x1, y1, x2, y2,
-                                          line_width, the_z, the_c,
-                                          the_t)
+                                       line_width, the_z, the_c, the_t)
                     line_data.append(ld)
                 row_data = hstack(line_data)
                 t_rows.append(row_data)
