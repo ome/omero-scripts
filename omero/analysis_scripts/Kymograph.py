@@ -156,7 +156,7 @@ def points_string_to_xy_list(string):
     xy_list = []
     for xy in first_list.strip(" []").split(", "):
         x, y = xy.split(",")
-        xy_list.append((int(x.strip()), int(y.strip())))
+        xy_list.append((float(x.strip()), float(y.strip())))
     return xy_list
 
 
