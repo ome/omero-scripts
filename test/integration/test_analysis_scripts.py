@@ -64,7 +64,11 @@ class TestAnalysisScripts(ScriptTest):
 
         # check the result
         assert kymograph_img is not None
-        assert kymograph_img.getValue().id.val > 0
+        image_id = kymograph_img.getValue().id.val
+        assert image_id > 0
+        new_image = client.sf.getQueryService().get('Image', image_id)
+        assert new_image.name.val == "%skymograph" % image.name.val
+
 
     def test_plot_profile(self):
         script_id = super(TestAnalysisScripts, self).get_script(plot_profile)
