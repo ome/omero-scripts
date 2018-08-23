@@ -82,7 +82,7 @@ class TestAnalysisScripts(ScriptTest):
         session = client.getSession()
         image = self.create_test_image(size_x, size_y, 1, 2, size_t, session)
         image_id = image.id.val
-        roi = create_roi(image_id, 0, size_x / 2, 0, size_y / 2, size_t, True)
+        roi = create_roi(image_id, 0, size_x / 2, 0, size_y / 2, size_t, False)
         session.getUpdateService().saveAndReturnObject(roi)
         image_ids = []
         image_ids.append(omero.rtypes.rlong(image_id))
