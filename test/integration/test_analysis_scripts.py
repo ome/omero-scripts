@@ -67,7 +67,7 @@ class TestAnalysisScripts(ScriptTest):
         image_id = kymograph_img.getValue().id.val
         assert image_id > 0
         new_image = client.sf.getQueryService().get('Image', image_id)
-        assert new_image.name.val == "%skymograph" % image.name.val
+        assert new_image.name.val == "%s_kymograph" % image.name.val
 
     def test_plot_profile(self):
         script_id = super(TestAnalysisScripts, self).get_script(plot_profile)
