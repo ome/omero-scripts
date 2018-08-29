@@ -367,8 +367,8 @@ def make_single_image(services, parameter_map, image_ids, dataset, colour_map):
                     pixel_sizes['y'].append(pixels.getPhysicalSizeY())
                 else:
                     plane_2d = zeros((size_y, size_x))
-                script_utils.upload_plane_by_row(
-                    raw_pixel_store_upload, plane_2d, the_z, the_c, the_t)
+                script_utils.upload_plane(raw_pixel_store_upload,
+                                          plane_2d, the_z, the_c, the_t)
                 min_value = min(min_value, plane_2d.min())
                 max_value = max(max_value, plane_2d.max())
         pixels_service.setChannelGlobalMinMax(pixels_id, the_c,
