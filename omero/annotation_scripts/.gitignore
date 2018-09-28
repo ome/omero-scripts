@@ -33,3 +33,10 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+
+downloads/OMERO.py-5.4.1-ice36-b75.zip
+downloads/OMERO.py-5.4.1-ice36-b75
+cli_scripts/downloads
+.idea
+.DS_Store
