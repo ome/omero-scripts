@@ -9,7 +9,9 @@ at the [University of Technology Sydney](ihttps://www.uts.edu.au).
 
 These scripts are primarily for the handling of metadata.  Details and instructions can be found on the [wiki](https://github.com/evenhuis/omero-user-scripts/wiki)
 
-* [Add_Key_Val.py](https://github.com/evenhuis/omero-user-scripts/wiki/Adding-key-value-pairs)
+* [Add_Key_Val_from_Description.py](https://code.research.uts.edu.au/MIF/OMERO-instructions/wikis/organising_data/Adding-Global-Key-Values)
+* [Key_Val_from_FileName.py](https://code.research.uts.edu.au/MIF/OMERO-instructions/wikis/organising_data/filename/Extracting-Key-Values-from-filenames)
+* [Export/Import from .csv](https://code.research.uts.edu.au/MIF/OMERO-instructions/wikis/organising_data/csv/Managing-Key-values-with-csv-files)
 
 The scripts were developed using the following resources:
 
