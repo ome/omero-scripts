@@ -9,15 +9,16 @@ at the [University of Technology Sydney](ihttps://www.uts.edu.au).
 
 These scripts are primarily for the handling of metadata.  Details and instructions can be found from the links:
 
-### `Key_value_from_Description.py`
+### `Key_Val_from_Description.py`
 Abuses the dataset description to:
 * [Add key-values to a dataset](https://code.research.uts.edu.au/MIF/OMERO-instructions/wikis/organising_data/Adding-Global-Key-Values)
 * [Extract key-values from filenames](https://code.research.uts.edu.au/MIF/OMERO-instructions/wikis/organising_data/filename/Extracting-Key-Values-from-filenames)
 
-### `Key_value_to_csv.py` `Key_value_from_csv.py`
+### `Key_Val_to_csv.py` `Key_value_from_csv.py`
 * [Export/Import key-values from .csv](https://code.research.uts.edu.au/MIF/OMERO-instructions/wikis/organising_data/csv/Managing-Key-values-with-csv-files)
 
-
+### `Key_Val_remove.py`
+Removes key value pairs from files or a dataset.
 
 The scripts were developed using the following resources:
 
