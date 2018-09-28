@@ -7,7 +7,7 @@ the [OMERO](https://www.openmicroscopy.org/omero/) installation in the
 which is part of the [ithree institute](https://www.uts.edu.au/research-and-teaching/our-research/ithree-institute)
 at the [University of Technology Sydney](ihttps://www.uts.edu.au).
 
-These scripts are primarily for the handling of metadata.  Details and instructions can be found on the [wiki](https://github.com/evenhuis/omero-user-scripts/wiki)
+These scripts are primarily for the handling of metadata.  Details and instructions can be found from the links:
 
 * [Add_Key_Val_from_Description.py](https://code.research.uts.edu.au/MIF/OMERO-instructions/wikis/organising_data/Adding-Global-Key-Values)
 * [Key_Val_from_FileName.py](https://code.research.uts.edu.au/MIF/OMERO-instructions/wikis/organising_data/filename/Extracting-Key-Values-from-filenames)
@@ -74,9 +74,8 @@ unset ORIGPATH
 unset ORIGPYTHONPATH
 ```
 
-5. Examples:
 
-## Run downloads
+# Run downloads
 
 1. Example
 ```bash
