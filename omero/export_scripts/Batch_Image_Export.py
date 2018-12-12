@@ -235,7 +235,7 @@ def save_planes_for_image(conn, image, size_c, split_cs, merged_cs,
         t_indexes = [image.getDefaultT()+1]
     else:
         if len(t_range) > 1:
-            t_indexes = range(t_range[0], t_range[1])
+            t_indexes = list(range(t_range[0], t_range[1]))
         else:
             t_indexes = [t_range[0]]
 
@@ -602,7 +602,7 @@ See http://help.openmicroscopy.org/export.html#batch""",
         conn = BlitzGateway(client_obj=client)
 
         script_params = client.getInputs(unwrap=True)
-        for key, value in script_params.iteritems():
+        for key, value in script_params.items():
             log("%s:%s" % (key, value))
 
         # call the main script - returns a file annotation wrapper

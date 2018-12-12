@@ -66,16 +66,16 @@ def populate_metadata(client, conn, script_params):
     object_id = object_ids[0]
     file_ann_id = None
     if "File_Annotation" in script_params:
-        file_ann_id = long(script_params["File_Annotation"])
+        file_ann_id = int(script_params["File_Annotation"])
     data_type = script_params["Data_Type"]
     original_file = get_original_file(
         conn, data_type, object_id, file_ann_id)
     provider = DownloadingOriginalFileProvider(conn)
     file_handle = provider.get_original_file_data(original_file)
     if data_type == "Plate":
-        omero_object = PlateI(long(object_id), False)
+        omero_object = PlateI(int(object_id), False)
     else:
-        omero_object = ScreenI(long(object_id), False)
+        omero_object = ScreenI(int(object_id), False)
     ctx = ParsingContext(client, omero_object, "")
     ctx.parse_from_handle(file_handle)
     ctx.write_to_omero()

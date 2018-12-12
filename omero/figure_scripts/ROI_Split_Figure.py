@@ -119,7 +119,7 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
     if not re.lookupRenderingDef(pixels_id):
         re.resetDefaults()
     if not re.lookupRenderingDef(pixels_id):
-        raise "Failed to lookup Rendering Def"
+        raise Exception("Failed to lookup Rendering Def")
     re.load()
 
     # if we are missing some merged colours, get them from rendering engine.
@@ -163,8 +163,8 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
                 # if it's a single plane, we can render a region (region not
                 # supported with projection)
                 plane_def = omero.romio.PlaneDef()
-                plane_def.z = long(pro_start)
-                plane_def.t = long(t_index)
+                plane_def.z = int(pro_start)
+                plane_def.t = int(t_index)
                 region_def = omero.romio.RegionDef()
                 region_def.x = roi_x
                 region_def.y = roi_y
@@ -682,7 +682,7 @@ def roi_figure(conn, command_args):
         merged_indexes.sort()
     # make sure we have some merged channels
     if len(merged_indexes) == 0:
-        merged_indexes = range(size_c)
+        merged_indexes = list(range(size_c))
     merged_indexes.reverse()
 
     merged_names = False
@@ -821,9 +821,9 @@ def run_script():
 'FigureROI' by default, (not case sensitive). If matching ROI not found, use \
 any ROI."""
     formats = [rstring('JPEG'), rstring('PNG'), rstring('TIFF')]
-    ckeys = COLOURS.keys()
+    ckeys = list(COLOURS.keys())
     ckeys.sort()
-    o_colours = wrap(OVERLAY_COLOURS.keys())
+    o_colours = wrap(list(OVERLAY_COLOURS.keys()))
 
     client = scripts.client(
         'ROI_Split_Figure.py',

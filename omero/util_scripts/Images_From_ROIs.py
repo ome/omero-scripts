@@ -62,7 +62,7 @@ def create_image_from_tiles(conn, source, image_name, description,
     def create_image():
         query = "from PixelsType as p where p.value='uint8'"
         pixels_type = query_service.findByQuery(query, None)
-        channel_list = range(size_c)
+        channel_list = list(range(size_c))
         # bytesPerPixel = pixelsType.bitSize.val / 8
         iid = pixels_service.createImage(
             size_x,
@@ -104,7 +104,7 @@ def create_image_from_tiles(conn, source, image_name, description,
     tile_gen = primary_pixels.getTiles(zct_tile_list)
 
     def next_tile():
-        return tile_gen.next()
+        return next(tile_gen)
 
     class Iteration(TileLoopIteration):
 
@@ -190,7 +190,7 @@ def process_image(conn, image_id, parameter_map):
         parent_project = parent_dataset.getParent()
 
     image_name = image.getName()
-    print "Processing image", image.getId(), image_name
+    print("Processing image", image.getId(), image_name)
     update_service = conn.getUpdateService()
 
     pixels = image.getPrimaryPixels()
@@ -234,7 +234,7 @@ def process_image(conn, image_id, parameter_map):
                 the_z = z1 if z1 is not None else 0
                 the_t = t1 if t1 is not None else 0
                 zct_tile_list.append((the_z, c, the_t, tile))
-            print 'image_stack zct_tile_list:', zct_tile_list
+            print('image_stack zct_tile_list:', zct_tile_list)
             for t in pixels.getTiles(zct_tile_list):
                 yield t
 
@@ -280,8 +280,8 @@ def process_image(conn, image_id, parameter_map):
                 t1 = 0
                 t2 = image.getSizeT() - 1
 
-            print "  ROI: x: %s, y: %s, w: %s, h: %s, z: %s-%s, t: %s-%s" % (
-                x, y, w, h, z1, z2, t1, t2)
+            print("  ROI: x: %s, y: %s, w: %s, h: %s, z: %s-%s, t: %s-%s" % (
+                x, y, w, h, z1, z2, t1, t2))
 
             description = "Created from image:"\
                 " \n  Name: %s\n  Image ID: %d"\

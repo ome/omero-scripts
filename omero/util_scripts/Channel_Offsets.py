@@ -162,7 +162,7 @@ def new_image_with_channel_offsets(conn, image_id, channel_offsets,
     desc += "\n".join(desc_lines)
     i = conn.createImageFromNumpySeq(
         offset_plane_gen(), new_image_name,
-        sizeZ=size_z, sizeC=len(offset_map.items()), sizeT=size_t,
+        sizeZ=size_z, sizeC=len(list(offset_map.items())), sizeT=size_t,
         description=desc, sourceImageId=image_id, channelList=channel_list)
 
     # Link image to dataset

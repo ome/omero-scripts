@@ -166,7 +166,7 @@ def get_split_view(conn, pixel_ids, z_start, z_end, split_indexes,
         if not re.lookupRenderingDef(pixels_id):
             re.resetDefaults()
         if not re.lookupRenderingDef(pixels_id):
-            raise "Failed to lookup Rendering Def"
+            raise Exception("Failed to lookup Rendering Def")
         re.load()
 
         pro_start = z_start
@@ -587,7 +587,7 @@ def split_view_figure(conn, script_params):
     if "Split_Indexes" in script_params:
         split_indexes = script_params["Split_Indexes"]
     else:
-        split_indexes = range(size_c)
+        split_indexes = list(range(size_c))
 
     # Make channel-names map. If argument wasn't specified, name by index
     channel_names = {}
@@ -615,7 +615,7 @@ def split_view_figure(conn, script_params):
             merged_indexes.append(c_index)
         merged_indexes.sort()
     else:
-        merged_indexes = range(size_c)
+        merged_indexes = list(range(size_c))
 
     colour_channels = not script_params["Split_Panels_Grey"]
 
@@ -685,9 +685,9 @@ def run_script():
     labels = [rstring('Image Name'), rstring('Datasets'), rstring('Tags')]
     algorithms = [rstring('Maximum Intensity'), rstring('Mean Intensity')]
     formats = [rstring('JPEG'), rstring('PNG'), rstring('TIFF')]
-    ckeys = COLOURS.keys()
+    ckeys = list(COLOURS.keys())
     ckeys.sort()
-    o_colours = wrap(OVERLAY_COLOURS.keys())
+    o_colours = wrap(list(OVERLAY_COLOURS.keys()))
 
     client = scripts.client(
         'Split_View_Figure.py',

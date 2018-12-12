@@ -195,7 +195,7 @@ def datasets_to_plates(conn, script_params):
         s = script_params["Screen"]
         # see if this is ID of existing screen
         try:
-            screen_id = long(s)
+            screen_id = int(s)
             screen = conn.getObject("Screen", screen_id)
         except ValueError:
             pass

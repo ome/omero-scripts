@@ -167,7 +167,7 @@ def process_images(conn, script_params):
             script_params['Channels'] = [i-1 for i in
                                          script_params['Channels']]
         else:
-            script_params['Channels'] = range(size_c)
+            script_params['Channels'] = list(range(size_c))
 
         roi_service = conn.getRoiService()
         result = roi_service.findByImage(image.getId(), None)

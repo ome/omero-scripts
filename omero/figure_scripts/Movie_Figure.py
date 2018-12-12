@@ -143,7 +143,7 @@ def createmovie_figure(conn, pixel_ids, t_indexes, z_start, z_end, width,
         if not re.lookupRenderingDef(pixels_id):
             re.resetDefaults()
         if not re.lookupRenderingDef(pixels_id):
-            raise "Failed to lookup Rendering Def"
+            raise Exception("Failed to lookup Rendering Def")
         re.load()
 
         pro_start = z_start
@@ -365,7 +365,7 @@ def movie_figure(conn, command_args):
         time_units = command_args["Time_Units"]
         # convert from UI name to time_labels key
         time_units = time_units.replace(" ", "_")
-    if time_units not in time_labels.keys():
+    if time_units not in list(time_labels.keys()):
         time_units = "SECS"
     log("Time units are in %s" % time_labels[time_units])
 
@@ -444,7 +444,7 @@ def movie_figure(conn, command_args):
         for t in command_args["T_Indexes"]:
             t_indexes.append(t)
     if len(t_indexes) == 0:      # if no t-indexes given, use all t-indices
-        t_indexes = range(size_t)
+        t_indexes = list(range(size_t))
 
     z_start = -1
     z_end = -1
@@ -551,9 +551,9 @@ def run_script():
     tunits = [rstring("SECS"), rstring("MINS"), rstring("HOURS"),
               rstring("MINS SECS"), rstring("HOURS MINS")]
     formats = [rstring('JPEG'), rstring('PNG'), rstring('TIFF')]
-    ckeys = COLOURS.keys()
+    ckeys = list(COLOURS.keys())
     ckeys.sort()
-    o_colours = wrap(OVERLAY_COLOURS.keys())
+    o_colours = wrap(list(OVERLAY_COLOURS.keys()))
 
     client = scripts.client(
         'Movie_Figure.py',

@@ -131,7 +131,7 @@ def get_roi_movie_view(re, query_service, pixels, time_shape_map,
     if not re.lookupRenderingDef(pixels_id):
         re.resetDefaults()
     if not re.lookupRenderingDef(pixels_id):
-        raise "Failed to lookup Rendering Def"
+        raise Exception("Failed to lookup Rendering Def")
     re.load()
 
     # now get each channel in greyscale (or colour)
@@ -600,7 +600,7 @@ def roi_figure(conn, command_args):
         # convert to 0-based
         merged_indexes = [c-1 for c in command_args["Merged_Channels"]]
     else:
-        merged_indexes = range(size_c)  # show all
+        merged_indexes = list(range(size_c))  # show all
     merged_indexes.reverse()
 
     #  if no colours added, use existing rendering settings.
@@ -724,9 +724,9 @@ def run_script():
 'FigureROI' by default, (not case sensitive). If matching ROI not found, use \
 any ROI."""
     formats = [rstring('JPEG'), rstring('PNG'), rstring('TIFF')]
-    ckeys = COLOURS.keys()
+    ckeys = list(COLOURS.keys())
     ckeys.sort()
-    o_colours = wrap(OVERLAY_COLOURS.keys())
+    o_colours = wrap(list(OVERLAY_COLOURS.keys()))
 
     client = scripts.client(
         'Movie_ROI_Figure.py',

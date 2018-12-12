@@ -233,7 +233,7 @@ def assign_images_by_regex(parameter_map, image_ids, query_service, source_z,
         size_t = size_t-t_start
         size_z = size_z-z_start
         i_map = {}
-        for key, value in image_map.items():
+        for key, value in list(image_map.items()):
             z, c, t = key
             i_map[(z-z_start, c, t-t_start)] = value
     else:
@@ -338,7 +338,7 @@ def make_single_image(services, parameter_map, image_ids, dataset, colour_map):
     image_name = "combinedImage"
     description = "created from image Ids: %s" % image_ids
 
-    channel_list = range(size_c)
+    channel_list = list(range(size_c))
     iid = pixels_service.createImage(size_x, size_y, size_z, size_t,
                                      channel_list, pixels_type, image_name,
                                      description)
@@ -511,16 +511,16 @@ def run_script():
     The main entry point of the script, as called by the client via the
     scripting service, passing the required parameters.
     """
-    ckeys = COLOURS.keys()
+    ckeys = list(COLOURS.keys())
     ckeys.sort()
     c_options = [rstring(col) for col in ckeys]
     data_types = [rstring('Dataset'), rstring('Image')]
     first_dim = [rstring('Time'), rstring('Channel'), rstring('Z')]
     extra_dims = [rstring(''), rstring('Time'), rstring('Channel'),
                   rstring('Z')]
-    channel_regs = [rstring(r) for r in channel_regexes.keys()]
-    z_regs = [rstring(r) for r in z_regexes.keys()]
-    t_regs = [rstring(r) for r in time_regexes.keys()]
+    channel_regs = [rstring(r) for r in list(channel_regexes.keys())]
+    z_regs = [rstring(r) for r in list(z_regexes.keys())]
+    t_regs = [rstring(r) for r in list(time_regexes.keys())]
 
     client = scripts.client(
         'Combine_Images.py',

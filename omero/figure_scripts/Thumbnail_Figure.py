@@ -72,7 +72,7 @@ def sort_images_by_tag(tag_ids, img_tags):
     letters = 'abcdefghijklmnopqrstuvwxyz'
     # assume we have less than 26 tags!
     sorted_images = []
-    for iid, tag_id_list in img_tags.items():
+    for iid, tag_id_list in list(img_tags.items()):
         ordered_indexes = []
         ordered_tags = []
         for i, tid in enumerate(tag_ids):
@@ -171,7 +171,7 @@ def paint_dataset_canvas(conn, images, title, tag_ids=None,
         annotations = metadata_service.loadAnnotations(
             "Image", ds_image_ids, types, None, None)
         # filter images by annotation...
-        for image_id, tags in annotations.items():
+        for image_id, tags in list(annotations.items()):
             img_tag_ids = []
             for tag in tags:
                 tag_id = tag.getId().getValue()

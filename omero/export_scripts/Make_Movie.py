@@ -71,7 +71,7 @@ from omero.gateway import BlitzGateway
 from omero.constants.namespaces import NSCREATED
 from omero.constants.metadata import NSMOVIE
 
-from cStringIO import StringIO
+from io import StringIO
 from types import StringTypes
 
 try:
@@ -162,7 +162,7 @@ def range_from_list(list, index):
     for i in list:
         min_value = min(min_value, i[index])
         max_value = max(max_value, i[index])
-    return range(min_value, max_value+1)
+    return list(range(min_value, max_value+1))
 
 
 def calculate_acquisition_time(conn, pixels_id, c_list, tz_list):
@@ -314,8 +314,8 @@ def build_plane_map_from_ranges(z_range, t_range):
 def str_to_range(key):
     split_key = key.split('-')
     if (len(split_key) == 1):
-        return range(int(split_key[0]), int(split_key[0])+1)
-    return range(int(split_key[0]), int(split_key[1])+1)
+        return list(range(int(split_key[0]), int(split_key[0])+1))
+    return list(range(int(split_key[0]), int(split_key[1])+1))
 
 
 def unroll_plane_map(plane_map):
@@ -355,8 +355,8 @@ def calculate_ranges(size_z, size_t, command_args):
         if (t_end == t_start):
             t_end = t_end+1
 
-        z_range = range(z_start, z_end)
-        t_range = range(t_start, t_end)
+        z_range = list(range(z_start, z_end))
+        t_range = list(range(t_start, t_end))
         plane_map = build_plane_map_from_ranges(z_range, t_range)
     else:
         map = command_args["Plane_Map"]
@@ -375,7 +375,7 @@ def reshape_to_fit(image, size_x, size_y, bg=(0, 0, 0)):
         return image
     # scale
     ratio = min(float(size_x) / image_w, float(size_y) / image_h)
-    image = image.resize(map(lambda x: int(x*ratio), image.size),
+    image = image.resize([int(x*ratio) for x in image.size],
                          Image.ANTIALIAS)
     # paste
     bg = Image.new("RGBA", (size_x, size_y), (0, 0, 0))     # black bg
@@ -498,7 +498,7 @@ def write_movie(command_args, conn):
     if (pixels.getPhysicalSizeX() is None):
         command_args["Scalebar"] = 0
 
-    c_range = range(0, size_c)
+    c_range = list(range(0, size_c))
     c_windows = None
     c_colours = None
     if "ChannelsExtended" in command_args and \
@@ -527,7 +527,7 @@ def write_movie(command_args, conn):
             command_args["Show_Time"] = False
 
     frame_no = 1
-    omero_image.setActiveChannels(map(lambda x: x+1, c_range),
+    omero_image.setActiveChannels([x+1 for x in c_range],
                                   c_windows, c_colours)
     rendering_engine = omero_image._re
 
@@ -653,8 +653,8 @@ def run_script():
     def __init__(self, name, optional = False, out = False, description =
                  None, type = None, min = None, max = None, values = None)
     """
-    formats = wrap(formatMap.keys())    # wrap each key in its rtype
-    ckeys = COLOURS.keys()
+    formats = wrap(list(formatMap.keys()))    # wrap each key in its rtype
+    ckeys = list(COLOURS.keys())
     ckeys = ckeys
     ckeys.sort()
     c_options = wrap(ckeys)
