@@ -158,7 +158,7 @@ def paint_dataset_canvas(conn, images, title, tag_ids=None,
     # if we have a list of tags, then sort images by tag
     if tag_ids:
         # Cast to int since List can be any type
-        tag_ids = [int(tagId) for tagId in tag_ids]
+        tag_ids = [int(tag_id) for tag_id in tag_ids]
         log(" Sorting images by tags: %s" % tag_ids)
         tag_names = {}
         tagged_images = {}    # a map of tagId: list-of-image-Ids

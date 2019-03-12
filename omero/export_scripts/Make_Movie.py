@@ -87,25 +87,25 @@ MPEG = 'MPEG'
 QT = 'Quicktime'
 WMV = 'WMV'
 MOVIE_NS = NSMOVIE
-formatNSMap = {MPEG: MOVIE_NS, QT: MOVIE_NS, WMV: MOVIE_NS}
-formatExtensionMap = {MPEG: "avi", QT: "avi", WMV: "avi"}
-formatMap = {MPEG: "avi", QT: "avi", WMV: "avi"}
-formatMimetypes = {
+format_ns_map = {MPEG: MOVIE_NS, QT: MOVIE_NS, WMV: MOVIE_NS}
+format_extension_map = {MPEG: "avi", QT: "avi", WMV: "avi"}
+format_map = {MPEG: "avi", QT: "avi", WMV: "avi"}
+format_mimetypes = {
     MPEG: "video/mpeg",
     QT: "video/quicktime",
     WMV: "video/x-ms-wmv"}
 OVERLAYCOLOUR = "#666666"
 
 
-logLines = []    # make a log / legend of the figure
+log_lines = []    # make a log / legend of the figure
 
 
 def log(text):
     """
-    Adds lines of text to the logLines list, so they can be collected into a
+    Adds lines of text to the log_lines list, so they can be collected into a
     figure legend.
     """
-    logLines.append(text)
+    log_lines.append(text)
 
 
 def download_plane(gateway, pixels, pixels_id, x, y, z, c, t):
@@ -611,7 +611,7 @@ def write_movie(command_args, conn):
 
     filelist = ",".join(file_names)
 
-    ext = formatMap[format]
+    ext = format_map[format]
     movie_name = "Movie"
     if "Movie_Name" in command_args:
         movie_name = command_args["Movie_Name"]
@@ -626,7 +626,7 @@ def write_movie(command_args, conn):
         frames_per_sec = command_args["FPS"]
     output = "localfile.%s" % ext
     build_avi(mw, mh, filelist, frames_per_sec, output, format)
-    mimetype = formatMimetypes[format]
+    mimetype = format_mimetypes[format]
     omero_image._re.close()
 
     if not os.path.exists(output):
@@ -653,7 +653,7 @@ def run_script():
     def __init__(self, name, optional = False, out = False, description =
                  None, type = None, min = None, max = None, values = None)
     """
-    formats = wrap(formatMap.keys())    # wrap each key in its rtype
+    formats = wrap(format_map.keys())    # wrap each key in its rtype
     ckeys = COLOURS.keys()
     ckeys = ckeys
     ckeys.sort()
