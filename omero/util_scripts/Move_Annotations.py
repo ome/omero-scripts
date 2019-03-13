@@ -47,7 +47,7 @@ def log(text):
 def move_well_annotations(conn, well, ann_type, remove_anns, ns):
     """Move annotations from Images in this Well onto the Well itself."""
     log("Processing Well: %s %s" % (well.id, well.getWellPos()))
-    iids = [wellSample.getImage().id for wellSample in well.listChildren()]
+    iids = [well_sample.getImage().id for well_sample in well.listChildren()]
     log("  Image IDs: %s" % iids)
     if len(iids) == 0:
         return 0

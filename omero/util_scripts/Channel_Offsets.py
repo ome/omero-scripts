@@ -226,8 +226,8 @@ def process_images(conn, script_params):
     # need to handle Datasets eventually - Just do images for now
     new_images = []
     links = []
-    for iId in image_ids:
-        new_img, link = new_image_with_channel_offsets(conn, iId,
+    for image_id in image_ids:
+        new_img, link = new_image_with_channel_offsets(conn, image_id,
                                                        channel_offsets,
                                                        dataset)
         if new_img is not None:
