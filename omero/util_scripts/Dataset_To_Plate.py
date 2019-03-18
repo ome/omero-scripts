@@ -39,9 +39,9 @@ import omero
 from omero.rtypes import rint, rlong, rstring, robject, unwrap
 
 
-def add_image_to_plate(conn, image, plate_id, column, row, remove_from=None):
+def add_images_to_plate(conn, images, plate_id, column, row, remove_from=None):
     """
-    Add the Image to a Plate, creating a new well at the specified column and
+    Add the Images to a Plate, creating a new well at the specified column and
     row
     NB - This will fail if there is already a well at that point
     """
@@ -51,22 +51,23 @@ def add_image_to_plate(conn, image, plate_id, column, row, remove_from=None):
     well.plate = omero.model.PlateI(plate_id, False)
     well.column = rint(column)
     well.row = rint(row)
-    well = update_service.saveAndReturnObject(well)
 
     try:
-        ws = omero.model.WellSampleI()
-        ws.image = omero.model.ImageI(image.id, False)
-        ws.well = well
-        well.addWellSample(ws)
-        update_service.saveObject(ws)
+        for image in images:
+            ws = omero.model.WellSampleI()
+            ws.image = omero.model.ImageI(image.id, False)
+            ws.well = well
+            well.addWellSample(ws)
+        update_service.saveObject(well)
     except Exception:
         return False
 
     # remove from Datast
-    if remove_from is not None:
-        links = list(image.getParentLinks(remove_from.id))
-        for l in links:
-            conn.deleteObjectDirect(l._obj)
+    for image in images:
+        if remove_from is not None:
+            links = list(image.getParentLinks(remove_from.id))
+            for l in links:
+                conn.deleteObjectDirect(l._obj)
     return True
 
 
@@ -115,10 +116,17 @@ def dataset_to_plate(conn, script_params, dataset_id, screen):
     if remove_dataset:
         remove_from = dataset
 
-    for image in images:
-        added_count = add_image_to_plate(conn, image,
-                                         plate.getId().getValue(),
-                                         col, row, remove_from)
+    images_per_well = script_params["Images_Per_Well"]
+    image_index = 0
+
+    while image_index < len(images):
+
+        well_images = images[image_index: image_index + images_per_well]
+        added_count = add_images_to_plate(conn, well_images,
+                                          plate.getId().getValue(),
+                                          col, row, remove_from)
+        image_index += images_per_well
+
         # update row and column index
         if first_axis_is_row:
             row += 1
@@ -289,6 +297,11 @@ See http://help.openmicroscopy.org/scripts.html""",
         scripts.Int(
             "First_Axis_Count", grouping="3.1", optional=False, default=12,
             description="Number of Rows or Columns in the 'First Axis'",
+            min=1),
+
+        scripts.Int(
+            "Images_Per_Well", grouping="3.2", optional=False, default=1,
+            description="Number of Images (Well Samples) per Well",
             min=1),
 
         scripts.String(
