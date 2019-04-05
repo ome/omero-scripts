@@ -37,6 +37,7 @@ sizeC as input.
 from omero.gateway import BlitzGateway
 import omero
 import omero.util.script_utils as script_utils
+import omero.util.roi_handling_utils as roi_utils
 from omero.rtypes import rlong, rstring, robject, unwrap
 import omero.scripts as scripts
 from numpy import zeros, hstack, vstack, asarray, math
@@ -135,29 +136,6 @@ def get_line_data(image, x1, y1, x2, y2, line_w=2, the_z=0, the_c=0, the_t=0):
     rgb_plane = asarray(cropped)
     # greyscale image. r, g, b all same. Just use first
     return rgb_plane[::, ::, 0]
-
-
-def points_string_to_xy_list(string):
-    """
-    Convert string to list of (x,y) points.
-
-    Expects string in format generated from omero.model.ShapeI.getPoints()
-    e.g. "points[309,427, 366,503]" to [(309,427), (366,503)]
-    """
-    point_lists = string.strip().split("points")
-    if len(point_lists) < 2:
-        if len(point_lists) == 1 and point_lists[0]:
-            xys = point_lists[0].split()
-            xy_list = [tuple(map(float, xy.split(','))) for xy in xys]
-            return xy_list
-        raise ValueError("Unrecognised ROI shape 'points' string: %s" % string)
-
-    first_list = point_lists[1]
-    xy_list = []
-    for xy in first_list.strip(" []").split(", "):
-        x, y = xy.split(",")
-        xy_list.append((float(x.strip()), float(y.strip())))
-    return xy_list
 
 
 def polyline_kymograph(conn, script_params, image, polylines, line_width,
@@ -366,7 +344,7 @@ def process_images(conn, script_params):
 
                 elif type(s) == omero.model.PolylineI:
                     v = s.getPoints().getValue()
-                    points = points_string_to_xy_list(v)
+                    points = roi_utils.points_string_to_xy_list(v)
                     polylines[t] = {'theZ': z, 'points': points}
 
             if len(lines) > 0:
