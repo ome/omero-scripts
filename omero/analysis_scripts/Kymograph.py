@@ -30,7 +30,7 @@ sizeC as input.
 
 # @author Will Moore
 # <a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
-# @version 4.3.3
+# @version 5.5.0
 # @since 3.0
 
 
