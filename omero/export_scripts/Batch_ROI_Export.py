@@ -193,7 +193,8 @@ def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y):
     if isinstance(shape, PolygonI):
         # https://www.mathopenref.com/coordpolygonarea.html
         coords = shape.getPoints().getValue().split(" ")
-        coords = [[float(x) for x in coord.split(",")] for coord in coords]
+        coords = [[float(x.strip(", ")) for x in coord.split(",")]
+                  for coord in coords]
         total = 0
         for c in range(len(coords)):
             coord = coords[c]
