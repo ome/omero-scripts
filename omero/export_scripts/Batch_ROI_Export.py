@@ -37,13 +37,18 @@ def log(data):
     print data
 
 
-def get_export_data(conn, script_params, image, units):
+def get_export_data(conn, script_params, image, units=None):
     """Get pixel data for shapes on image and returns list of dicts."""
     log("Image ID %s..." % image.id)
 
     # Get pixel size in SAME units for all images
-    pixel_size_x = image.getPixelSizeX(units=units).getValue()
-    pixel_size_y = image.getPixelSizeY(units=units).getValue()
+    pixel_size_x = None
+    pixel_size_y = None
+    if units is not None:
+        pixel_size_x = image.getPixelSizeX(units=units)
+        pixel_size_x = pixel_size_x.getValue() if pixel_size_x else None
+        pixel_size_y = image.getPixelSizeY(units=units)
+        pixel_size_y = pixel_size_y.getValue() if pixel_size_y else None
 
     roi_service = conn.getRoiService()
     all_planes = script_params["Export_All_Planes"]
@@ -146,6 +151,7 @@ COLUMN_NAMES = ["image_id",
                 "Y2",
                 "Points"]
 
+
 def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y):
     """Add shape coordinates and length or area to the row_data dict."""
     if shape.getTextValue():
@@ -156,20 +162,20 @@ def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y):
     if isinstance(shape, (RectangleI, MaskI)):
         row_data['Width'] = shape.getWidth().getValue()
         row_data['Height'] = shape.getHeight().getValue()
-        row_data['area'] = row_data['Width'] * pixel_size_x * \
-                           row_data['Height'] * pixel_size_y
+        row_data['area'] = row_data['Width'] * row_data['Height']
     if isinstance(shape, EllipseI):
         row_data['RadiusX'] = shape.getRadiusX().getValue()
         row_data['RadiusY'] = shape.getRadiusY().getValue()
-        row_data['area'] = pi * row_data['RadiusX'] * pixel_size_x * \
-                           row_data['RadiusY'] * pixel_size_y
+        row_data['area'] = pi * row_data['RadiusX'] * row_data['RadiusY']
     if isinstance(shape, LineI):
         row_data['X1'] = shape.getX1().getValue()
         row_data['X2'] = shape.getX2().getValue()
         row_data['Y1'] = shape.getY1().getValue()
         row_data['Y2'] = shape.getY2().getValue()
-        dx = (row_data['X1'] - row_data['X2']) * pixel_size_x
-        dy = (row_data['Y1'] - row_data['Y2']) * pixel_size_y
+        dx = (row_data['X1'] - row_data['X2'])
+        dx = dx if pixel_size_x is None else dx * pixel_size_x
+        dy = (row_data['Y1'] - row_data['Y2'])
+        dy = dy if pixel_size_y is None else dy * pixel_size_y
         row_data['length'] = sqrt((dx * dx) + (dy * dy))
     if isinstance(shape, (PolygonI, PolylineI)):
         row_data['Points'] = '"%s"' % shape.getPoints().getValue()
@@ -178,8 +184,10 @@ def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y):
         coords = [coord.split(",") for coord in coords]
         lengths = []
         for i in range(len(coords)-1):
-            dx = (float(coords[i][0]) - float(coords[i + 1][0])) * pixel_size_x
-            dy = (float(coords[i][1]) - float(coords[i + 1][1])) * pixel_size_y
+            dx = (float(coords[i][0]) - float(coords[i + 1][0]))
+            dy = (float(coords[i][1]) - float(coords[i + 1][1]))
+            dx = dx if pixel_size_x is None else dx * pixel_size_x
+            dy = dy if pixel_size_y is None else dy * pixel_size_y
             lengths.append(sqrt((dx * dx) + (dy * dy)))
         row_data['length'] = sum(lengths)
     if isinstance(shape, PolygonI):
@@ -191,7 +199,10 @@ def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y):
             coord = coords[c]
             next_coord = coords[(c + 1) % len(coords)]
             total += (coord[0] * next_coord[1]) - (next_coord[0] * coord[1])
-        row_data['area'] = abs(0.5 * total * pixel_size_x * pixel_size_y)
+        row_data['area'] = abs(0.5 * total)
+    if 'area' in row_data and pixel_size_x and pixel_size_y:
+        row_data['area'] = row_data['area'] * pixel_size_x * pixel_size_y
+
 
 def write_csv(conn, export_data, script_params, units_symbol):
     """Write the list of data to a CSV file and create a file annotation."""
@@ -202,6 +213,8 @@ def write_csv(conn, export_data, script_params, units_symbol):
         file_name += ".csv"
 
     csv_header = ",".join(COLUMN_NAMES)
+    if units_symbol is None:
+        units_symbol = "pixels"
     csv_header = csv_header.replace(",length,", ",length (%s)," % units_symbol)
     csv_header = csv_header.replace(",area,", ",area (%s)," % units_symbol)
     csv_rows = [csv_header]
@@ -237,10 +250,15 @@ def batch_roi_export(conn, script_params):
     if len(images) == 0:
         return None
 
-    # Find units for length
+    # Find units for length. If any images have NO pixel size, use 'pixels'
+    # since we can't convert
+    any_none = False
+    for i in images:
+        if i.getPixelSizeX() is None:
+            any_none = True
     pixel_size_x = images[0].getPixelSizeX(units=True)
-    units = pixel_size_x.getUnit()
-    symbol = pixel_size_x.getSymbol()
+    units = None if any_none else pixel_size_x.getUnit()
+    symbol = None if any_none else pixel_size_x.getSymbol()
 
     # build a list of dicts.
     export_data = []
