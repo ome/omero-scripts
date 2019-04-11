@@ -28,6 +28,7 @@ from omero.rtypes import unwrap, rstring, rlong, robject
 from omero.model import RectangleI, EllipseI, LineI, PolygonI, PolylineI, \
     MaskI, LabelI, PointI
 from math import sqrt, pi
+import re
 
 DEFAULT_FILE_NAME = "roi_intensities.csv"
 
@@ -178,21 +179,27 @@ def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y):
         dy = dy if pixel_size_y is None else dy * pixel_size_y
         row_data['length'] = sqrt((dx * dx) + (dy * dy))
     if isinstance(shape, (PolygonI, PolylineI)):
-        row_data['Points'] = '"%s"' % shape.getPoints().getValue()
+        point_list = shape.getPoints().getValue()
+        INSIGHT_POINT_LIST_RE = re.compile(r'points\[([^\]]+)\]')
+        match = INSIGHT_POINT_LIST_RE.search(point_list)
+        if match is not None:
+            point_list = match.group(1)
+        row_data['Points'] = '"%s"' % point_list
     if isinstance(shape, PolylineI):
-        coords = shape.getPoints().getValue().split(" ")
-        coords = [coord.split(",") for coord in coords]
+        coords = point_list.split(" ")
+        coords = [[float(x.strip(", ")) for x in coord.split(",")]
+                  for coord in coords]
         lengths = []
         for i in range(len(coords)-1):
-            dx = (float(coords[i][0]) - float(coords[i + 1][0]))
-            dy = (float(coords[i][1]) - float(coords[i + 1][1]))
+            dx = (coords[i][0] - coords[i + 1][0])
+            dy = (coords[i][1] - coords[i + 1][1])
             dx = dx if pixel_size_x is None else dx * pixel_size_x
             dy = dy if pixel_size_y is None else dy * pixel_size_y
             lengths.append(sqrt((dx * dx) + (dy * dy)))
         row_data['length'] = sum(lengths)
     if isinstance(shape, PolygonI):
         # https://www.mathopenref.com/coordpolygonarea.html
-        coords = shape.getPoints().getValue().split(" ")
+        coords = point_list.split(" ")
         coords = [[float(x.strip(", ")) for x in coord.split(",")]
                   for coord in coords]
         total = 0
