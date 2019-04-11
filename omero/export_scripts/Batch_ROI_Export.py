@@ -31,6 +31,7 @@ from math import sqrt, pi
 import re
 
 DEFAULT_FILE_NAME = "roi_intensities.csv"
+INSIGHT_POINT_LIST_RE = re.compile(r'points\[([^\]]+)\]')
 
 
 def log(data):
@@ -180,7 +181,6 @@ def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y):
         row_data['length'] = sqrt((dx * dx) + (dy * dy))
     if isinstance(shape, (PolygonI, PolylineI)):
         point_list = shape.getPoints().getValue()
-        INSIGHT_POINT_LIST_RE = re.compile(r'points\[([^\]]+)\]')
         match = INSIGHT_POINT_LIST_RE.search(point_list)
         if match is not None:
             point_list = match.group(1)
