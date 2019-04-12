@@ -122,14 +122,17 @@ class TestExportScripts(ScriptTest):
         # Check first 2 rows of csv (except Std dev)
         zt = ","
         points_min_max_sum_mean = ",,,,"
+        area = "6561.0"
         if all_planes:
             zt = "1,1"
             points_min_max_sum_mean = "6561,10.0,90.0,328050.0,50.0"
         expected = ("image_id,image_name,roi_id,shape_id,type,text,"
-                    "z,t,channel,points,min,max,sum,mean,std_dev\n"
-                    "%s,\"%s\",%s,%s,polygon,\"%s\",%s,0,%s,") % (
+                    "z,t,channel,area (pixels),length (pixels),"
+                    "points,min,max,sum,mean,std_dev,"
+                    "X,Y,Width,Height,RadiusX,RadiusY,X1,Y1,X2,Y2,Points\n"
+                    "%s,\"%s\",%s,%s,polygon,\"%s\",%s,0,%s,,%s,") % (
             image.id.val, image_name, roi.id.val,
-            polygon.id.val, label_text, zt, points_min_max_sum_mean)
+            polygon.id.val, label_text, zt, area, points_min_max_sum_mean)
         assert csv_text.startswith(expected)
 
     @pytest.mark.broken(
