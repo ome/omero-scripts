@@ -187,7 +187,7 @@ def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y):
         row_data['Points'] = '"%s"' % point_list
     if isinstance(shape, PolylineI):
         coords = point_list.split(" ")
-        coords = [[float(x.strip(", ")) for x in coord.split(",")]
+        coords = [[float(x.strip(", ")) for x in coord.split(",", 1)]
                   for coord in coords]
         lengths = []
         for i in range(len(coords)-1):
@@ -200,7 +200,7 @@ def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y):
     if isinstance(shape, PolygonI):
         # https://www.mathopenref.com/coordpolygonarea.html
         coords = point_list.split(" ")
-        coords = [[float(x.strip(", ")) for x in coord.split(",")]
+        coords = [[float(x.strip(", ")) for x in coord.split(",", 1)]
                   for coord in coords]
         total = 0
         for c in range(len(coords)):
