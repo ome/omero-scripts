@@ -74,7 +74,7 @@ def get_export_data(conn, script_params, image, units=None):
 
     rois = result.rois
     # Sort by ROI.id (same as in iviewer)
-    rois.sort(key = lambda r: r.id.val)
+    rois.sort(key=lambda r: r.id.val)
     export_data = []
 
     for roi in rois:
