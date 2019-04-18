@@ -72,9 +72,12 @@ def get_export_data(conn, script_params, image, units=None):
 
     result = roi_service.findByImage(image.getId(), None)
 
+    rois = result.rois
+    # Sort by ROI.id (same as in iviewer)
+    rois.sort(key = lambda r: r.id.val)
     export_data = []
 
-    for roi in result.rois:
+    for roi in rois:
         for shape in roi.copyShapes():
             label = unwrap(shape.getTextValue())
             # wrap label in double quotes in case it contains comma
