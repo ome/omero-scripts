@@ -30,7 +30,7 @@ from omero.model import RectangleI, EllipseI, LineI, PolygonI, PolylineI, \
 from math import sqrt, pi
 import re
 
-DEFAULT_FILE_NAME = "roi_intensities.csv"
+DEFAULT_FILE_NAME = "Batch_ROI_Export.csv"
 INSIGHT_POINT_LIST_RE = re.compile(r'points\[([^\]]+)\]')
 
 
