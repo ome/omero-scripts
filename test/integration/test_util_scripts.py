@@ -24,11 +24,13 @@
 """
 
 import omero
+from omero.gateway import BlitzGateway
 import omero.scripts
 import pytest
 from script import ScriptTest
 from script import run_script
 from omero.cmd import Delete2
+from omero.rtypes import wrap
 
 channel_offsets = "/omero/util_scripts/Channel_Offsets.py"
 combine_images = "/omero/util_scripts/Combine_Images.py"
@@ -127,7 +129,10 @@ class TestUtilScripts(ScriptTest):
             # Otherwise we use all planes of input image
             assert new_size_z == size_z
 
-    def test_dataset_to_plate(self):
+    @pytest.mark.parametrize('image_names', [
+            ["A1", "A2", "A3", "B1", "B2", "B3"],
+            ["1A_0", "1A_1", "2A_0", "2A_1", "1B_0", "1B_1", "2B_0", "2B_1"]])
+    def test_dataset_to_plate(self, image_names):
         script_id = super(TestUtilScripts, self).get_script(dataset_to_plate)
         assert script_id > 0
         # root session is root.sf
@@ -136,45 +141,57 @@ class TestUtilScripts(ScriptTest):
 
         # create several test images in a dataset
         dataset = self.make_dataset("dataset_to_plate-test", client=client)
-        n = 10
+        # Images will be sorted by name and assigned Column first
+        n = len(image_names)
         image_ids = []
-        for i in range(n):
+        for i in image_names:
             # x,y,z,c,t
-            image = self.create_test_image(100, 100, 1, 1, 1, session)
+            image = self.create_test_image(100, 100, 1, 1, 1, session, name=i)
             self.link(dataset, image, client=client)
             image_ids.append(image.id.val)
 
-        # run the script twice. First with all args...
+        # We run the script twice (parametrize). First with minimum args...
         dataset_ids = [omero.rtypes.rlong(dataset.id.val)]
         args = {
-            "Data_Type": omero.rtypes.rstring("Dataset"),
-            "IDs": omero.rtypes.rlist(dataset_ids)
+            "Data_Type": wrap("Dataset"),
+            "IDs": wrap(dataset_ids),
+            "First_Axis_Count": wrap(3),
         }
 
+        # With more image names, add extra args
+        images_per_well = 1
+        if (len(image_names)) == 8:
+            images_per_well = 2
+            args["Images_Per_Well"] = wrap(images_per_well)
+            args["First_Axis_Count"] = wrap(2)
+            args["Column_Names"] = wrap("letter")
+            args["Row_Names"] = wrap("number")
+
         d_to_p = run_script(client, script_id, args, "New_Object")
-        # check the result
+
+        # check the result - load all Wells from Plate, check image IDs
         assert d_to_p is not None
         plate_id = d_to_p.getValue().id.val
-        assert plate_id > 0
-        qs = client.getSession().getQueryService()
-        query = "select well from Well as well left outer join fetch well.plate \
-                 as pt left outer join fetch well.wellSamples as ws left \
-                 outer join fetch ws.image as img where well.plate.id = :oid"
 
-        params = omero.sys.ParametersI()
-        params.addLong('oid', omero.rtypes.rlong(plate_id))
-        wells = qs.findAllByQuery(query, params)
-        # check the plate
-        assert len(wells) == n
-        count = 0
-        for w in wells:
-            img = w.getWellSample(0).getImage()
-            assert img is not None
-            id = img.id.val
-            if id in image_ids:
-                count += 1
+        # Check names of Images matches Well position
+        images_in_plate = []
+        conn = BlitzGateway(client_obj=client)
+        plate = conn.getObject("Plate", plate_id)
+        for well in plate.listChildren():
+            print 'well', well
+            for w in range(images_per_well):
+                if images_per_well == 1:
+                    name = well.getWellPos()
+                else:
+                    # e.g. "A1_0"
+                    name = "%s_%d" % (well.getWellPos(), w)
+                image = well.getImage(w)
+                assert image.getName() == name
+                images_in_plate.append(image.getId())
+        # and all images were in the Plate
+        images_in_plate.sort()
+        assert images_in_plate == image_ids
 
-        assert count == n
 
     @pytest.mark.parametrize("remove", [True, False])
     @pytest.mark.parametrize("script_runner", ['user', 'admin'])
