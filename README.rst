@@ -47,3 +47,19 @@ OMERO User Scripts
 
 If you would like to provide your own scripts for others to install
 into their OMERO installations, please see http://openmicroscopy.org/info/scripts
+
+
+Testing
+-------
+
+Integration tests under ``test/`` require an OMERO server with scripts installed.
+The tests are run by Travis for open PRs using omero-test-infra to deploy OMERO
+via Docker containers.
+
+To run tests locally:
+
+	# All tests
+	$ python setup.py test
+
+	# Single test in a single file
+	$ python setup.py test -t test/integration/test_util_scripts.py -k test_dataset_to_plate
