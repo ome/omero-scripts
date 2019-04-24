@@ -142,7 +142,6 @@ class TestUtilScripts(ScriptTest):
         # create several test images in a dataset
         dataset = self.make_dataset("dataset_to_plate-test", client=client)
         # Images will be sorted by name and assigned Column first
-        n = len(image_names)
         image_ids = []
         for i in image_names:
             # x,y,z,c,t
@@ -191,7 +190,6 @@ class TestUtilScripts(ScriptTest):
         # and all images were in the Plate
         images_in_plate.sort()
         assert images_in_plate == image_ids
-
 
     @pytest.mark.parametrize("remove", [True, False])
     @pytest.mark.parametrize("script_runner", ['user', 'admin'])
