@@ -50,7 +50,7 @@ class TestAnalysisScripts(ScriptTest):
         session = client.getSession()
         image = self.create_test_image(size_x, size_y, 1, 2, size_t, session)
         image_id = image.id.val
-        roi = create_roi(image_id, 0, size_x / 2, 0, size_y / 2, size_t, True)
+        roi = create_roi(image_id, -10, 80.5, 60, 11.1, size_t, True)
         session.getUpdateService().saveAndReturnObject(roi)
         image_ids = []
         image_ids.append(omero.rtypes.rlong(image_id))
@@ -64,7 +64,10 @@ class TestAnalysisScripts(ScriptTest):
 
         # check the result
         assert kymograph_img is not None
-        assert kymograph_img.getValue().id.val > 0
+        image_id = kymograph_img.getValue().id.val
+        assert image_id > 0
+        new_image = client.sf.getQueryService().get('Image', image_id)
+        assert new_image.name.val == "%s_kymograph" % image.name.val
 
     def test_plot_profile(self):
         script_id = super(TestAnalysisScripts, self).get_script(plot_profile)
@@ -79,7 +82,7 @@ class TestAnalysisScripts(ScriptTest):
         session = client.getSession()
         image = self.create_test_image(size_x, size_y, 1, 2, size_t, session)
         image_id = image.id.val
-        roi = create_roi(image_id, 0, size_x / 2, 0, size_y / 2, size_t, True)
+        roi = create_roi(image_id, 0, size_x / 2, 0, size_y / 2, size_t, False)
         session.getUpdateService().saveAndReturnObject(roi)
         image_ids = []
         image_ids.append(omero.rtypes.rlong(image_id))
@@ -156,7 +159,7 @@ def create_roi(image_id, x1, x2, y1, y2, size_t, with_polylines):
             polyline = omero.model.PolylineI()
             polyline.theZ = omero.rtypes.rint(0)
             polyline.theT = omero.rtypes.rint(t)
-            points = [[10, 20], [50, 50], [75, 60]]
+            points = [[10.5, 20], [50.55, 50], [75, 60]]
             polyline.points = omero.rtypes.rstring(points_to_string(points))
             roi.addShape(polyline)
     return roi
