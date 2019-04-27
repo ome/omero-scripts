@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # -----------------------------------------------------------------------------
-#   Copyright (C) 2018 University of Dundee. All rights reserved.
+#   Copyright (C) 2018-2019 University of Dundee. All rights reserved.
 
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -25,8 +25,13 @@
 import omero.scripts as scripts
 from omero.gateway import BlitzGateway
 from omero.rtypes import unwrap, rstring, rlong, robject
+from omero.model import RectangleI, EllipseI, LineI, PolygonI, PolylineI, \
+    MaskI, LabelI, PointI
+from math import sqrt, pi
+import re
 
-DEFAULT_FILE_NAME = "roi_intensities.csv"
+DEFAULT_FILE_NAME = "Batch_ROI_Export.csv"
+INSIGHT_POINT_LIST_RE = re.compile(r'points\[([^\]]+)\]')
 
 
 def log(data):
@@ -34,9 +39,19 @@ def log(data):
     print data
 
 
-def get_export_data(conn, script_params, image):
+def get_export_data(conn, script_params, image, units=None):
     """Get pixel data for shapes on image and returns list of dicts."""
     log("Image ID %s..." % image.id)
+
+    # Get pixel size in SAME units for all images
+    pixel_size_x = None
+    pixel_size_y = None
+    if units is not None:
+        pixel_size_x = image.getPixelSizeX(units=units)
+        pixel_size_x = pixel_size_x.getValue() if pixel_size_x else None
+        pixel_size_y = image.getPixelSizeY(units=units)
+        pixel_size_y = pixel_size_y.getValue() if pixel_size_y else None
+
     roi_service = conn.getRoiService()
     all_planes = script_params["Export_All_Planes"]
     size_c = image.getSizeC()
@@ -57,9 +72,12 @@ def get_export_data(conn, script_params, image):
 
     result = roi_service.findByImage(image.getId(), None)
 
+    rois = result.rois
+    # Sort by ROI.id (same as in iviewer)
+    rois.sort(key=lambda r: r.id.val)
     export_data = []
 
-    for roi in result.rois:
+    for roi in rois:
         for shape in roi.copyShapes():
             label = unwrap(shape.getTextValue())
             # wrap label in double quotes in case it contains comma
@@ -85,7 +103,7 @@ def get_export_data(conn, script_params, image):
                         stats = roi_service.getShapeStatsRestricted(
                             [shape.id.val], z, t, ch_indexes)
                     for c, ch_index in enumerate(ch_indexes):
-                        export_data.append({
+                        row_data = {
                             "image_id": image.getId(),
                             "image_name": '"%s"' % image_name,
                             "roi_id": roi.id.val,
@@ -101,7 +119,11 @@ def get_export_data(conn, script_params, image):
                             "sum": stats[0].sum[c] if stats else "",
                             "mean": stats[0].mean[c] if stats else "",
                             "std_dev": stats[0].stdDev[c] if stats else ""
-                        })
+                        }
+                        add_shape_coords(shape, row_data,
+                                         pixel_size_x, pixel_size_y)
+                        export_data.append(row_data)
+
     return export_data
 
 
@@ -114,15 +136,86 @@ COLUMN_NAMES = ["image_id",
                 "z",
                 "t",
                 "channel",
+                "area",
+                "length",
                 "points",
                 "min",
                 "max",
                 "sum",
                 "mean",
-                "std_dev"]
+                "std_dev",
+                "X",
+                "Y",
+                "Width",
+                "Height",
+                "RadiusX",
+                "RadiusY",
+                "X1",
+                "Y1",
+                "X2",
+                "Y2",
+                "Points"]
 
 
-def write_csv(conn, export_data, script_params):
+def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y):
+    """Add shape coordinates and length or area to the row_data dict."""
+    if shape.getTextValue():
+        row_data['Text'] = shape.getTextValue().getValue()
+    if isinstance(shape, (RectangleI, EllipseI, PointI, LabelI, MaskI)):
+        row_data['X'] = shape.getX().getValue()
+        row_data['Y'] = shape.getY().getValue()
+    if isinstance(shape, (RectangleI, MaskI)):
+        row_data['Width'] = shape.getWidth().getValue()
+        row_data['Height'] = shape.getHeight().getValue()
+        row_data['area'] = row_data['Width'] * row_data['Height']
+    if isinstance(shape, EllipseI):
+        row_data['RadiusX'] = shape.getRadiusX().getValue()
+        row_data['RadiusY'] = shape.getRadiusY().getValue()
+        row_data['area'] = pi * row_data['RadiusX'] * row_data['RadiusY']
+    if isinstance(shape, LineI):
+        row_data['X1'] = shape.getX1().getValue()
+        row_data['X2'] = shape.getX2().getValue()
+        row_data['Y1'] = shape.getY1().getValue()
+        row_data['Y2'] = shape.getY2().getValue()
+        dx = (row_data['X1'] - row_data['X2'])
+        dx = dx if pixel_size_x is None else dx * pixel_size_x
+        dy = (row_data['Y1'] - row_data['Y2'])
+        dy = dy if pixel_size_y is None else dy * pixel_size_y
+        row_data['length'] = sqrt((dx * dx) + (dy * dy))
+    if isinstance(shape, (PolygonI, PolylineI)):
+        point_list = shape.getPoints().getValue()
+        match = INSIGHT_POINT_LIST_RE.search(point_list)
+        if match is not None:
+            point_list = match.group(1)
+        row_data['Points'] = '"%s"' % point_list
+    if isinstance(shape, PolylineI):
+        coords = point_list.split(" ")
+        coords = [[float(x.strip(", ")) for x in coord.split(",", 1)]
+                  for coord in coords]
+        lengths = []
+        for i in range(len(coords)-1):
+            dx = (coords[i][0] - coords[i + 1][0])
+            dy = (coords[i][1] - coords[i + 1][1])
+            dx = dx if pixel_size_x is None else dx * pixel_size_x
+            dy = dy if pixel_size_y is None else dy * pixel_size_y
+            lengths.append(sqrt((dx * dx) + (dy * dy)))
+        row_data['length'] = sum(lengths)
+    if isinstance(shape, PolygonI):
+        # https://www.mathopenref.com/coordpolygonarea.html
+        coords = point_list.split(" ")
+        coords = [[float(x.strip(", ")) for x in coord.split(",", 1)]
+                  for coord in coords]
+        total = 0
+        for c in range(len(coords)):
+            coord = coords[c]
+            next_coord = coords[(c + 1) % len(coords)]
+            total += (coord[0] * next_coord[1]) - (next_coord[0] * coord[1])
+        row_data['area'] = abs(0.5 * total)
+    if 'area' in row_data and pixel_size_x and pixel_size_y:
+        row_data['area'] = row_data['area'] * pixel_size_x * pixel_size_y
+
+
+def write_csv(conn, export_data, script_params, units_symbol):
     """Write the list of data to a CSV file and create a file annotation."""
     file_name = script_params.get("File_Name", "")
     if len(file_name) == 0:
@@ -130,9 +223,15 @@ def write_csv(conn, export_data, script_params):
     if not file_name.endswith(".csv"):
         file_name += ".csv"
 
-    csv_rows = [",".join(COLUMN_NAMES)]
+    csv_header = ",".join(COLUMN_NAMES)
+    if units_symbol is None:
+        units_symbol = "pixels"
+    csv_header = csv_header.replace(",length,", ",length (%s)," % units_symbol)
+    csv_header = csv_header.replace(",area,", ",area (%s)," % units_symbol)
+    csv_rows = [csv_header]
+
     for row in export_data:
-        cells = [str(row.get(name)) for name in COLUMN_NAMES]
+        cells = [str(row.get(name, "")) for name in COLUMN_NAMES]
         csv_rows.append(",".join(cells))
 
     with open(file_name, 'w') as csv_file:
@@ -162,13 +261,23 @@ def batch_roi_export(conn, script_params):
     if len(images) == 0:
         return None
 
+    # Find units for length. If any images have NO pixel size, use 'pixels'
+    # since we can't convert
+    any_none = False
+    for i in images:
+        if i.getPixelSizeX() is None:
+            any_none = True
+    pixel_size_x = images[0].getPixelSizeX(units=True)
+    units = None if any_none else pixel_size_x.getUnit()
+    symbol = None if any_none else pixel_size_x.getSymbol()
+
     # build a list of dicts.
     export_data = []
     for image in images:
-        export_data.extend(get_export_data(conn, script_params, image))
+        export_data.extend(get_export_data(conn, script_params, image, units))
 
     # Write to csv
-    file_ann = write_csv(conn, export_data, script_params)
+    file_ann = write_csv(conn, export_data, script_params, symbol)
     if script_params['Data_Type'] == "Dataset":
         datasets = conn.getObjects("Dataset", script_params['IDs'])
         link_annotation(datasets, file_ann)
