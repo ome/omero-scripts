@@ -149,7 +149,7 @@ class TestUtilScripts(ScriptTest):
             self.link(dataset, image, client=client)
             image_ids.append(image.id.val)
 
-        # We run the script twice (parametrize). First with minimum args...
+        # Minimum args.
         dataset_ids = [omero.rtypes.rlong(dataset.id.val)]
         args = {
             "Data_Type": wrap("Dataset"),
