@@ -31,20 +31,30 @@ from omero.model import PlateI, ScreenI
 import sys
 
 from omero.util.populate_roi import DownloadingOriginalFileProvider
-from omero.util.populate_metadata import ParsingContext
+try:
+    # Hopefully this will import
+    # https://github.com/ome/omero-metadata/blob/v0.3.1/src/populate_metadata.py
+    from populate_metadata import ParsingContext
+except ImportError:
+    from omero.util.populate_metadata import ParsingContext
+
+
+OBJECT_TYPES = (
+    'Plate',
+    'Screen',
+    'Dataset',
+    'Project',
+)
 
 
 def get_original_file(conn, object_type, object_id, file_ann_id=None):
-    if object_type == "Plate":
-        omero_object = conn.getObject("Plate", int(object_id))
-        if omero_object is None:
-            sys.stderr.write("Error: Plate does not exist.\n")
-            sys.exit(1)
-    else:
-        omero_object = conn.getObject("Screen", int(object_id))
-        if omero_object is None:
-            sys.stderr.write("Error: Screen does not exist.\n")
-            sys.exit(1)
+    if object_type not in OBJECT_TYPES:
+        sys.stderr.write("Error: Invalid objet type: %s.\n" % object_type)
+        sys.exit(1)
+    omero_object = conn.getObject(object_type, int(object_id))
+    if omero_object is None:
+        sys.stderr.write("Error: %s does not exist.\n" % object_type)
+        sys.exit(1)
     file_ann = None
 
     for ann in omero_object.listAnnotations():
@@ -84,7 +94,7 @@ def populate_metadata(client, conn, script_params):
 
 def run_script():
 
-    data_types = [rstring('Plate'), rstring('Screen')]
+    data_types = [rstring(otype) for otype in OBJECT_TYPES]
     client = scripts.client(
         'Populate_Metadata.py',
         """
