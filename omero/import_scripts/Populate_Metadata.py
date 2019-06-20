@@ -26,7 +26,7 @@ import omero
 from omero.gateway import BlitzGateway
 from omero.rtypes import rstring, rlong
 import omero.scripts as scripts
-from omero.model import PlateI, ScreenI
+import omero.model
 
 import sys
 
@@ -49,7 +49,7 @@ OBJECT_TYPES = (
 
 def get_original_file(conn, object_type, object_id, file_ann_id=None):
     if object_type not in OBJECT_TYPES:
-        sys.stderr.write("Error: Invalid objet type: %s.\n" % object_type)
+        sys.stderr.write("Error: Invalid object type: %s.\n" % object_type)
         sys.exit(1)
     omero_object = conn.getObject(object_type, int(object_id))
     if omero_object is None:
@@ -82,10 +82,8 @@ def populate_metadata(client, conn, script_params):
         conn, data_type, object_id, file_ann_id)
     provider = DownloadingOriginalFileProvider(conn)
     file_handle = provider.get_original_file_data(original_file)
-    if data_type == "Plate":
-        omero_object = PlateI(long(object_id), False)
-    else:
-        omero_object = ScreenI(long(object_id), False)
+    objectI = getattr(omero.model, data_type + 'I')
+    omero_object = objectI(long(object_id), False)
     ctx = ParsingContext(client, omero_object, "")
     ctx.parse_from_handle(file_handle)
     ctx.write_to_omero()
@@ -98,8 +96,8 @@ def run_script():
     client = scripts.client(
         'Populate_Metadata.py',
         """
-    This script processes a csv file, attached to a Screen or Plate,
-    converting it to an OMERO.table, with one row per Well.
+    This script processes a csv file, attached to a container,
+    converting it to an OMERO.table, with one row per Image or Well.
     The table data can then be displayed in the OMERO clients.
     For full details, see
     http://help.openmicroscopy.org/scripts.html#metadata
@@ -107,11 +105,11 @@ def run_script():
         scripts.String(
             "Data_Type", optional=False, grouping="1",
             description="Choose source of images",
-            values=data_types, default="Plate"),
+            values=data_types, default=OBJECT_TYPES[0]),
 
         scripts.List(
             "IDs", optional=False, grouping="2",
-            description="Plate or Screen ID.").ofType(rlong(0)),
+            description="Container ID.").ofType(rlong(0)),
 
         scripts.String(
             "File_Annotation", grouping="3",
