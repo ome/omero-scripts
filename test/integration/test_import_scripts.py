@@ -67,7 +67,7 @@ class TestImportScripts(ScriptTest):
         args = {
             "Data_Type": omero.rtypes.rstring("Plate"),
             "IDs": omero.rtypes.rlist(plate_ids),
-            "File_Annotation": omero.rtypes.rstring(str(fa.id))
+            "File_Annotation": omero.rtypes.rlong(str(fa.id))
         }
         message = run_script(client, sid, args, "Message")
         assert message is not None
@@ -118,7 +118,7 @@ class TestImportScripts(ScriptTest):
         args = {
             "Data_Type": omero.rtypes.rstring("Screen"),
             "IDs": omero.rtypes.rlist(screen_ids),
-            "File_Annotation": omero.rtypes.rstring(str(fa.id))
+            "File_Annotation": omero.rtypes.rlong(str(fa.id))
         }
         message = run_script(client, sid, args, "Message")
         assert message is not None
