@@ -35,16 +35,26 @@ try:
     # Hopefully this will import
     # https://github.com/ome/omero-metadata/blob/v0.3.1/src/populate_metadata.py
     from populate_metadata import ParsingContext
+    OBJECT_TYPES = (
+        'Plate',
+        'Screen',
+        'Dataset',
+        'Project',
+    )
+    DEPRECATED = ""
+
 except ImportError:
     from omero.util.populate_metadata import ParsingContext
+    OBJECT_TYPES = (
+        'Plate',
+        'Screen',
+    )
+    DEPRECATED = """
 
-
-OBJECT_TYPES = (
-    'Plate',
-    'Screen',
-    'Dataset',
-    'Project',
-)
+    Warning: This script is using an outdated metadata plugin.
+    Ask your administrator to install the omero-metadata plugin
+    for additional features: https://pypi.org/project/omero-metadata/
+    """
 
 
 def get_original_file(conn, object_type, object_id, file_ann_id=None):
@@ -81,12 +91,20 @@ def populate_metadata(client, conn, script_params):
     original_file = get_original_file(
         conn, data_type, object_id, file_ann_id)
     provider = DownloadingOriginalFileProvider(conn)
-    file_handle = provider.get_original_file_data(original_file)
+    data_for_preprocessing = provider.get_original_file_data(original_file)
+    data = provider.get_original_file_data(original_file)
     objectI = getattr(omero.model, data_type + 'I')
     omero_object = objectI(long(object_id), False)
     ctx = ParsingContext(client, omero_object, "")
-    ctx.parse_from_handle(file_handle)
-    ctx.write_to_omero()
+
+    try:
+        # Old
+        ctx.parse_from_handle(data)
+        ctx.write_to_omero()
+    except AttributeError:
+        # omero-metadata >= 0.3.0
+        ctx.preprocess_from_handle(data_for_preprocessing)
+        ctx.parse_from_handle_stream(data)
     return "Table data populated for %s: %s" % (data_type, object_id)
 
 
@@ -101,7 +119,7 @@ def run_script():
     The table data can then be displayed in the OMERO clients.
     For full details, see
     http://help.openmicroscopy.org/scripts.html#metadata
-        """,
+        """ + DEPRECATED,
         scripts.String(
             "Data_Type", optional=False, grouping="1",
             description="Choose source of images",
