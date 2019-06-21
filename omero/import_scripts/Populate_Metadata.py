@@ -93,8 +93,8 @@ def populate_metadata(client, conn, script_params):
     provider = DownloadingOriginalFileProvider(conn)
     data_for_preprocessing = provider.get_original_file_data(original_file)
     data = provider.get_original_file_data(original_file)
-    objectI = getattr(omero.model, data_type + 'I')
-    omero_object = objectI(long(object_id), False)
+    objecti = getattr(omero.model, data_type + 'I')
+    omero_object = objecti(long(object_id), False)
     ctx = ParsingContext(client, omero_object, "")
 
     try:
