@@ -34,7 +34,7 @@ from omero.util.populate_roi import DownloadingOriginalFileProvider
 try:
     # Hopefully this will import
     # https://github.com/ome/omero-metadata/blob/v0.3.1/src/populate_metadata.py
-    from populate_metadata import ParsingContext
+    from omero_metadata.populate import ParsingContext
     OBJECT_TYPES = (
         'Plate',
         'Screen',
