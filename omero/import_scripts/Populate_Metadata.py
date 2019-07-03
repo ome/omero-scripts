@@ -129,7 +129,7 @@ def run_script():
             "IDs", optional=False, grouping="2",
             description="Container ID.").ofType(rlong(0)),
 
-        scripts.Long(
+        scripts.String(
             "File_Annotation", grouping="3",
             description="File Annotation ID containing metadata to populate. "
             "Note this is not the same as the File ID."),
