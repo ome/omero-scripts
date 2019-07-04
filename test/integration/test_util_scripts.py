@@ -130,8 +130,8 @@ class TestUtilScripts(ScriptTest):
             assert new_size_z == size_z
 
     @pytest.mark.parametrize('image_names', [
-            ["A1", "A2", "A3", "B1", "B2", "B3"],
-            ["1A_0", "1A_1", "2A_0", "2A_1", "1B_0", "1B_1", "2B_0", "2B_1"]])
+        ["A1", "A2", "A3", "B1", "B2", "B3"],
+        ["1A_0", "1A_1", "2A_0", "2A_1", "1B_0", "1B_1", "2B_0", "2B_1"]])
     def test_dataset_to_plate(self, image_names):
         script_id = super(TestUtilScripts, self).get_script(dataset_to_plate)
         assert script_id > 0
