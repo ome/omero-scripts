@@ -26,25 +26,45 @@ import omero
 from omero.gateway import BlitzGateway
 from omero.rtypes import rstring, rlong
 import omero.scripts as scripts
-from omero.model import PlateI, ScreenI
+import omero.model
 
 import sys
 
 from omero.util.populate_roi import DownloadingOriginalFileProvider
-from omero.util.populate_metadata import ParsingContext
+try:
+    # Hopefully this will import
+    # https://github.com/ome/omero-metadata/blob/v0.3.1/src/populate_metadata.py
+    from omero_metadata.populate import ParsingContext
+    OBJECT_TYPES = (
+        'Plate',
+        'Screen',
+        'Dataset',
+        'Project',
+    )
+    DEPRECATED = ""
+
+except ImportError:
+    from omero.util.populate_metadata import ParsingContext
+    OBJECT_TYPES = (
+        'Plate',
+        'Screen',
+    )
+    DEPRECATED = """
+
+    Warning: This script is using an outdated metadata plugin.
+    Ask your administrator to install the omero-metadata plugin
+    for additional features: https://pypi.org/project/omero-metadata/
+    """
 
 
 def get_original_file(conn, object_type, object_id, file_ann_id=None):
-    if object_type == "Plate":
-        omero_object = conn.getObject("Plate", int(object_id))
-        if omero_object is None:
-            sys.stderr.write("Error: Plate does not exist.\n")
-            sys.exit(1)
-    else:
-        omero_object = conn.getObject("Screen", int(object_id))
-        if omero_object is None:
-            sys.stderr.write("Error: Screen does not exist.\n")
-            sys.exit(1)
+    if object_type not in OBJECT_TYPES:
+        sys.stderr.write("Error: Invalid object type: %s.\n" % object_type)
+        sys.exit(1)
+    omero_object = conn.getObject(object_type, int(object_id))
+    if omero_object is None:
+        sys.stderr.write("Error: %s does not exist.\n" % object_type)
+        sys.exit(1)
     file_ann = None
 
     for ann in omero_object.listAnnotations():
@@ -71,41 +91,48 @@ def populate_metadata(client, conn, script_params):
     original_file = get_original_file(
         conn, data_type, object_id, file_ann_id)
     provider = DownloadingOriginalFileProvider(conn)
-    file_handle = provider.get_original_file_data(original_file)
-    if data_type == "Plate":
-        omero_object = PlateI(long(object_id), False)
-    else:
-        omero_object = ScreenI(long(object_id), False)
+    data_for_preprocessing = provider.get_original_file_data(original_file)
+    data = provider.get_original_file_data(original_file)
+    objecti = getattr(omero.model, data_type + 'I')
+    omero_object = objecti(long(object_id), False)
     ctx = ParsingContext(client, omero_object, "")
-    ctx.parse_from_handle(file_handle)
-    ctx.write_to_omero()
+
+    try:
+        # Old
+        ctx.parse_from_handle(data)
+        ctx.write_to_omero()
+    except AttributeError:
+        # omero-metadata >= 0.3.0
+        ctx.preprocess_from_handle(data_for_preprocessing)
+        ctx.parse_from_handle_stream(data)
     return "Table data populated for %s: %s" % (data_type, object_id)
 
 
 def run_script():
 
-    data_types = [rstring('Plate'), rstring('Screen')]
+    data_types = [rstring(otype) for otype in OBJECT_TYPES]
     client = scripts.client(
         'Populate_Metadata.py',
         """
-    This script processes a csv file, attached to a Screen or Plate,
-    converting it to an OMERO.table, with one row per Well.
+    This script processes a csv file, attached to a container,
+    converting it to an OMERO.table, with one row per Image or Well.
     The table data can then be displayed in the OMERO clients.
     For full details, see
     http://help.openmicroscopy.org/scripts.html#metadata
-        """,
+        """ + DEPRECATED,
         scripts.String(
             "Data_Type", optional=False, grouping="1",
             description="Choose source of images",
-            values=data_types, default="Plate"),
+            values=data_types, default=OBJECT_TYPES[0]),
 
         scripts.List(
             "IDs", optional=False, grouping="2",
-            description="Plate or Screen ID.").ofType(rlong(0)),
+            description="Container ID.").ofType(rlong(0)),
 
         scripts.String(
             "File_Annotation", grouping="3",
-            description="File ID containing metadata to populate."),
+            description="File Annotation ID containing metadata to populate. "
+            "Note this is not the same as the File ID."),
 
         authors=["Emil Rozbicki", "OME Team"],
         institutions=["Glencoe Software Inc."],
