@@ -65,7 +65,7 @@ class PyTest(test_command):
         sys.exit(errno)
 
 
-version = '5.5.1'
+version = '5.5.2.dev'
 url = "https://github.com/ome/scripts/"
 
 setup(
