@@ -24,7 +24,7 @@
 
 import omero.scripts as scripts
 from omero.gateway import BlitzGateway
-from omero.rtypes import unwrap, rstring, rlong, robject
+from omero.rtypes import rlong, rint, rstring, robject, unwrap
 from omero.model import RectangleI, EllipseI, LineI, PolygonI, PolylineI, \
     MaskI, LabelI, PointI
 from math import sqrt, pi
@@ -307,7 +307,7 @@ def run_script():
         scripts.List(
             "Channels", grouping="3", default=[1, 2, 3, 4],
             description="Indices of Channels to measure intensity."
-            ).ofType(rlong(0)),
+            ).ofType(rint(0)),
 
         scripts.Bool(
             "Export_All_Planes", grouping="4",
