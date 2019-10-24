@@ -455,9 +455,8 @@ def make_split_view_figure(conn, pixel_ids, z_start, z_end, split_indexes,
         if index in merged_indexes:
             if (not colour_channels) and (index in merged_colours):
                 rgba = tuple(merged_colours[index])
-                if rgba == (255, 255, 255, 255):    # if white (unreadable),
-                                                    # needs to be black!
-                    rgba = (0, 0, 0, 255)
+                if rgba == (255, 255, 255, 255):  # if white (unreadable)
+                    rgba = (0, 0, 0, 255)  # needs to be black!
         draw.text((px+inset, py), channel_names[index], font=font, fill=rgba)
         px = px + width + spacer
 
@@ -469,9 +468,8 @@ def make_split_view_figure(conn, pixel_ids, z_start, z_end, split_indexes,
             if index in merged_colours:
                 rgba = tuple(merged_colours[index])
                 log("%s %s %s" % (index, channel_names[index], rgba))
-                if rgba == (255, 255, 255, 255):    # if white (unreadable),
-                                                    # needs to be black!
-                    rgba = (0, 0, 0, 255)
+                if rgba == (255, 255, 255, 255):  # if white (unreadable)
+                    rgba = (0, 0, 0, 255)  # needs to be black!
             name = channel_names[index]
             comb_text_width = font.getsize(name)[0]
             inset = int((width - comb_text_width) / 2)

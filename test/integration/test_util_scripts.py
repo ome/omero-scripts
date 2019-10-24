@@ -177,7 +177,7 @@ class TestUtilScripts(ScriptTest):
         conn = BlitzGateway(client_obj=client)
         plate = conn.getObject("Plate", plate_id)
         for well in plate.listChildren():
-            print 'well', well
+            print('well', well)
             for w in range(images_per_well):
                 if images_per_well == 1:
                     name = well.getWellPos()

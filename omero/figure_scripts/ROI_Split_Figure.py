@@ -52,6 +52,12 @@ except ImportError:
     import Image
     import ImageDraw  # see ticket:2597
 
+try:
+    long
+except Exception:
+    # Python 3
+    long = int
+
 
 COLOURS = script_utils.COLOURS    # name:(rgba) map
 OVERLAY_COLOURS = dict(COLOURS, **script_utils.EXTRA_COLOURS)
@@ -180,7 +186,7 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
                 roi_image = full_image.crop(box)
                 roi_image.load()
                 # hoping that when we zoom, don't zoom fullImage
-            if roi_zoom is not 1:
+            if roi_zoom != 1:
                 new_size = (int(roi_width*roi_zoom), int(roi_height*roi_zoom))
                 roi_image = roi_image.resize(new_size, Image.ANTIALIAS)
             rendered_images.append(roi_image)
@@ -213,7 +219,7 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
     # make sure this is not just a lazy copy of the full image
     roi_merged_image.load()
 
-    if roi_zoom is not 1:
+    if roi_zoom != 1:
         new_size = (int(roi_width*roi_zoom), int(roi_height*roi_zoom))
         roi_merged_image = roi_merged_image.resize(new_size, Image.ANTIALIAS)
 
