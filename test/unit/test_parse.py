@@ -21,5 +21,5 @@ class TestParse(object):
         for script in SCRIPTS.walk("*.py"):
             try:
                 parse_file(str(script))
-            except Exception, e:
+            except Exception as e:
                 assert False, "%s\n%s" % (script, e)

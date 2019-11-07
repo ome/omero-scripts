@@ -614,8 +614,8 @@ See http://help.openmicroscopy.org/export.html#batch""",
         # return this fileAnnotation to the client.
         client.setOutput("Message", rstring(message))
         if file_annotation is not None:
-                client.setOutput("File_Annotation",
-                                 robject(file_annotation._obj))
+            client.setOutput("File_Annotation",
+                             robject(file_annotation._obj))
 
     finally:
         client.closeSession()

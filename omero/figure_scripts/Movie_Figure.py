@@ -505,7 +505,7 @@ def movie_figure(conn, command_args):
     log("")
     fig_legend = "\n".join(log_lines)
 
-    # print figLegend    # bug fixing only
+    # print(figLegend)    # bug fixing only
     format = command_args["Format"]
 
     figure_name = "movie_figure"

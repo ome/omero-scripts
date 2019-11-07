@@ -32,6 +32,12 @@ import sys
 
 from omero.util.populate_roi import DownloadingOriginalFileProvider
 try:
+    long
+except Exception:
+    # Python 3
+    long = int
+
+try:
     # Hopefully this will import
     # https://github.com/ome/omero-metadata/blob/v0.3.1/src/populate_metadata.py
     from omero_metadata.populate import ParsingContext
