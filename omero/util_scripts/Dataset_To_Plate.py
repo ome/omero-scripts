@@ -36,6 +36,11 @@ from omero.gateway import BlitzGateway
 import omero
 
 from omero.rtypes import rint, rlong, rstring, robject, unwrap
+try:
+    long
+except Exception:
+    # Python 3
+    long = int
 
 
 def add_images_to_plate(conn, images, plate_id, column, row, remove_from=None):

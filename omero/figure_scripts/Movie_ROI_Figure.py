@@ -184,7 +184,7 @@ def get_roi_movie_view(re, query_service, pixels, time_shape_map,
         roi_merged_image = full_merged_image.crop(box)
         # make sure this is not just a lazy copy of the full image
         roi_merged_image.load()
-        if roi_zoom is not 1:
+        if roi_zoom != 1:
             new_size = (int(roi_width*roi_zoom), int(roi_height*roi_zoom))
             roi_merged_image = roi_merged_image.resize(new_size)
         panel_width = roi_merged_image.size[0]
