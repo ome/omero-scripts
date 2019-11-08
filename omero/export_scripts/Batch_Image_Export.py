@@ -602,7 +602,7 @@ See http://help.openmicroscopy.org/export.html#batch""",
         conn = BlitzGateway(client_obj=client)
 
         script_params = client.getInputs(unwrap=True)
-        for key, value in script_params.iteritems():
+        for key, value in script_params.items():
             log("%s:%s" % (key, value))
 
         # call the main script - returns a file annotation wrapper
