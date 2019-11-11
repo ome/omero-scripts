@@ -278,7 +278,6 @@ def batch_roi_export(conn, script_params):
             for plate in screen.listChildren():
                 images.extend(get_images_from_plate(plate))
 
-
     log("Processing %s images..." % len(images))
     if len(images) == 0:
         return None
