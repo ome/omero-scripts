@@ -43,7 +43,7 @@ import omero.scripts as scripts
 from numpy import zeros, hstack, vstack, asarray, math
 import logging
 from PIL import Image
-from cStringIO import StringIO
+from io import BytesIO
 
 logger = logging.getLogger('kymograph')
 
@@ -105,7 +105,7 @@ def get_line_data(image, x1, y1, x2, y2, line_w=2, the_z=0, the_c=0, the_t=0):
     # get the Tile - render single channel white
     image.set_active_channels([the_c + 1], None, ['FFFFFF'])
     jpeg_data = image.renderJpegRegion(the_z, the_t, x, y, w, h)
-    pil = Image.open(StringIO(jpeg_data))
+    pil = Image.open(BytesIO(jpeg_data))
 
     # pad if we wanted a bigger region
     if pad_left > 0 or pad_right > 0 or pad_top > 0 or pad_bottom > 0:

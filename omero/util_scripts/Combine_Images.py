@@ -110,7 +110,7 @@ def manually_assign_images(parameter_map, image_ids, source_z):
             if size_param in parameter_map:
                 dim_sizes[i] = parameter_map[size_param]
             else:
-                dim_sizes[i] = len(image_ids) / \
+                dim_sizes[i] = len(image_ids) // \
                     (dim_sizes[0] * dim_sizes[1] * dim_sizes[2])
 
     index = 0
@@ -511,7 +511,7 @@ def run_script():
     The main entry point of the script, as called by the client via the
     scripting service, passing the required parameters.
     """
-    ckeys = COLOURS.keys()
+    ckeys = list(COLOURS.keys())
     ckeys.sort()
     c_options = [rstring(col) for col in ckeys]
     data_types = [rstring('Dataset'), rstring('Image')]
