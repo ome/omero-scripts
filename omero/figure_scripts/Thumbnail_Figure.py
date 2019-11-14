@@ -96,7 +96,7 @@ def get_font(fontsize):
     font_path = os.path.join(GATEWAYPATH, "pilfonts", "FreeSans.ttf")
     try:
         font = ImageFont.truetype(font_path, fontsize)
-    except:
+    except OSError:
         font = ImageFont.load('%s/pilfonts/B%0.2d.pil' % (GATEWAYPATH, 24))
     return font
 
