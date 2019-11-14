@@ -52,12 +52,6 @@ except ImportError:
     import Image
     import ImageDraw  # see ticket:2597
 
-try:
-    long
-except Exception:
-    # Python 3
-    long = int
-
 
 COLOURS = script_utils.COLOURS    # name:(rgba) map
 OVERLAY_COLOURS = dict(COLOURS, **script_utils.EXTRA_COLOURS)
@@ -169,8 +163,8 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
                 # if it's a single plane, we can render a region (region not
                 # supported with projection)
                 plane_def = omero.romio.PlaneDef()
-                plane_def.z = long(pro_start)
-                plane_def.t = long(t_index)
+                plane_def.z = int(pro_start)
+                plane_def.t = int(t_index)
                 region_def = omero.romio.RegionDef()
                 region_def.x = roi_x
                 region_def.y = roi_y
