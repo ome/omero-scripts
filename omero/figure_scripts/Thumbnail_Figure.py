@@ -38,7 +38,6 @@ import omero.scripts as scripts
 from omero.gateway import BlitzGateway
 import omero.util.script_utils as script_utils
 from omero.rtypes import rlong, rstring, robject, rint
-import omero.util.image_utils as image_utils
 from omero.constants.namespaces import NSCREATED
 import os
 
@@ -300,7 +299,7 @@ def paint_dataset_canvas(conn, images, title, tag_ids=None,
 
     # set-up fonts
     fontsize = length/7 + 5
-    font = image_utils.get_font(fontsize)
+    font = get_font(fontsize)
     text_height = font.getsize("Textq")[1]
     top_spacer = spacing + text_height
     left_spacer = spacing + text_height
