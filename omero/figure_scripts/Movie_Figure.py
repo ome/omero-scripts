@@ -553,7 +553,7 @@ def run_script():
     formats = [rstring('JPEG'), rstring('PNG'), rstring('TIFF')]
     ckeys = list(COLOURS.keys())
     ckeys.sort()
-    o_colours = wrap(OVERLAY_COLOURS.keys())
+    o_colours = wrap(list(OVERLAY_COLOURS.keys()))
 
     client = scripts.client(
         'Movie_Figure.py',
