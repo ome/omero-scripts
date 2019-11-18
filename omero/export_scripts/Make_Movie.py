@@ -654,8 +654,7 @@ def run_script():
                  None, type = None, min = None, max = None, values = None)
     """
     formats = wrap(format_map.keys())    # wrap each key in its rtype
-    ckeys = COLOURS.keys()
-    ckeys = ckeys
+    ckeys = list(COLOURS.keys())
     ckeys.sort()
     c_options = wrap(ckeys)
     data_types = [rstring("Image")]

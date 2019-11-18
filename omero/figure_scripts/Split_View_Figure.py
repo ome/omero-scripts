@@ -683,7 +683,7 @@ def run_script():
     labels = [rstring('Image Name'), rstring('Datasets'), rstring('Tags')]
     algorithms = [rstring('Maximum Intensity'), rstring('Mean Intensity')]
     formats = [rstring('JPEG'), rstring('PNG'), rstring('TIFF')]
-    ckeys = COLOURS.keys()
+    ckeys = list(COLOURS.keys())
     ckeys.sort()
     o_colours = wrap(OVERLAY_COLOURS.keys())
 

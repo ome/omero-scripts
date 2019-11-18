@@ -551,7 +551,7 @@ def run_script():
     tunits = [rstring("SECS"), rstring("MINS"), rstring("HOURS"),
               rstring("MINS SECS"), rstring("HOURS MINS")]
     formats = [rstring('JPEG'), rstring('PNG'), rstring('TIFF')]
-    ckeys = COLOURS.keys()
+    ckeys = list(COLOURS.keys())
     ckeys.sort()
     o_colours = wrap(OVERLAY_COLOURS.keys())
 
