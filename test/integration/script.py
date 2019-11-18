@@ -139,6 +139,6 @@ def get_file_contents(client, original_file_id):
     """Returns Original File contents as a string."""
     conn = BlitzGateway(client_obj=client)
     orig_file = conn.getObject("OriginalFile", original_file_id)
-    text = "".join(orig_file.getFileInChunks())
+    text = b"".join(orig_file.getFileInChunks())
     conn.close()
-    return text
+    return text.decode('utf-8')
