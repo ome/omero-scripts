@@ -543,7 +543,8 @@ def get_split_view(conn, image_ids, pixel_ids, split_indexes, channel_names,
         image_utils.paste_image(image, figure_canvas, int(left_text_width),
                                 int(row_y + top_spacers[row]))
         x = left_text_width + width + spacer
-        image_utils.paste_image(roi_split_panes[row], figure_canvas, x, row_y)
+        image_utils.paste_image(roi_split_panes[row], figure_canvas,
+                                int(x), int(row_y))
         row_y = row_y + max(image.size[1] + top_spacers[row],
                             roi_split_panes[row].size[1]) + spacer
 
