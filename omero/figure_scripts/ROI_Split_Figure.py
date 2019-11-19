@@ -235,8 +235,8 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
             top_spacer = text_height + spacer
     image_count = len(rendered_images) + 1     # extra image for merged image
     # no spaces around panels
-    canvas_width = ((panel_width + spacer) * image_count) - spacer
-    canvas_height = roi_merged_image.size[1] + top_spacer
+    canvas_width = int(((panel_width + spacer) * image_count) - spacer)
+    canvas_height = int(roi_merged_image.size[1] + top_spacer)
 
     size = (canvas_width, canvas_height)
     # create a canvas of appropriate width, height
@@ -248,7 +248,7 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
     # paste the split images in, with channel labels
     draw = ImageDraw.Draw(canvas)
     for i, index in enumerate(split_indexes):
-        label = channel_names[index]
+        label = channel_names.get(index, index)
         indent = (panel_width - (font.getsize(label)[0])) // 2
         # text is coloured if channel is not coloured AND in the merged image
         rgb = (0, 0, 0)

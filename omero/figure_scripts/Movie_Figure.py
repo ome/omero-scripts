@@ -191,11 +191,11 @@ def createmovie_figure(conn, pixel_ids, t_indexes, z_start, z_end, width,
         # make a canvas for the row of splitview images...
         # (will add time labels above each row)
         col_count = min(max_col_count, len(rendered_images))
-        row_count = int(math.ceil(float(len(rendered_images)) / col_count))
-        font = image_utils.get_font(width/12)
+        row_count = int(math.ceil(len(rendered_images) / col_count))
+        font = image_utils.get_font(width // 12)
         font_height = font.getsize("Textq")[1]
         canvas_width = ((width + spacer) * col_count) + spacer
-        canvas_height = row_count * (spacer/2 + font_height + spacer + height)
+        canvas_height = row_count * (spacer // 2 + font_height + spacer + height)
         size = (canvas_width, canvas_height)
         # create a canvas of appropriate width, height
         canvas = Image.new(mode, size, white)
@@ -203,7 +203,7 @@ def createmovie_figure(conn, pixel_ids, t_indexes, z_start, z_end, width,
         # add text labels
         query_service = conn.getQueryService()
         text_x = spacer
-        text_y = spacer/4
+        text_y = spacer // 4
         col_index = 0
         time_labels = figUtil.getTimeLabels(
             query_service, pixels_id, t_indexes, size_t, time_units)
@@ -212,7 +212,7 @@ def createmovie_figure(conn, pixel_ids, t_indexes, z_start, z_end, width,
                 continue
             time = time_labels[t]
             text_w = font.getsize(time)[0]
-            inset = (width - text_w) / 2
+            inset = (width - text_w) // 2
             textdraw = ImageDraw.Draw(canvas)
             textdraw.text((text_x+inset, text_y), time, font=font,
                           fill=(0, 0, 0))
@@ -221,7 +221,7 @@ def createmovie_figure(conn, pixel_ids, t_indexes, z_start, z_end, width,
             if col_index >= max_col_count:
                 col_index = 0
                 text_x = spacer
-                text_y += (spacer/2 + font_height + spacer + height)
+                text_y += (spacer // 2 + font_height + spacer + height)
 
         # add scale bar to last frame...
         if scalebar:
@@ -248,7 +248,7 @@ def createmovie_figure(conn, pixel_ids, t_indexes, z_start, z_end, width,
             if col_index >= max_col_count:
                 col_index = 0
                 px = spacer
-                py += (spacer/2 + font_height + spacer + height)
+                py += (spacer // 2 + font_height + spacer + height)
 
         # Add labels to the left of the panel
         canvas = add_left_labels(canvas, image_labels, row, width, spacer)
@@ -266,7 +266,7 @@ def createmovie_figure(conn, pixel_ids, t_indexes, z_start, z_end, width,
     figure_size = (total_width, total_height+spacer)
     figure_canvas = Image.new(mode, figure_size, white)
 
-    row_y = spacer / 2
+    row_y = spacer // 2
     for row in row_panels:
         image_utils.paste_image(row, figure_canvas, 0, row_y)
         row_y = row_y + row.size[1]
@@ -335,7 +335,7 @@ def add_left_labels(panel_canvas, image_labels, row_index, width, spacer):
     # want it to be vertical. Rotate and paste the text canvas from above
     if image_labels:
         text_v = text_canvas.rotate(90, expand=True)
-        image_utils.paste_image(text_v, canvas, spacer/2, 0)
+        image_utils.paste_image(text_v, canvas, spacer // 2, 0)
 
     return canvas
 
@@ -461,7 +461,7 @@ def movie_figure(conn, command_args):
     if "Height" in command_args:
         height = command_args["Height"]
 
-    spacer = (width/25) + 2
+    spacer = (width // 25) + 2
 
     algorithm = ProjectionType.MAXIMUMINTENSITY
     if "Algorithm" in command_args:
