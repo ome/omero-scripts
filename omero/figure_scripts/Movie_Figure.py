@@ -302,7 +302,7 @@ def add_left_labels(panel_canvas, image_labels, row_index, width, spacer):
     max_count = 0
     for row in image_labels:
         max_count = max(max_count, len(row))
-    left_text_height = (text_height + text_gap) * max_count
+    left_text_height = int((text_height + text_gap) * max_count)
     # make the canvas as wide as the panels height
     left_text_width = panel_canvas.size[1]
     size = (left_text_width, left_text_height)
