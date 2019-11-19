@@ -195,7 +195,8 @@ def createmovie_figure(conn, pixel_ids, t_indexes, z_start, z_end, width,
         font = image_utils.get_font(width // 12)
         font_height = font.getsize("Textq")[1]
         canvas_width = ((width + spacer) * col_count) + spacer
-        canvas_height = row_count * (spacer // 2 + font_height + spacer + height)
+        canvas_height = row_count * (spacer // 2 + font_height +
+                                     spacer + height)
         size = (canvas_width, canvas_height)
         # create a canvas of appropriate width, height
         canvas = Image.new(mode, size, white)
