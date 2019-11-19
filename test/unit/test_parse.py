@@ -7,8 +7,11 @@
    Use is subject to license terms supplied in LICENSE.txt
 """
 
-
-from path import path
+try:
+    from omero_ext.path import path
+except ImportError:
+    # Python 2
+    from path import path
 from omero.scripts import parse_file
 
 
