@@ -243,13 +243,13 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
     canvas = Image.new(mode, size, white)
 
     px = 0
-    text_y = top_spacer - text_height - spacer/2
+    text_y = top_spacer - text_height - spacer // 2
     panel_y = top_spacer
     # paste the split images in, with channel labels
     draw = ImageDraw.Draw(canvas)
     for i, index in enumerate(split_indexes):
         label = channel_names[index]
-        indent = (panel_width - (font.getsize(label)[0])) / 2
+        indent = (panel_width - (font.getsize(label)[0])) // 2
         # text is coloured if channel is not coloured AND in the merged image
         rgb = (0, 0, 0)
         if index in merged_colours:
@@ -408,7 +408,7 @@ def get_split_view(conn, image_ids, pixel_ids, split_indexes, channel_names,
         raise Exception("No ROI found for the first image.")
     roi_x, roi_y, roi_width, roi_height, y_min, y_max, t_min, t_max = rect
 
-    roi_outline = ((max(width, height)) / 200) + 1
+    roi_outline = ((max(width, height)) // 200) + 1
 
     if roi_zoom is None:
         # get the pixels for priamry image.
@@ -420,7 +420,7 @@ def get_split_view(conn, image_ids, pixel_ids, split_indexes, channel_names,
     else:
         log("ROI zoom: %F X" % roi_zoom)
 
-    text_gap = spacer/3
+    text_gap = spacer // 3
     fontsize = 12
     if width > 500:
         fontsize = 48
@@ -504,10 +504,10 @@ def get_split_view(conn, image_ids, pixel_ids, split_indexes, channel_names,
 
         # draw ROI onto mergedImage...
         # recalculate roi if the image has been zoomed
-        x = roi_x / image_zoom
-        y = roi_y / image_zoom
-        roi_x2 = (roi_x + roi_width) / image_zoom
-        roi_y2 = (roi_y + roi_height) / image_zoom
+        x = roi_x // image_zoom
+        y = roi_y // image_zoom
+        roi_x2 = (roi_x + roi_width) // image_zoom
+        roi_y2 = (roi_y + roi_height) // image_zoom
         draw_rectangle(
             merged_image, x, y, roi_x2, roi_y2, overlay_colour, roi_outline)
 
@@ -537,8 +537,8 @@ def get_split_view(conn, image_ids, pixel_ids, split_indexes, channel_names,
     for row, image in enumerate(merged_images):
         label_canvas = figUtil.getVerticalLabels(image_labels[row], font,
                                                  text_gap)
-        v_offset = (image.size[1] - label_canvas.size[1]) / 2
-        image_utils.paste_image(label_canvas, figure_canvas, spacer/2,
+        v_offset = (image.size[1] - label_canvas.size[1]) // 2
+        image_utils.paste_image(label_canvas, figure_canvas, spacer // 2,
                                 row_y + top_spacers[row] + v_offset)
         image_utils.paste_image(
             image, figure_canvas, left_text_width, row_y + top_spacers[row])
