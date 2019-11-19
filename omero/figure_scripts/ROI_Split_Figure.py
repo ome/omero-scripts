@@ -244,7 +244,7 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
 
     px = 0
     text_y = top_spacer - text_height - spacer // 2
-    panel_y = top_spacer
+    panel_y = int(top_spacer)
     # paste the split images in, with channel labels
     draw = ImageDraw.Draw(canvas)
     for i, index in enumerate(split_indexes):
@@ -262,7 +262,7 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
             draw.text((px+indent, text_y), label, font=font, fill=rgb)
         if i < len(rendered_images):
             image_utils.paste_image(rendered_images[i], canvas, px, panel_y)
-        px = px + panel_width + spacer
+        px = int(px + panel_width + spacer)
     # and the merged image
     if show_top_labels:
         if (merged_names):
