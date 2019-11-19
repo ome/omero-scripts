@@ -600,7 +600,7 @@ def roi_figure(conn, command_args):
         # convert to 0-based
         merged_indexes = [c-1 for c in command_args["Merged_Channels"]]
     else:
-        merged_indexes = range(size_c)  # show all
+        merged_indexes = list(range(size_c))  # show all
     merged_indexes.reverse()
 
     #  if no colours added, use existing rendering settings.

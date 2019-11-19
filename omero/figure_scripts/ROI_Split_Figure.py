@@ -682,7 +682,7 @@ def roi_figure(conn, command_args):
         merged_indexes.sort()
     # make sure we have some merged channels
     if len(merged_indexes) == 0:
-        merged_indexes = range(size_c)
+        merged_indexes = list(range(size_c))
     merged_indexes.reverse()
 
     merged_names = False
