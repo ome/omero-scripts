@@ -530,7 +530,7 @@ def get_split_view(conn, image_ids, pixel_ids, split_indexes, channel_names,
     # each row has 1/2 spacer above and below the panels. Need extra 1/2
     # spacer top and bottom
     canvas_width = left_text_width + width + 2 * spacer + max_split_panel_width
-    figure_size = (canvas_width, total_canvas_height + spacer)
+    figure_size = (int(canvas_width), int(total_canvas_height + spacer))
     figure_canvas = Image.new("RGB", figure_size, (255, 255, 255))
 
     row_y = spacer
