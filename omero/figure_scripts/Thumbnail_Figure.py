@@ -92,7 +92,7 @@ def get_font(fontsize):
     @param fontsize:	The size of the font you want
     @return: 	A PIL Font
     """
-
+    fontsize = int(fontsize)
     font_path = os.path.join(GATEWAYPATH, "pilfonts", "FreeSans.ttf")
     try:
         font = ImageFont.truetype(font_path, fontsize)
@@ -269,7 +269,7 @@ def paint_dataset_canvas(conn, images, title, tag_ids=None,
 
     mode = "RGB"
     fig_canvas = None
-    spacing = length/40 + 2
+    spacing = length//40 + 2
 
     thumbnail_store = conn.createThumbnailStore()
     metadata_service = conn.getMetadataService()
@@ -329,8 +329,7 @@ def paint_dataset_canvas(conn, images, title, tag_ids=None,
             for tag in tags:
                 tag_id = tag.getId().getValue()
                 # make a dict of tag-names
-                val = tag.getTextValue().getValue()
-                tag_names[tag_id] = val.decode('utf8')
+                tag_names[tag_id] = tag.getTextValue().getValue()
                 img_tag_ids.append(tag_id)
             img_tags[image_id] = img_tag_ids
 
