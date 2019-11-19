@@ -538,8 +538,8 @@ def get_split_view(conn, image_ids, pixel_ids, split_indexes, channel_names,
         label_canvas = figUtil.getVerticalLabels(image_labels[row], font,
                                                  text_gap)
         v_offset = (image.size[1] - label_canvas.size[1]) // 2
-        image_utils.paste_image(label_canvas, figure_canvas, spacer // 2,
-                                row_y + top_spacers[row] + v_offset)
+        image_utils.paste_image(label_canvas, figure_canvas, int(spacer // 2),
+                                int(row_y + top_spacers[row] + v_offset))
         image_utils.paste_image(
             image, figure_canvas, left_text_width, row_y + top_spacers[row])
         x = left_text_width + width + spacer
