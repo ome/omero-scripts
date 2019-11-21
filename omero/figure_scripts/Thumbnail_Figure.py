@@ -37,7 +37,7 @@ from io import BytesIO
 import omero.scripts as scripts
 from omero.gateway import BlitzGateway
 import omero.util.script_utils as script_utils
-from omero.rtypes import rlong, rstring, robject, rint
+from omero.rtypes import rint, rlong, rstring, robject
 from omero.constants.namespaces import NSCREATED
 import os
 
@@ -69,17 +69,17 @@ def paste_image(image, canvas, x, y):
     Pastes the image onto the canvas at the specified coordinates
     Image and canvas are instances of PIL 'Image'
 
-    @param image:		The PIL image to be pasted. Image
-    @param canvas:		The PIL image on which to paste. Image
-    @param x:			X coordinate (left) to paste
-    @param y: 			Y coordinate (top) to paste
+    @param image:       The PIL image to be pasted. Image
+    @param canvas:      The PIL image on which to paste. Image
+    @param x:           X coordinate (left) to paste
+    @param y:           Y coordinate (top) to paste
     """
 
     x = int(x)
     y = int(y)
     x_right = image.size[0] + x
     y_bottom = image.size[1] + y
-    # make a tuple of topleft-x, topleft-y, bottomRight-x, bottomRight-y
+    # make a tuple of topLeft-x, topLeft-y, bottomRight-x, bottomRight-y
     pastebox = (x, y, x_right, y_bottom)
     canvas.paste(image, pastebox)
 
@@ -110,21 +110,21 @@ def paint_thumbnail_grid(thumbnail_store, length, spacing, pixel_ids,
     Option to add a vertical label to the left of the canvas
     Creates a PIL 'Image' which is returned
 
-    @param thumbnail_store:  The omero thumbnail store.
-    @param length:			 Length of longest thumbnail side, int
-    @param spacing:			 The spacing between thumbnails and around the
-                             edges. int
-    @param pixel_ids:		 List of pixel IDs. [long]
-    @param col_count:		 The number of columns. int
-    @param bg:				 Background colour as (r,g,b).
-                             Default is white (255, 255, 255)
-    @param left_label: 		 Optional string to display vertically to the left.
-    @param text_color:		 The color of the text as (r,g,b).
-                             Default is black (0, 0, 0)
-    @param fontsize:		 Size of the font.
-                             Default is calculated based on thumbnail length,
-                             int
-    @return: 			    The PIL Image canvas.
+    @param thumbnail_store: The omero thumbnail store.
+    @param length:          Length of longest thumbnail side, int
+    @param spacing:         The spacing between thumbnails and around the
+                            edges. int
+    @param pixel_ids:       List of pixel IDs. [long]
+    @param col_count:       The number of columns. int
+    @param bg:              Background colour as (r,g,b).
+                            Default is white (255, 255, 255)
+    @param left_label:      Optional string to display vertically to the left.
+    @param text_color:      The color of the text as (r,g,b).
+                            Default is black (0, 0, 0)
+    @param fontsize:        Size of the font.
+                            Default is calculated based on thumbnail length,
+                            int
+    @return:                The PIL Image canvas.
     """
     mode = "RGB"
     # work out how many rows and columns are needed for all the images
