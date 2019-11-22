@@ -72,7 +72,10 @@ from omero.constants.namespaces import NSCREATED
 from omero.constants.metadata import NSMOVIE
 
 from io import BytesIO
-from types import StringTypes
+try:
+    from types import StringTypes
+except ImportError:
+    StringTypes = str
 
 try:
     from PIL import Image, ImageDraw  # see ticket:2597
@@ -529,7 +532,6 @@ def write_movie(command_args, conn):
     frame_no = 1
     omero_image.setActiveChannels(map(lambda x: x+1, c_range),
                                   c_windows, c_colours)
-    rendering_engine = omero_image._re
 
     overlay_colour = (255, 255, 255)
     if "Overlay_Colour" in command_args:
@@ -568,12 +570,8 @@ def write_movie(command_args, conn):
     for tz in tz_list:
         t = tz[0]
         z = tz[1]
-        plane = get_plane(rendering_engine, z, t)
-        plane_image = numpy.array(plane, dtype='uint32')
-        plane_image = plane_image.byteswap()
-        plane_image = plane_image.reshape(size_x, size_y)
-        image = Image.frombuffer('RGBA', (size_x, size_y), plane_image.data,
-                                 'raw', 'ARGB', 0, 1)
+        image = omero_image.renderImage(z, t)
+
         if ovlpos is not None:
             image2 = canvas.copy()
             image2.paste(image, ovlpos, image)
@@ -653,7 +651,7 @@ def run_script():
     def __init__(self, name, optional = False, out = False, description =
                  None, type = None, min = None, max = None, values = None)
     """
-    formats = wrap(format_map.keys())    # wrap each key in its rtype
+    formats = wrap(list(format_map.keys()))    # wrap each key in its rtype
     ckeys = list(COLOURS.keys())
     ckeys.sort()
     c_options = wrap(ckeys)
