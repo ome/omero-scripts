@@ -71,7 +71,7 @@ from omero.gateway import BlitzGateway
 from omero.constants.namespaces import NSCREATED
 from omero.constants.metadata import NSMOVIE
 
-from cStringIO import StringIO
+from io import BytesIO
 from types import StringTypes
 
 try:
@@ -403,8 +403,8 @@ def write_intro_end_slides(conn, command_args, orig_file_id, duration, size_x,
 
     # get Original File as Image
     slide_file = conn.getObject("OriginalFile", orig_file_id)
-    slide_data = "".join(slide_file.getFileInChunks())
-    i = StringIO(slide_data)
+    slide_data = b"".join(slide_file.getFileInChunks())
+    i = BytesIO(slide_data)
     slide = Image.open(i)
     slide = reshape_to_fit(slide, size_x, size_y)
 
@@ -433,8 +433,8 @@ def prepare_watermark(conn, command_args, size_x, size_y):
     wm_orig_file = command_args["Watermark"]
     # get Original File as Image
     wm_file = conn.getObject("OriginalFile", wm_orig_file.getId().getValue())
-    wm_data = "".join(wm_file.getFileInChunks())
-    i = StringIO(wm_data)
+    wm_data = b"".join(wm_file.getFileInChunks())
+    i = BytesIO(wm_data)
     wm = Image.open(i)
     wm_w, wm_h = wm.size
     # only resize watermark if too big
