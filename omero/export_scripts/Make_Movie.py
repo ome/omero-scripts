@@ -530,7 +530,7 @@ def write_movie(command_args, conn):
             command_args["Show_Time"] = False
 
     frame_no = 1
-    omero_image.setActiveChannels(map(lambda x: x+1, c_range),
+    omero_image.setActiveChannels([x+1 for x in c_range],
                                   c_windows, c_colours)
 
     overlay_colour = (255, 255, 255)
