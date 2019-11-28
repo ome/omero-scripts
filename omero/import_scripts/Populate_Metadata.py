@@ -31,11 +31,6 @@ import omero.model
 import sys
 
 from omero.util.populate_roi import DownloadingOriginalFileProvider
-try:
-    long
-except Exception:
-    # Python 3
-    long = int
 
 try:
     # Hopefully this will import
@@ -92,7 +87,7 @@ def populate_metadata(client, conn, script_params):
     object_id = object_ids[0]
     file_ann_id = None
     if "File_Annotation" in script_params:
-        file_ann_id = long(script_params["File_Annotation"])
+        file_ann_id = int(script_params["File_Annotation"])
     data_type = script_params["Data_Type"]
     original_file = get_original_file(
         conn, data_type, object_id, file_ann_id)
@@ -100,7 +95,7 @@ def populate_metadata(client, conn, script_params):
     data_for_preprocessing = provider.get_original_file_data(original_file)
     data = provider.get_original_file_data(original_file)
     objecti = getattr(omero.model, data_type + 'I')
-    omero_object = objecti(long(object_id), False)
+    omero_object = objecti(int(object_id), False)
     ctx = ParsingContext(client, omero_object, "")
 
     try:

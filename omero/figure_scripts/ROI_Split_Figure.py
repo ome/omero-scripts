@@ -52,12 +52,6 @@ except ImportError:
     import Image
     import ImageDraw  # see ticket:2597
 
-try:
-    long
-except Exception:
-    # Python 3
-    long = int
-
 
 COLOURS = script_utils.COLOURS    # name:(rgba) map
 OVERLAY_COLOURS = dict(COLOURS, **script_utils.EXTRA_COLOURS)
@@ -169,8 +163,8 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
                 # if it's a single plane, we can render a region (region not
                 # supported with projection)
                 plane_def = omero.romio.PlaneDef()
-                plane_def.z = long(pro_start)
-                plane_def.t = long(t_index)
+                plane_def.z = int(pro_start)
+                plane_def.t = int(t_index)
                 region_def = omero.romio.RegionDef()
                 region_def.x = roi_x
                 region_def.y = roi_y
@@ -241,21 +235,21 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
             top_spacer = text_height + spacer
     image_count = len(rendered_images) + 1     # extra image for merged image
     # no spaces around panels
-    canvas_width = ((panel_width + spacer) * image_count) - spacer
-    canvas_height = roi_merged_image.size[1] + top_spacer
+    canvas_width = int(((panel_width + spacer) * image_count) - spacer)
+    canvas_height = int(roi_merged_image.size[1] + top_spacer)
 
     size = (canvas_width, canvas_height)
     # create a canvas of appropriate width, height
     canvas = Image.new(mode, size, white)
 
     px = 0
-    text_y = top_spacer - text_height - spacer/2
-    panel_y = top_spacer
+    text_y = top_spacer - text_height - spacer // 2
+    panel_y = int(top_spacer)
     # paste the split images in, with channel labels
     draw = ImageDraw.Draw(canvas)
     for i, index in enumerate(split_indexes):
-        label = channel_names[index]
-        indent = (panel_width - (font.getsize(label)[0])) / 2
+        label = channel_names.get(index, index)
+        indent = (panel_width - (font.getsize(label)[0])) // 2
         # text is coloured if channel is not coloured AND in the merged image
         rgb = (0, 0, 0)
         if index in merged_colours:
@@ -268,7 +262,7 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
             draw.text((px+indent, text_y), label, font=font, fill=rgb)
         if i < len(rendered_images):
             image_utils.paste_image(rendered_images[i], canvas, px, panel_y)
-        px = px + panel_width + spacer
+        px = int(px + panel_width + spacer)
     # and the merged image
     if show_top_labels:
         if (merged_names):
@@ -414,7 +408,7 @@ def get_split_view(conn, image_ids, pixel_ids, split_indexes, channel_names,
         raise Exception("No ROI found for the first image.")
     roi_x, roi_y, roi_width, roi_height, y_min, y_max, t_min, t_max = rect
 
-    roi_outline = ((max(width, height)) / 200) + 1
+    roi_outline = ((max(width, height)) // 200) + 1
 
     if roi_zoom is None:
         # get the pixels for priamry image.
@@ -426,7 +420,7 @@ def get_split_view(conn, image_ids, pixel_ids, split_indexes, channel_names,
     else:
         log("ROI zoom: %F X" % roi_zoom)
 
-    text_gap = spacer/3
+    text_gap = spacer // 3
     fontsize = 12
     if width > 500:
         fontsize = 48
@@ -510,10 +504,10 @@ def get_split_view(conn, image_ids, pixel_ids, split_indexes, channel_names,
 
         # draw ROI onto mergedImage...
         # recalculate roi if the image has been zoomed
-        x = roi_x / image_zoom
-        y = roi_y / image_zoom
-        roi_x2 = (roi_x + roi_width) / image_zoom
-        roi_y2 = (roi_y + roi_height) / image_zoom
+        x = roi_x // image_zoom
+        y = roi_y // image_zoom
+        roi_x2 = (roi_x + roi_width) // image_zoom
+        roi_y2 = (roi_y + roi_height) // image_zoom
         draw_rectangle(
             merged_image, x, y, roi_x2, roi_y2, overlay_colour, roi_outline)
 
@@ -536,20 +530,21 @@ def get_split_view(conn, image_ids, pixel_ids, split_indexes, channel_names,
     # each row has 1/2 spacer above and below the panels. Need extra 1/2
     # spacer top and bottom
     canvas_width = left_text_width + width + 2 * spacer + max_split_panel_width
-    figure_size = (canvas_width, total_canvas_height + spacer)
+    figure_size = (int(canvas_width), int(total_canvas_height + spacer))
     figure_canvas = Image.new("RGB", figure_size, (255, 255, 255))
 
     row_y = spacer
     for row, image in enumerate(merged_images):
         label_canvas = figUtil.getVerticalLabels(image_labels[row], font,
                                                  text_gap)
-        v_offset = (image.size[1] - label_canvas.size[1]) / 2
-        image_utils.paste_image(label_canvas, figure_canvas, spacer/2,
-                                row_y + top_spacers[row] + v_offset)
-        image_utils.paste_image(
-            image, figure_canvas, left_text_width, row_y + top_spacers[row])
+        v_offset = (image.size[1] - label_canvas.size[1]) // 2
+        image_utils.paste_image(label_canvas, figure_canvas, int(spacer // 2),
+                                int(row_y + top_spacers[row] + v_offset))
+        image_utils.paste_image(image, figure_canvas, int(left_text_width),
+                                int(row_y + top_spacers[row]))
         x = left_text_width + width + spacer
-        image_utils.paste_image(roi_split_panes[row], figure_canvas, x, row_y)
+        image_utils.paste_image(roi_split_panes[row], figure_canvas,
+                                int(x), int(row_y))
         row_y = row_y + max(image.size[1] + top_spacers[row],
                             roi_split_panes[row].size[1]) + spacer
 
@@ -688,7 +683,7 @@ def roi_figure(conn, command_args):
         merged_indexes.sort()
     # make sure we have some merged channels
     if len(merged_indexes) == 0:
-        merged_indexes = range(size_c)
+        merged_indexes = list(range(size_c))
     merged_indexes.reverse()
 
     merged_names = False
@@ -827,9 +822,9 @@ def run_script():
 'FigureROI' by default, (not case sensitive). If matching ROI not found, use \
 any ROI."""
     formats = [rstring('JPEG'), rstring('PNG'), rstring('TIFF')]
-    ckeys = COLOURS.keys()
+    ckeys = list(COLOURS.keys())
     ckeys.sort()
-    o_colours = wrap(OVERLAY_COLOURS.keys())
+    o_colours = wrap(list(OVERLAY_COLOURS.keys()))
 
     client = scripts.client(
         'ROI_Split_Figure.py',

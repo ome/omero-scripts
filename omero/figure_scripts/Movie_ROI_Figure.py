@@ -76,7 +76,7 @@ def get_time_indexes(time_points, max_frames):
     """
     frames = min(max_frames, time_points)
     interval_count = frames-1
-    smallest_interval = (time_points-1)/interval_count
+    smallest_interval = (time_points-1)//interval_count
     # make a list of intervals, making the last intervals bigger if needed
     intervals = [smallest_interval] * interval_count
     extra = (time_points-1) % interval_count
@@ -198,7 +198,7 @@ def get_roi_movie_view(re, query_service, pixels, time_shape_map,
     col_count = len(rendered_images)
     row_count = 1
     if max_columns:
-        row_count = col_count / max_columns
+        row_count = col_count // max_columns
         if (col_count % max_columns) > 0:
             row_count += 1
         col_count = max_columns
@@ -213,7 +213,7 @@ def get_roi_movie_view(re, query_service, pixels, time_shape_map,
     canvas = Image.new(mode, size, white)
 
     px = 0
-    text_y = spacer/2
+    text_y = spacer // 2
     panel_y = text_height + spacer
     # paste the images in, with time labels
     draw = ImageDraw.Draw(canvas)
@@ -221,7 +221,7 @@ def get_roi_movie_view(re, query_service, pixels, time_shape_map,
     col = 0
     for i, img in enumerate(rendered_images):
         label = time_labels[i]
-        indent = (panel_width - (font.getsize(label)[0])) / 2
+        indent = (panel_width - (font.getsize(label)[0])) // 2
         draw.text((px+indent, text_y), label, font=font, fill=(0, 0, 0))
         image_utils.paste_image(img, canvas, px, panel_y)
         if col == (col_count - 1):
@@ -358,7 +358,7 @@ def get_split_view(conn, image_ids, pixel_ids, merged_indexes, merged_colours,
         return
     x, y, roi_width, roi_height, time_shape_map = rect
 
-    roi_outline = ((max(width, height)) / 200) + 1
+    roi_outline = ((max(width, height)) // 200) + 1
 
     if roi_zoom is None:
         # get the pixels for priamry image.
@@ -370,7 +370,7 @@ def get_split_view(conn, image_ids, pixel_ids, merged_indexes, merged_colours,
     else:
         log("ROI zoom: %F X" % roi_zoom)
 
-    text_gap = spacer/3
+    text_gap = spacer // 3
     font_size = 12
     if width > 500:
         font_size = 48
@@ -439,10 +439,10 @@ def get_split_view(conn, image_ids, pixel_ids, merged_indexes, merged_colours,
 
         # draw ROI onto mergedImage...
         # recalculate roi if the image has been zoomed
-        x = roi_x / image_zoom
-        y = roi_y / image_zoom
-        roi_x2 = (roi_x + roi_width) / image_zoom
-        roi_y2 = (roi_y + roi_height) / image_zoom
+        x = roi_x // image_zoom
+        y = roi_y // image_zoom
+        roi_x2 = (roi_x + roi_width) // image_zoom
+        roi_y2 = (roi_y + roi_height) // image_zoom
         draw_rectangle(
             merged_image, x, y, roi_x2, roi_y2, overlay_colour, roi_outline)
 
@@ -467,8 +467,8 @@ def get_split_view(conn, image_ids, pixel_ids, merged_indexes, merged_colours,
     for row, image in enumerate(merged_images):
         label_canvas = figUtil.getVerticalLabels(image_labels[row], font,
                                                  text_gap)
-        v_offset = (image.size[1] - label_canvas.size[1]) / 2
-        image_utils.paste_image(label_canvas, figure_canvas, spacer / 2,
+        v_offset = (image.size[1] - label_canvas.size[1]) // 2
+        image_utils.paste_image(label_canvas, figure_canvas, spacer // 2,
                                 row_y+top_spacers[row] + v_offset)
         image_utils.paste_image(
             image, figure_canvas, left_text_width, row_y + top_spacers[row])
@@ -600,7 +600,7 @@ def roi_figure(conn, command_args):
         # convert to 0-based
         merged_indexes = [c-1 for c in command_args["Merged_Channels"]]
     else:
-        merged_indexes = range(size_c)  # show all
+        merged_indexes = list(range(size_c))  # show all
     merged_indexes.reverse()
 
     #  if no colours added, use existing rendering settings.
@@ -660,7 +660,7 @@ def roi_figure(conn, command_args):
     if "Roi_Selection_Label" in command_args:
         roi_label = command_args["Roi_Selection_Label"]
 
-    spacer = (width/50) + 2
+    spacer = (width // 50) + 2
 
     fig = get_split_view(
         conn, image_ids, pixel_ids, merged_indexes, merged_colours, width,
@@ -724,9 +724,9 @@ def run_script():
 'FigureROI' by default, (not case sensitive). If matching ROI not found, use \
 any ROI."""
     formats = [rstring('JPEG'), rstring('PNG'), rstring('TIFF')]
-    ckeys = COLOURS.keys()
+    ckeys = list(COLOURS.keys())
     ckeys.sort()
-    o_colours = wrap(OVERLAY_COLOURS.keys())
+    o_colours = wrap(list(OVERLAY_COLOURS.keys()))
 
     client = scripts.client(
         'Movie_ROI_Figure.py',
