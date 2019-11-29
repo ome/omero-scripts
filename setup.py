@@ -74,6 +74,7 @@ setup(
     packages=[
         'omero.analysis_scripts',
         'omero.export_scripts',
+        'omero.figure_scripts',
         'omero.import_scripts',
         'omero.util_scripts'],
     description="OMERO scripts",
