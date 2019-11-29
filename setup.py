@@ -65,8 +65,8 @@ class PyTest(test_command):
         sys.exit(errno)
 
 
-version = '5.5.2.dev'
-url = "https://github.com/ome/scripts/"
+version = '5.6.dev1'
+url = "https://github.com/ome/omero-scripts/"
 
 setup(
     version=version,
@@ -74,6 +74,7 @@ setup(
     packages=[
         'omero.analysis_scripts',
         'omero.export_scripts',
+        'omero.figure_scripts',
         'omero.import_scripts',
         'omero.util_scripts'],
     description="OMERO scripts",
