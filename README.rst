@@ -1,3 +1,9 @@
+.. image:: https://travis-ci.org/ome/omero-scripts.svg
+    :target: https://travis-ci.org/ome/omero-scripts
+
+.. image:: https://badge.fury.io/py/omero-scripts.svg
+    :target: https://badge.fury.io/py/omero-scripts
+
 OMERO Core Scripts
 ==================
 
