@@ -602,7 +602,7 @@ See http://help.openmicroscopy.org/export.html#batch""",
         conn = BlitzGateway(client_obj=client)
 
         script_params = client.getInputs(unwrap=True)
-        for key, value in script_params.iteritems():
+        for key, value in script_params.items():
             log("%s:%s" % (key, value))
 
         # call the main script - returns a file annotation wrapper
@@ -614,8 +614,8 @@ See http://help.openmicroscopy.org/export.html#batch""",
         # return this fileAnnotation to the client.
         client.setOutput("Message", rstring(message))
         if file_annotation is not None:
-                client.setOutput("File_Annotation",
-                                 robject(file_annotation._obj))
+            client.setOutput("File_Annotation",
+                             robject(file_annotation._obj))
 
     finally:
         client.closeSession()

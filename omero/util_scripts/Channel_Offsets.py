@@ -360,11 +360,13 @@ See http://help.openmicroscopy.org/scripts.html""",
 
     try:
         script_params = client.getInputs(unwrap=True)
+        print(script_params)
 
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
 
         images, dataset, message = process_images(conn, script_params)
+        print(message)
 
         # Return message, new image and new dataset (if applicable) to the
         # client

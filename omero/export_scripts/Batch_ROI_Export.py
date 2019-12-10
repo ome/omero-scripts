@@ -24,7 +24,7 @@
 
 import omero.scripts as scripts
 from omero.gateway import BlitzGateway
-from omero.rtypes import unwrap, rstring, rlong, robject
+from omero.rtypes import rlong, rint, rstring, robject, unwrap
 from omero.model import RectangleI, EllipseI, LineI, PolygonI, PolylineI, \
     MaskI, LabelI, PointI
 from math import sqrt, pi
@@ -36,7 +36,7 @@ INSIGHT_POINT_LIST_RE = re.compile(r'points\[([^\]]+)\]')
 
 def log(data):
     """Handle logging or printing in one place."""
-    print data
+    print(data)
 
 
 def get_export_data(conn, script_params, image, units=None):
@@ -228,14 +228,18 @@ def write_csv(conn, export_data, script_params, units_symbol):
         units_symbol = "pixels"
     csv_header = csv_header.replace(",length,", ",length (%s)," % units_symbol)
     csv_header = csv_header.replace(",area,", ",area (%s)," % units_symbol)
-    csv_rows = [csv_header]
+    csv_rows = [csv_header.encode('utf-8')]
 
     for row in export_data:
-        cells = [str(row.get(name, "")) for name in COLUMN_NAMES]
-        csv_rows.append(",".join(cells))
+        # cells = [("%s" % row.get(name, "")) for name in COLUMN_NAMES]
+        cells = []
+        for name in COLUMN_NAMES:
+            td = row.get(name, '')
+            cells.append(str(td).encode('utf-8'))
+        csv_rows.append(b",".join(cells))
 
-    with open(file_name, 'w') as csv_file:
-        csv_file.write("\n".join(csv_rows))
+    with open(file_name, 'wb') as csv_file:
+        csv_file.write(b"\n".join(csv_rows))
 
     return conn.createFileAnnfromLocalFile(file_name, mimetype="text/csv")
 
@@ -305,9 +309,9 @@ def run_script():
             description="List of Dataset IDs or Image IDs").ofType(rlong(0)),
 
         scripts.List(
-            "Channels", grouping="3", default=[1L, 2L, 3L, 4L],
+            "Channels", grouping="3", default=[1, 2, 3, 4],
             description="Indices of Channels to measure intensity."
-            ).ofType(rlong(0)),
+            ).ofType(rint(0)),
 
         scripts.Bool(
             "Export_All_Planes", grouping="4",

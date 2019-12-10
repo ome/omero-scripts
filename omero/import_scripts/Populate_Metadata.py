@@ -31,6 +31,7 @@ import omero.model
 import sys
 
 from omero.util.populate_roi import DownloadingOriginalFileProvider
+
 try:
     # Hopefully this will import
     # https://github.com/ome/omero-metadata/blob/v0.3.1/src/populate_metadata.py
@@ -107,7 +108,7 @@ def populate_metadata(client, conn, script_params):
     data_type = script_params["Data_Type"]
     file_ann_id = None
     if "File_Annotation" in script_params:
-        file_ann_id = long(script_params["File_Annotation"])
+        file_ann_id = int(script_params["File_Annotation"])
         link_file_ann(conn, data_type, object_id, file_ann_id)
     original_file = get_original_file(
         conn, data_type, object_id, file_ann_id)
@@ -115,7 +116,7 @@ def populate_metadata(client, conn, script_params):
     data_for_preprocessing = provider.get_original_file_data(original_file)
     data = provider.get_original_file_data(original_file)
     objecti = getattr(omero.model, data_type + 'I')
-    omero_object = objecti(long(object_id), False)
+    omero_object = objecti(int(object_id), False)
     ctx = ParsingContext(client, omero_object, "")
 
     try:

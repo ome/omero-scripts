@@ -65,12 +65,18 @@ class PyTest(test_command):
         sys.exit(errno)
 
 
-version = '0.1.0'
-url = "https://github.com/ome/scripts/"
+version = '5.6.dev2'
+url = "https://github.com/ome/omero-scripts/"
 
 setup(
     version=version,
     name='omero-scripts',
+    packages=[
+        'omero.analysis_scripts',
+        'omero.export_scripts',
+        'omero.figure_scripts',
+        'omero.import_scripts',
+        'omero.util_scripts'],
     description="OMERO scripts",
     long_description="OMERO scripts",
     author='The Open Microscopy Team',

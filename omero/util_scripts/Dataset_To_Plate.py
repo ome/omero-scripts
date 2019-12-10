@@ -33,7 +33,6 @@ This script converts a Dataset of Images to a Plate, with one image per Well.
 
 import omero.scripts as scripts
 from omero.gateway import BlitzGateway
-import omero.util.script_utils as script_utils
 import omero
 
 from omero.rtypes import rint, rlong, rstring, robject, unwrap
@@ -66,8 +65,8 @@ def add_images_to_plate(conn, images, plate_id, column, row, remove_from=None):
     for image in images:
         if remove_from is not None:
             links = list(image.getParentLinks(remove_from.id))
-            for l in links:
-                conn.deleteObjectDirect(l._obj)
+            link_ids = [l.id for l in links]
+            conn.deleteObjects('DatasetImageLink', link_ids)
     return True
 
 
@@ -159,8 +158,9 @@ def datasets_to_plates(conn, script_params):
     message = ""
 
     # Get the datasets ID
-    datasets, log_message = script_utils.get_objects(conn, script_params)
-    message += log_message
+    dtype = script_params['Data_Type']
+    ids = script_params['IDs']
+    datasets = list(conn.getObjects(dtype, ids))
 
     def has_images_linked_to_well(dataset):
         params = omero.sys.ParametersI()
@@ -203,7 +203,7 @@ def datasets_to_plates(conn, script_params):
         s = script_params["Screen"]
         # see if this is ID of existing screen
         try:
-            screen_id = long(s)
+            screen_id = int(s)
             screen = conn.getObject("Screen", screen_id)
         except ValueError:
             pass
