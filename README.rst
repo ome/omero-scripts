@@ -69,3 +69,8 @@ To run tests locally:
 
 	# Single test in a single file
 	$ python setup.py test -t test/integration/test_util_scripts.py -k test_dataset_to_plate
+
+Copyright
+---------
+
+2010-2020, The Open Microscopy Environment
