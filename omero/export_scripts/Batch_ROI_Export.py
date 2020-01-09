@@ -228,18 +228,14 @@ def write_csv(conn, export_data, script_params, units_symbol):
         units_symbol = "pixels"
     csv_header = csv_header.replace(",length,", ",length (%s)," % units_symbol)
     csv_header = csv_header.replace(",area,", ",area (%s)," % units_symbol)
-    csv_rows = [csv_header.encode('utf-8')]
+    csv_rows = [csv_header]
 
     for row in export_data:
-        # cells = [("%s" % row.get(name, "")) for name in COLUMN_NAMES]
-        cells = []
-        for name in COLUMN_NAMES:
-            td = row.get(name, '')
-            cells.append(str(td).encode('utf-8'))
-        csv_rows.append(b",".join(cells))
+        cells = [str(row.get(name, "")) for name in COLUMN_NAMES]
+        csv_rows.append(",".join(cells))
 
-    with open(file_name, 'wb') as csv_file:
-        csv_file.write(b"\n".join(csv_rows))
+    with open(file_name, 'w') as csv_file:
+        csv_file.write("\n".join(csv_rows))
 
     return conn.createFileAnnfromLocalFile(file_name, mimetype="text/csv")
 
