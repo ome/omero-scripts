@@ -189,28 +189,36 @@ def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y):
             point_list = match.group(1)
         row_data['Points'] = '"%s"' % point_list
     if isinstance(shape, PolylineI):
-        coords = point_list.split(" ")
-        coords = [[float(x.strip(", ")) for x in coord.split(",", 1)]
-                  for coord in coords]
-        lengths = []
-        for i in range(len(coords)-1):
-            dx = (coords[i][0] - coords[i + 1][0])
-            dy = (coords[i][1] - coords[i + 1][1])
-            dx = dx if pixel_size_x is None else dx * pixel_size_x
-            dy = dy if pixel_size_y is None else dy * pixel_size_y
-            lengths.append(sqrt((dx * dx) + (dy * dy)))
-        row_data['length'] = sum(lengths)
+        coords = point_list.strip(" ").split(" ")
+        try:
+            coords = [[float(x.strip(", ")) for x in coord.split(",", 1)]
+                    for coord in coords]
+        except ValueError:
+            print("Invalid Polyline coords:", coords)
+        else:
+            lengths = []
+            for i in range(len(coords)-1):
+                dx = (coords[i][0] - coords[i + 1][0])
+                dy = (coords[i][1] - coords[i + 1][1])
+                dx = dx if pixel_size_x is None else dx * pixel_size_x
+                dy = dy if pixel_size_y is None else dy * pixel_size_y
+                lengths.append(sqrt((dx * dx) + (dy * dy)))
+            row_data['length'] = sum(lengths)
     if isinstance(shape, PolygonI):
         # https://www.mathopenref.com/coordpolygonarea.html
-        coords = point_list.split(" ")
-        coords = [[float(x.strip(", ")) for x in coord.split(",", 1)]
-                  for coord in coords]
-        total = 0
-        for c in range(len(coords)):
-            coord = coords[c]
-            next_coord = coords[(c + 1) % len(coords)]
-            total += (coord[0] * next_coord[1]) - (next_coord[0] * coord[1])
-        row_data['area'] = abs(0.5 * total)
+        coords = point_list.strip(" ").split(" ")
+        try:
+            coords = [[float(x.strip(", ")) for x in coord.split(",", 1)]
+                      for coord in coords]
+        except ValueError:
+            print("Invalid Polygon coords:", coords)
+        else:
+            total = 0
+            for c in range(len(coords)):
+                coord = coords[c]
+                next_coord = coords[(c + 1) % len(coords)]
+                total += (coord[0] * next_coord[1]) - (next_coord[0] * coord[1])
+            row_data['area'] = abs(0.5 * total)
     if 'area' in row_data and pixel_size_x and pixel_size_y:
         row_data['area'] = row_data['area'] * pixel_size_x * pixel_size_y
 
