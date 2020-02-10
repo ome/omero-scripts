@@ -192,7 +192,7 @@ def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y):
         coords = point_list.strip(" ").split(" ")
         try:
             coords = [[float(x.strip(", ")) for x in coord.split(",", 1)]
-                    for coord in coords]
+                      for coord in coords]
         except ValueError:
             print("Invalid Polyline coords:", coords)
         else:
@@ -216,8 +216,8 @@ def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y):
             total = 0
             for c in range(len(coords)):
                 coord = coords[c]
-                next_coord = coords[(c + 1) % len(coords)]
-                total += (coord[0] * next_coord[1]) - (next_coord[0] * coord[1])
+                next_c = coords[(c + 1) % len(coords)]
+                total += (coord[0] * next_c[1]) - (next_c[0] * coord[1])
             row_data['area'] = abs(0.5 * total)
     if 'area' in row_data and pixel_size_x and pixel_size_y:
         row_data['area'] = row_data['area'] * pixel_size_x * pixel_size_y
