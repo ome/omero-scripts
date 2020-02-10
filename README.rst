@@ -1,3 +1,9 @@
+.. image:: https://travis-ci.org/ome/omero-scripts.svg
+    :target: https://travis-ci.org/ome/omero-scripts
+
+.. image:: https://badge.fury.io/py/omero-scripts.svg
+    :target: https://badge.fury.io/py/omero-scripts
+
 OMERO Core Scripts
 ==================
 
@@ -63,3 +69,8 @@ To run tests locally:
 
 	# Single test in a single file
 	$ python setup.py test -t test/integration/test_util_scripts.py -k test_dataset_to_plate
+
+Copyright
+---------
+
+2010-2020, The Open Microscopy Environment

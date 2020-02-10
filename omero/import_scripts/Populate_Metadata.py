@@ -31,6 +31,7 @@ import omero.model
 import sys
 
 from omero.util.populate_roi import DownloadingOriginalFileProvider
+
 try:
     # Hopefully this will import
     # https://github.com/ome/omero-metadata/blob/v0.3.1/src/populate_metadata.py
@@ -57,7 +58,22 @@ except ImportError:
     """
 
 
-def get_original_file(conn, object_type, object_id, file_ann_id=None):
+def link_file_ann(conn, object_type, object_id, file_ann_id):
+    """Link File Annotation to the Object, if not already linked."""
+    file_ann = conn.getObject("Annotation", file_ann_id)
+    if file_ann is None:
+        sys.stderr.write("Error: File Annotation not found: %s.\n"
+                         % file_ann_id)
+        sys.exit(1)
+    omero_object = get_object(conn, object_type, object_id)
+    # Check for existing links
+    links = list(conn.getAnnotationLinks(object_type, parent_ids=[object_id],
+                                         ann_ids=[file_ann_id]))
+    if len(links) == 0:
+        omero_object.linkAnnotation(file_ann)
+
+
+def get_object(conn, object_type, object_id):
     if object_type not in OBJECT_TYPES:
         sys.stderr.write("Error: Invalid object type: %s.\n" % object_type)
         sys.exit(1)
@@ -65,6 +81,11 @@ def get_original_file(conn, object_type, object_id, file_ann_id=None):
     if omero_object is None:
         sys.stderr.write("Error: %s does not exist.\n" % object_type)
         sys.exit(1)
+    return omero_object
+
+
+def get_original_file(conn, object_type, object_id, file_ann_id=None):
+    omero_object = get_object(conn, object_type, object_id)
     file_ann = None
 
     for ann in omero_object.listAnnotations():
@@ -84,17 +105,18 @@ def get_original_file(conn, object_type, object_id, file_ann_id=None):
 def populate_metadata(client, conn, script_params):
     object_ids = script_params["IDs"]
     object_id = object_ids[0]
+    data_type = script_params["Data_Type"]
     file_ann_id = None
     if "File_Annotation" in script_params:
-        file_ann_id = long(script_params["File_Annotation"])
-    data_type = script_params["Data_Type"]
+        file_ann_id = int(script_params["File_Annotation"])
+        link_file_ann(conn, data_type, object_id, file_ann_id)
     original_file = get_original_file(
         conn, data_type, object_id, file_ann_id)
     provider = DownloadingOriginalFileProvider(conn)
     data_for_preprocessing = provider.get_original_file_data(original_file)
     data = provider.get_original_file_data(original_file)
     objecti = getattr(omero.model, data_type + 'I')
-    omero_object = objecti(long(object_id), False)
+    omero_object = objecti(int(object_id), False)
     ctx = ParsingContext(client, omero_object, "")
 
     try:

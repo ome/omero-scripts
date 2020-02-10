@@ -41,7 +41,7 @@ ANN_TYPES = {
 
 def log(text):
     """Handle logging statements in a single place."""
-    print text
+    print(text)
 
 
 def move_well_annotations(conn, well, ann_type, remove_anns, ns):
@@ -102,7 +102,7 @@ def move_well_annotations(conn, well, ann_type, remove_anns, ns):
         new_links.append(link)
     try:
         conn.getUpdateService().saveArray(new_links)
-    except Exception, ex:
+    except Exception as ex:
         log("Failed to create links: %s" % ex.message)
         return 0
 
@@ -113,7 +113,7 @@ def move_well_annotations(conn, well, ann_type, remove_anns, ns):
             handle = conn.c.sf.submit(delete)
             conn.c.waitOnCmd(handle, loops=10, ms=500, failonerror=True,
                              failontimeout=False, closehandle=False)
-        except Exception, ex:
+        except Exception as ex:
             log("Failed to delete links: %s" % ex.message)
     return len(new_links)
 

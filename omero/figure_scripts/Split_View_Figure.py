@@ -62,11 +62,6 @@ def log(text):
     """
     Adds the text to a list of logs. Compiled into figure legend at the end.
     """
-    # Handle unicode
-    try:
-        text = text.encode('utf8')
-    except UnicodeEncodeError:
-        pass
     log_strings.append(text)
 
 
@@ -273,7 +268,7 @@ def get_split_view(conn, pixel_ids, z_start, z_end, split_indexes,
         canvas = Image.new(mode, size, white)
 
         px = spacer
-        py = spacer/2
+        py = spacer//2
         col = 0
         # paste the images in
         for img in rendered_images:
@@ -314,7 +309,7 @@ def get_split_view(conn, pixel_ids, z_start, z_end, split_indexes,
     figure_size = (total_width, total_height+spacer)
     figure_canvas = Image.new(mode, figure_size, white)
 
-    row_y = spacer/2
+    row_y = spacer // 2
     for row in row_panels:
         image_utils.paste_image(row, figure_canvas, 0, row_y)
         row_y = row_y + row.size[1]
@@ -377,7 +372,7 @@ def make_split_view_figure(conn, pixel_ids, z_start, z_end, split_indexes,
     elif width > 200:
         fontsize = 16
 
-    spacer = (width/25) + 2
+    spacer = (width // 25) + 2
     text_gap = 3        # gap between text and image panels
     left_text_width = 0
     text_height = 0
@@ -413,7 +408,7 @@ def make_split_view_figure(conn, pixel_ids, z_start, z_end, split_indexes,
             for l, label in enumerate(row):
                 py = py - text_height    # find the top of this row
                 w = textdraw.textsize(label, font=font)[0]
-                inset = int((height - w) / 2)
+                inset = int((height - w) // 2)
                 textdraw.text((px+inset, py), label, font=font,
                               fill=(0, 0, 0))
                 py = py - text_gap    # add space between rows
@@ -449,15 +444,14 @@ def make_split_view_figure(conn, pixel_ids, z_start, z_end, split_indexes,
     for index in split_indexes:
         # calculate the position of the text, centered above the image
         w = font.getsize(channel_names[index])[0]
-        inset = int((width - w) / 2)
+        inset = int((width - w) // 2)
         # text is coloured if channel is grey AND in the merged image
         rgba = (0, 0, 0, 255)
         if index in merged_indexes:
             if (not colour_channels) and (index in merged_colours):
                 rgba = tuple(merged_colours[index])
-                if rgba == (255, 255, 255, 255):    # if white (unreadable),
-                                                    # needs to be black!
-                    rgba = (0, 0, 0, 255)
+                if rgba == (255, 255, 255, 255):  # if white (unreadable)
+                    rgba = (0, 0, 0, 255)  # needs to be black!
         draw.text((px+inset, py), channel_names[index], font=font, fill=rgba)
         px = px + width + spacer
 
@@ -469,17 +463,16 @@ def make_split_view_figure(conn, pixel_ids, z_start, z_end, split_indexes,
             if index in merged_colours:
                 rgba = tuple(merged_colours[index])
                 log("%s %s %s" % (index, channel_names[index], rgba))
-                if rgba == (255, 255, 255, 255):    # if white (unreadable),
-                                                    # needs to be black!
-                    rgba = (0, 0, 0, 255)
+                if rgba == (255, 255, 255, 255):  # if white (unreadable)
+                    rgba = (0, 0, 0, 255)  # needs to be black!
             name = channel_names[index]
             comb_text_width = font.getsize(name)[0]
-            inset = int((width - comb_text_width) / 2)
+            inset = int((width - comb_text_width) // 2)
             draw.text((px + inset, py), name, font=font, fill=rgba)
             py = py - text_height
     else:
         comb_text_width = font.getsize("Merged")[0]
-        inset = int((width - comb_text_width) / 2)
+        inset = int((width - comb_text_width) // 2)
         px = px + inset
         draw.text((px, py), "Merged", font=font, fill=(0, 0, 0))
 
@@ -509,16 +502,16 @@ def split_view_figure(conn, script_params):
     # function for getting image labels.
     def get_image_names(full_name, tags_list, pd_list):
         name = full_name.split("/")[-1]
-        return [name.decode('utf8')]
+        return [name]
 
     # default function for getting labels is getName (or use datasets / tags)
     if script_params["Image_Labels"] == "Datasets":
         def get_datasets(name, tags_list, pd_list):
-            return [dataset.decode('utf8') for project, dataset in pd_list]
+            return [dataset for project, dataset in pd_list]
         get_labels = get_datasets
     elif script_params["Image_Labels"] == "Tags":
         def get_tags(name, tags_list, pd_list):
-            return [t.decode('utf8') for t in tags_list]
+            return [t for t in tags_list]
         get_labels = get_tags
     else:
         get_labels = get_image_names
@@ -597,7 +590,7 @@ def split_view_figure(conn, script_params):
         c_name_map = script_params["Channel_Names"]
         for c in c_name_map:
             index = int(c)
-            channel_names[index] = c_name_map[c].decode('utf8')
+            channel_names[index] = c_name_map[c]
 
     merged_indexes = []  # the channels in the combined image,
     merged_colours = {}
@@ -615,7 +608,7 @@ def split_view_figure(conn, script_params):
             merged_indexes.append(c_index)
         merged_indexes.sort()
     else:
-        merged_indexes = range(size_c)
+        merged_indexes = list(range(size_c))
 
     colour_channels = not script_params["Split_Panels_Grey"]
 
@@ -685,9 +678,9 @@ def run_script():
     labels = [rstring('Image Name'), rstring('Datasets'), rstring('Tags')]
     algorithms = [rstring('Maximum Intensity'), rstring('Mean Intensity')]
     formats = [rstring('JPEG'), rstring('PNG'), rstring('TIFF')]
-    ckeys = COLOURS.keys()
+    ckeys = list(COLOURS.keys())
     ckeys.sort()
-    o_colours = wrap(OVERLAY_COLOURS.keys())
+    o_colours = wrap(list(OVERLAY_COLOURS.keys()))
 
     client = scripts.client(
         'Split_View_Figure.py',
