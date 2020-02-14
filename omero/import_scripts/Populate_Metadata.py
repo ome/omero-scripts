@@ -1,7 +1,7 @@
 # coding=utf-8
 '''
 -----------------------------------------------------------------------------
-  Copyright (C) 2014 Glencoe Software, Inc. All rights reserved.
+  Copyright (C) 2014-2020 Glencoe Software, Inc. All rights reserved.
 
 
   This program is free software; you can redistribute it and/or modify
@@ -136,11 +136,11 @@ def run_script():
     client = scripts.client(
         'Populate_Metadata.py',
         """
-    This script processes a csv file, attached to a container,
+    This script processes a CSV file, attached to a container,
     converting it to an OMERO.table, with one row per Image or Well.
     The table data can then be displayed in the OMERO clients.
-    For full details, see
-    http://help.openmicroscopy.org/scripts.html#metadata
+    For full details of the supported CSV format, see
+    https://github.com/ome/omero-metadata/
         """ + DEPRECATED,
         scripts.String(
             "Data_Type", optional=False, grouping="1",
