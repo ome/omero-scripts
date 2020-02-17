@@ -267,7 +267,7 @@ def batch_roi_export(conn, script_params):
         for dataset in conn.getObjects("Dataset", ids):
             images.extend(list(dataset.listChildren()))
     elif dtype == "Project":
-        for project in conn.getObjects("Dataset", ids):
+        for project in conn.getObjects("Project", ids):
             for dataset in project.listChildren():
                 images.extend(list(dataset.listChildren()))
     elif dtype == "Plate":
