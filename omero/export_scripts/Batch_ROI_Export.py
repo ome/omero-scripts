@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # -----------------------------------------------------------------------------
-#   Copyright (C) 2018-2019 University of Dundee. All rights reserved.
+#   Copyright (C) 2018-2020 University of Dundee. All rights reserved.
 
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -247,15 +247,36 @@ def link_annotation(objects, file_ann):
             o.linkAnnotation(file_ann)
 
 
+def get_images_from_plate(plate):
+    imgs = []
+    for well in plate.listChildren():
+        for ws in well.listChildren():
+            imgs.append(ws.image())
+    return imgs
+
+
 def batch_roi_export(conn, script_params):
     """Main entry point. Get images, process them and return result."""
     images = []
 
-    if script_params['Data_Type'] == "Image":
-        images = list(conn.getObjects("Image", script_params['IDs']))
-    else:
-        for dataset in conn.getObjects("Dataset", script_params['IDs']):
+    dtype = script_params['Data_Type']
+    ids = script_params['IDs']
+    if dtype == "Image":
+        images = list(conn.getObjects("Image", ids))
+    elif dtype == "Dataset":
+        for dataset in conn.getObjects("Dataset", ids):
             images.extend(list(dataset.listChildren()))
+    elif dtype == "Project":
+        for project in conn.getObjects("Project", ids):
+            for dataset in project.listChildren():
+                images.extend(list(dataset.listChildren()))
+    elif dtype == "Plate":
+        for plate in conn.getObjects("Plate", ids):
+            images.extend(get_images_from_plate(plate))
+    elif dtype == "Screen":
+        for screen in conn.getObjects("Screen", ids):
+            for plate in screen.listChildren():
+                images.extend(get_images_from_plate(plate))
 
     log("Processing %s images..." % len(images))
     if len(images) == 0:
@@ -278,18 +299,19 @@ def batch_roi_export(conn, script_params):
 
     # Write to csv
     file_ann = write_csv(conn, export_data, script_params, symbol)
-    if script_params['Data_Type'] == "Dataset":
-        datasets = conn.getObjects("Dataset", script_params['IDs'])
-        link_annotation(datasets, file_ann)
-    else:
+    if dtype == "Image":
         link_annotation(images, file_ann)
+    else:
+        objects = conn.getObjects(dtype, script_params['IDs'])
+        link_annotation(objects, file_ann)
     message = "Exported %s shapes" % len(export_data)
     return file_ann, message
 
 
 def run_script():
     """The main entry point of the script, as called by the client."""
-    data_types = [rstring('Dataset'), rstring('Image')]
+    data_types = [rstring(s) for s in
+                  ['Screen', 'Plate', 'Project', 'Dataset', 'Image']]
 
     client = scripts.client(
         'Batch_ROI_Export.py',
