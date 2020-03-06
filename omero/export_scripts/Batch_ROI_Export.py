@@ -194,7 +194,7 @@ def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y):
             coords = [[float(x.strip(", ")) for x in coord.split(",", 1)]
                       for coord in coords]
         except ValueError:
-            print("Invalid Polyline coords:", coords)
+            log("Invalid Polyline coords: %s" % coords)
         else:
             lengths = []
             for i in range(len(coords)-1):
@@ -211,7 +211,7 @@ def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y):
             coords = [[float(x.strip(", ")) for x in coord.split(",", 1)]
                       for coord in coords]
         except ValueError:
-            print("Invalid Polygon coords:", coords)
+            log("Invalid Polygon coords: %s" % coords)
         else:
             total = 0
             for c in range(len(coords)):
