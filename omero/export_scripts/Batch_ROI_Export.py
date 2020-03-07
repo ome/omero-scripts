@@ -120,13 +120,15 @@ def get_export_data(conn, script_params, image, units=None):
                             "mean": stats[0].mean[c] if stats else "",
                             "std_dev": stats[0].stdDev[c] if stats else ""
                         }
+                        if hasattr(image, 'well_id'):
+                            row_data['well_id'] = image.well_id
                         add_shape_coords(shape, row_data,
                                          pixel_size_x, pixel_size_y)
                         export_data.append(row_data)
 
     return export_data
 
-
+# well_id inserted if SPW
 COLUMN_NAMES = ["image_id",
                 "image_name",
                 "roi_id",
@@ -251,7 +253,9 @@ def get_images_from_plate(plate):
     imgs = []
     for well in plate.listChildren():
         for ws in well.listChildren():
-            imgs.append(ws.image())
+            img = ws.image()
+            img.well_id = well.id
+            imgs.append(img)
     return imgs
 
 
@@ -261,6 +265,8 @@ def batch_roi_export(conn, script_params):
 
     dtype = script_params['Data_Type']
     ids = script_params['IDs']
+    if dtype in ("Screen", "Plate"):
+        COLUMN_NAMES.insert(1, "well_id")
     if dtype == "Image":
         images = list(conn.getObjects("Image", ids))
     elif dtype == "Dataset":
