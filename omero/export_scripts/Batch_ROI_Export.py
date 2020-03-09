@@ -122,13 +122,21 @@ def get_export_data(conn, script_params, image, units=None):
                         }
                         if hasattr(image, 'well_id'):
                             row_data['well_id'] = image.well_id
+                        if image._obj.wellSamplesLoaded:
+                            for wellSample in image.copyWellSamples():
+                                w = wellSample.getWell()
+                                well = conn.getObject("Well", w.id.val)
+                                row_data['well_id'] = w.id.val
+                                row_data['well_row'] = well.getRow()
+                                row_data['well_column'] = well.getColumn()
+                                row_data['well_label'] = well.getWellPos()
                         add_shape_coords(shape, row_data,
                                          pixel_size_x, pixel_size_y)
                         export_data.append(row_data)
 
     return export_data
 
-# well_id inserted if SPW
+# well_id, well_row, well_column, well_label inserted if SPW
 COLUMN_NAMES = ["image_id",
                 "image_name",
                 "roi_id",
@@ -253,9 +261,7 @@ def get_images_from_plate(plate):
     imgs = []
     for well in plate.listChildren():
         for ws in well.listChildren():
-            img = ws.image()
-            img.well_id = well.id
-            imgs.append(img)
+            imgs.append(ws.image())
     return imgs
 
 
@@ -267,6 +273,9 @@ def batch_roi_export(conn, script_params):
     ids = script_params['IDs']
     if dtype in ("Screen", "Plate"):
         COLUMN_NAMES.insert(1, "well_id")
+        COLUMN_NAMES.insert(2, "well_row")
+        COLUMN_NAMES.insert(3, "well_column")
+        COLUMN_NAMES.insert(4, "well_label")
     if dtype == "Image":
         images = list(conn.getObjects("Image", ids))
     elif dtype == "Dataset":
