@@ -120,11 +120,10 @@ def get_export_data(conn, script_params, image, units=None):
                             "mean": stats[0].mean[c] if stats else "",
                             "std_dev": stats[0].stdDev[c] if stats else ""
                         }
-                        if hasattr(image, 'well_id'):
-                            row_data['well_id'] = image.well_id
+                        # For SPW data, add Well info...
                         if image._obj.wellSamplesLoaded:
-                            for wellSample in image.copyWellSamples():
-                                w = wellSample.getWell()
+                            for well_sample in image.copyWellSamples():
+                                w = well_sample.getWell()
                                 well = conn.getObject("Well", w.id.val)
                                 row_data['well_id'] = w.id.val
                                 row_data['well_row'] = well.getRow()
@@ -135,6 +134,7 @@ def get_export_data(conn, script_params, image, units=None):
                         export_data.append(row_data)
 
     return export_data
+
 
 # well_id, well_row, well_column, well_label inserted if SPW
 COLUMN_NAMES = ["image_id",
