@@ -268,6 +268,14 @@ def save_planes_for_image(conn, image, size_c, split_cs, merged_cs,
                                c, g_scale, zoom_percent, folder_name)
 
 
+def get_images_from_plate(plate):
+    imgs = []
+    for well in plate.listChildren():
+        for ws in well.listChildren():
+            imgs.append(ws.image())
+    return imgs
+
+
 def batch_image_export(conn, script_params):
 
     # for params with default values, we can get the value directly
@@ -356,13 +364,24 @@ def batch_image_export(conn, script_params):
     # Attach figure to the first image
     parent = objects[0]
 
-    if data_type == 'Dataset':
-        images = []
+    images = []
+    if data_type == "Project":
+        for project in objects:
+            for dataset in project.listChildren():
+                images.extend(list(dataset.listChildren()))
+    elif data_type == 'Dataset':
         for ds in objects:
             images.extend(list(ds.listChildren()))
         if not images:
             message += "No image found in dataset(s)"
             return None, message
+    elif data_type == "Plate":
+        for plate in objects:
+            images.extend(get_images_from_plate(plate))
+    elif data_type == "Screen":
+        for screen in objects:
+            for plate in screen.listChildren():
+                images.extend(get_images_from_plate(plate))
     else:
         images = objects
 
@@ -490,7 +509,8 @@ def run_script():
     scripting service, passing the required parameters.
     """
 
-    data_types = [rstring('Dataset'), rstring('Image')]
+    data_types = [rstring(s) for s in
+                  ['Screen', 'Plate', 'Project', 'Dataset', 'Image']]
     formats = [rstring('JPEG'), rstring('PNG'), rstring('TIFF'),
                rstring('OME-TIFF')]
     default_z_option = 'Default-Z (last-viewed)'
