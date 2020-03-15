@@ -123,6 +123,7 @@ class TestExportScripts(ScriptTest):
         zt = ","
         points_min_max_sum_mean = ",,,,"
         area = "6561.0"
+        length = "324"
         if all_planes:
             zt = "1,1"
             points_min_max_sum_mean = "6561,10.0,90.0,328050.0,50.0"
@@ -130,9 +131,9 @@ class TestExportScripts(ScriptTest):
                     "z,t,channel,area (pixels),length (pixels),"
                     "points,min,max,sum,mean,std_dev,"
                     "X,Y,Width,Height,RadiusX,RadiusY,X1,Y1,X2,Y2,Points\n"
-                    "%s,\"%s\",%s,%s,polygon,\"%s\",%s,0,%s,,%s,") % (
-            image.id.val, image_name, roi.id.val,
-            polygon.id.val, label_text, zt, area, points_min_max_sum_mean)
+                    "%s,\"%s\",%s,%s,polygon,\"%s\",%s,0,%s,%s,%s,") % (
+            image.id.val, image_name, roi.id.val, polygon.id.val,
+            label_text, zt, area, length, points_min_max_sum_mean)
         assert csv_text.startswith(expected)
 
     @pytest.mark.broken(
