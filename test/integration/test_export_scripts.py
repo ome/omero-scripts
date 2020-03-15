@@ -134,6 +134,8 @@ class TestExportScripts(ScriptTest):
                     "%s,\"%s\",%s,%s,polygon,\"%s\",%s,0,%s,%s,%s,") % (
             image.id.val, image_name, roi.id.val, polygon.id.val,
             label_text, zt, area, length, points_min_max_sum_mean)
+        print('csv_text', csv_text)
+        print('expected', expected)
         assert csv_text.startswith(expected)
 
     @pytest.mark.broken(
