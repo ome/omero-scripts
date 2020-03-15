@@ -192,10 +192,12 @@ def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y,
             point_list = match.group(1)
         if include_points:
             row_data['Points'] = '"%s"' % point_list
-    if isinstance(shape, (PolygonI, PolylineI)):
         coords = point_list.split(" ")
         coords = [[float(x.strip(", ")) for x in coord.split(",", 1)]
                   for coord in coords]
+        # to measure length of Polygon, add length to start point
+        if isinstance(shape, PolygonI):
+            coords.append(coords[0])
         lengths = []
         for i in range(len(coords)-1):
             dx = (coords[i][0] - coords[i + 1][0])
