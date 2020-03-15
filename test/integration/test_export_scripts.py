@@ -123,7 +123,7 @@ class TestExportScripts(ScriptTest):
         zt = ","
         points_min_max_sum_mean = ",,,,"
         area = "6561.0"
-        length = "324"
+        length = "324.0"
         if all_planes:
             zt = "1,1"
             points_min_max_sum_mean = "6561,10.0,90.0,328050.0,50.0"
