@@ -54,6 +54,7 @@ def get_export_data(conn, script_params, image, units=None):
 
     roi_service = conn.getRoiService()
     all_planes = script_params["Export_All_Planes"]
+    include_points = script_params.get("Include_Points_Coords", False)
     size_c = image.getSizeC()
     # Channels index
     channels = script_params.get("Channels", [1])
@@ -130,7 +131,8 @@ def get_export_data(conn, script_params, image, units=None):
                                 row_data['well_column'] = well.getColumn()
                                 row_data['well_label'] = well.getWellPos()
                         add_shape_coords(shape, row_data,
-                                         pixel_size_x, pixel_size_y)
+                                         pixel_size_x, pixel_size_y,
+                                         include_points)
                         export_data.append(row_data)
 
     return export_data
@@ -167,7 +169,8 @@ COLUMN_NAMES = ["image_id",
                 "Points"]
 
 
-def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y):
+def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y,
+                     include_points=False):
     """Add shape coordinates and length or area to the row_data dict."""
     if shape.getTextValue():
         row_data['Text'] = shape.getTextValue().getValue()
@@ -197,7 +200,8 @@ def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y):
         match = INSIGHT_POINT_LIST_RE.search(point_list)
         if match is not None:
             point_list = match.group(1)
-        row_data['Points'] = '"%s"' % point_list
+        if include_points:
+            row_data['Points'] = '"%s"' % point_list
     if isinstance(shape, PolylineI):
         coords = point_list.split(" ")
         coords = [[float(x.strip(", ")) for x in coord.split(",", 1)]
@@ -353,8 +357,16 @@ def run_script():
                          "where Z and T are not set?"),
             default=False),
 
+        scripts.Bool(
+            "Include_Points_Coords", grouping="5",
+            description=("Export the Points string for Polygons "
+                         "and Polylines. Disable this to reduce the "
+                         "size of the csv file when exporting large "
+                         "numbers of ROIs"),
+            default=True),
+
         scripts.String(
-            "File_Name", grouping="5", default=DEFAULT_FILE_NAME,
+            "File_Name", grouping="6", default=DEFAULT_FILE_NAME,
             description="Name of the exported CSV file"),
 
         authors=["William Moore", "OME Team"],
