@@ -225,29 +225,22 @@ def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y):
         row_data['area'] = row_data['area'] * pixel_size_x * pixel_size_y
 
 
-def write_csv(conn, export_data, script_params, units_symbol):
-    """Write the list of data to a CSV file and create a file annotation."""
+def get_file_name(script_params):
     file_name = script_params.get("File_Name", "")
     if len(file_name) == 0:
         file_name = DEFAULT_FILE_NAME
     if not file_name.endswith(".csv"):
         file_name += ".csv"
+    return file_name
 
+
+def get_csv_header(units_symbol):
     csv_header = ",".join(COLUMN_NAMES)
     if units_symbol is None:
         units_symbol = "pixels"
     csv_header = csv_header.replace(",length,", ",length (%s)," % units_symbol)
     csv_header = csv_header.replace(",area,", ",area (%s)," % units_symbol)
-    csv_rows = [csv_header]
-
-    for row in export_data:
-        cells = [str(row.get(name, "")) for name in COLUMN_NAMES]
-        csv_rows.append(",".join(cells))
-
-    with open(file_name, 'w') as csv_file:
-        csv_file.write("\n".join(csv_rows))
-
-    return conn.createFileAnnfromLocalFile(file_name, mimetype="text/csv")
+    return csv_header
 
 
 def link_annotation(objects, file_ann):
@@ -305,21 +298,29 @@ def batch_roi_export(conn, script_params):
             any_none = True
     pixel_size_x = images[0].getPixelSizeX(units=True)
     units = None if any_none else pixel_size_x.getUnit()
-    symbol = None if any_none else pixel_size_x.getSymbol()
+    units_symbol = None if any_none else pixel_size_x.getSymbol()
 
-    # build a list of dicts.
-    export_data = []
-    for image in images:
-        export_data.extend(get_export_data(conn, script_params, image, units))
+    # Create a file so we can write direct to open file
+    file_name = get_file_name(script_params)
+    csv_header = get_csv_header(units_symbol)
 
-    # Write to csv
-    file_ann = write_csv(conn, export_data, script_params, symbol)
+    row_count = 0
+    with open(file_name, 'w') as csv_file:
+        csv_file.write(csv_header + "\n")
+        for image in images:
+            for row in get_export_data(conn, script_params, image, units):
+                cells = [str(row.get(name, "")) for name in COLUMN_NAMES]
+                csv_file.write(",".join(cells) + "\n")
+                row_count += 1
+
+    file_ann = conn.createFileAnnfromLocalFile(file_name, mimetype="text/csv")
+
     if dtype == "Image":
         link_annotation(images, file_ann)
     else:
         objects = conn.getObjects(dtype, script_params['IDs'])
         link_annotation(objects, file_ann)
-    message = "Exported %s shapes" % len(export_data)
+    message = "Exported %s shapes" % row_count
     return file_ann, message
 
 
