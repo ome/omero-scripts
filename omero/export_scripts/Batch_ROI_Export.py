@@ -78,6 +78,16 @@ def get_export_data(conn, script_params, image, units=None):
     rois.sort(key=lambda r: r.id.val)
     export_data = []
 
+    well_id = None
+    # For SPW data, add Well info...
+    if image._obj.wellSamplesLoaded:
+        for well_sample in image.copyWellSamples():
+            well_id = well_sample.getWell().id.val
+            well = conn.getObject("Well", well_id)
+            well_row = well.getRow()
+            well_column = well.getColumn()
+            well_label = well.getWellPos()
+
     for roi in rois:
         for shape in roi.copyShapes():
             label = unwrap(shape.getTextValue())
@@ -122,14 +132,11 @@ def get_export_data(conn, script_params, image, units=None):
                             "std_dev": stats[0].stdDev[c] if stats else ""
                         }
                         # For SPW data, add Well info...
-                        if image._obj.wellSamplesLoaded:
-                            for well_sample in image.copyWellSamples():
-                                w = well_sample.getWell()
-                                well = conn.getObject("Well", w.id.val)
-                                row_data['well_id'] = w.id.val
-                                row_data['well_row'] = well.getRow()
-                                row_data['well_column'] = well.getColumn()
-                                row_data['well_label'] = well.getWellPos()
+                        if well_id is not None:
+                            row_data['well_id'] = well_id
+                            row_data['well_row'] = well_row
+                            row_data['well_column'] = well_column
+                            row_data['well_label'] = well_label
                         add_shape_coords(shape, row_data,
                                          pixel_size_x, pixel_size_y,
                                          include_points)
