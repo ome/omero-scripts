@@ -317,11 +317,11 @@ def batch_roi_export(conn, script_params):
 
     row_count = 0
     with open(file_name, 'w') as csv_file:
-        csv_file.write(csv_header + "\n")
+        csv_file.write(csv_header)
         for image in images:
             for row in get_export_data(conn, script_params, image, units):
                 cells = [str(row.get(name, "")) for name in COLUMN_NAMES]
-                csv_file.write(",".join(cells) + "\n")
+                csv_file.write("\n" + ",".join(cells))
                 row_count += 1
 
     file_ann = conn.createFileAnnfromLocalFile(file_name, mimetype="text/csv")
