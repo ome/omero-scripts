@@ -72,7 +72,7 @@ def attach_csv_file( conn, obj, data ):
     #print("tmp_file",tmp_file)
     # get the union of the keys
     key_union=OrderedDict()
-    for img_k,img_v in data.iteritems():
+    for img_k,img_v in data.items():
         key_union.update(img_v)
 
     all_keys = key_union.keys()
@@ -85,7 +85,7 @@ def attach_csv_file( conn, obj, data ):
     header = ['filename']+all_keys
     tfile.write( to_csv( header ) )
 
-    for fname,kv_dict in data.iteritems():
+    for fname,kv_dict in data.items():
         row = [fname]+[ kv_dict.get(key,"") for key in all_keys ]
         tfile.write( to_csv( row ) )
     tfile.close()
@@ -159,7 +159,7 @@ def run_script():
                             conn.c.waitOnCmd(handle, loops=10, ms=500, failonerror=True,
                                          failontimeout=False, closehandle=False)
                             print("Deleted")
-                        except Exception, ex:
+                        except Exception as ex:
                             print("Failed to delete links: {}".format(ex.message))
         
             # assemble the metadata 
@@ -170,7 +170,7 @@ def run_script():
                 im_kv =  GetExistingMapAnnotions(img)
                 kv_dict[fn] = GetExistingMapAnnotions(img)
 
-            for k,v in kv_dict.iteritems():
+            for k,v in kv_dict.items():
                 print(k)
                 print(v)    
  
@@ -178,6 +178,9 @@ def run_script():
             mess = attach_csv_file( conn, ds, kv_dict )
         mess="done" 
         client.setOutput("Message", rstring(mess))
+    
+    except:
+        pass
 
     finally:
         client.closeSession()

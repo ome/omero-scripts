@@ -80,7 +80,7 @@ def remove_MapAnnotations(conn, dtype, Id ):
         conn.c.waitOnCmd(handle, loops=10, ms=500, failonerror=True,
                      failontimeout=False, closehandle=False)
 
-    except Exception, ex:
+    except Exception as ex:
         print("Failed to delete links: {}".format(ex.message))
     return
 
@@ -170,7 +170,7 @@ def populate_metadata(client, conn, script_params):
                 existing_kv = get_existing_MapAnnotions( img )
                 updated_kv  = copy.deepcopy(existing_kv)
                 print("Existing kv ")
-                for k,v in existing_kv.iteritems():
+                for k,v in existing_kv.items():
                     print(k,v)
 
                 for i in range(1,len(row)):  # first entry is the filename
@@ -190,7 +190,7 @@ def populate_metadata(client, conn, script_params):
                     namesoace = omero.constants.metadata.NSBULKANNOTATIONS 
                     map_ann.setNs(namespace)
                     # convert the ordered dict to a list of lists
-                    map_ann.setValue([  [k,v] for k,v in updated_kv.iteritems() ] )
+                    map_ann.setValue([  [k,v] for k,v in updated_kv.items() ] )
                     map_ann.save()
                     img.linkAnnotation(map_ann)                     
                 else:
@@ -236,10 +236,13 @@ def run_script():
         conn = BlitzGateway(client_obj=client)
         message="here I am"
         print "scaript params"
-        for k,v in script_params.iteritems():
+        for k,v in script_params.items():
             print k,v
         message = populate_metadata(client, conn, script_params)
         client.setOutput("Message", rstring(message))
+    
+    except:
+        pass
 
     finally:
         client.closeSession()

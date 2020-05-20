@@ -28,7 +28,6 @@
 @since 5.3
 
 """
-from __future__ import print_function
 
 import sys, os
 import re
@@ -70,7 +69,7 @@ def RemoveMapAnnotations(conn, dtype, Id ):
         conn.c.waitOnCmd(handle, loops=10, ms=500, failonerror=True,
                      failontimeout=False, closehandle=False)
 
-    except Exception, ex:
+    except Exception as ex:
         print("Failed to delete links: {}".format(ex.message))
     return
 
@@ -103,7 +102,7 @@ def AddMapAnnotations(conn, dtype, Id ):
 
     for line in description:
         # 1. See if this is a mode string
-        for key,value in modes.iteritems():
+        for key,value in modes.items():
             match = re.search( "^#\s+{}".format(key),line.lower())
             if( match is not None ):
                 mode = value
@@ -140,7 +139,7 @@ def AddMapAnnotations(conn, dtype, Id ):
                  file_keys[i] = match.group(2)
 
     print("Global k-v's")
-    for k,v in global_kv.iteritems():
+    for k,v in global_kv.items():
         print( k,v)
 
     # convert the template to a regexp
@@ -163,7 +162,7 @@ def AddMapAnnotations(conn, dtype, Id ):
         map_ann = omero.gateway.MapAnnotationWrapper(conn)
         namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
         map_ann.setNs(namespace)    
-        map_ann.setValue(  [  [k,v] for k,v in global_kv.iteritems() ] )
+        map_ann.setValue(  [  [k,v] for k,v in global_kv.items() ] )
         map_ann.save()
         dataset.linkAnnotation(map_ann)
 
@@ -187,10 +186,6 @@ def AddMapAnnotations(conn, dtype, Id ):
             filename = path+"/"+name
             match = regexp.search(filename)
 
-            # extract the keys
-            #for i,key in file_keys.iteritems():
-            #    val = match.group(int(i))
-            #    updated_kv[key] =  val
             if( match is not None ):
                 for i,val in enumerate(match.groups()):
                     i1 = i+1
@@ -199,10 +194,10 @@ def AddMapAnnotations(conn, dtype, Id ):
                         updated_kv[key] = val
 
         print("existing_kv")
-        for k,v in existing_kv.iteritems():
+        for k,v in existing_kv.items():
             print("  {} : {}".format(k,v))             
         print("updated_kv")
-        for k,v in updated_kv.iteritems():
+        for k,v in updated_kv.items():
             print("  {} : {}".format(k,v))    
         print("Are they the same?",existing_kv == updated_kv )
 
@@ -214,7 +209,7 @@ def AddMapAnnotations(conn, dtype, Id ):
             namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
             map_ann.setNs(namespace)
             # convert the ordered dict to a list of lists
-            map_ann.setValue([  [k,v] for k,v in updated_kv.iteritems() ] )
+            map_ann.setValue([  [k,v] for k,v in updated_kv.items() ] )
             map_ann.save()
             image.linkAnnotation(map_ann)
 
