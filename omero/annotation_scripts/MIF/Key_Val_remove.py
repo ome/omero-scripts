@@ -163,7 +163,7 @@ if __name__ == "__main__":
         client.setOutput("Message", rstring(message))
     
     except:
-        raise
+        pass
 
     finally:
         client.closeSession()

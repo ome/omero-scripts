@@ -444,7 +444,7 @@ if __name__ == "__main__":
         #        # Insight will display the 'Message' parameter
         #client.setOutput("Message", rstring(message))
     except:
-        raise
+        pass
 
     finally:
         client.closeSession()
