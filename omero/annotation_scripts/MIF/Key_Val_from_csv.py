@@ -234,10 +234,9 @@ def run_script():
 
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
-        message="here I am"
-        print "scaript params"
+        print("script params")
         for k,v in script_params.items():
-            print k,v
+            print(k,v)
         message = populate_metadata(client, conn, script_params)
         client.setOutput("Message", rstring(message))
     
