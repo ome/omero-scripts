@@ -58,7 +58,6 @@ def RemoveMapAnnotations(conn, dtype, Id ):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     image = conn.getObject(dtype,int(Id))
     namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
-    namespace = "openmicroscopy.org/mapr/gene" 
 
     filename = image.getName()
 
