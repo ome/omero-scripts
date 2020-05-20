@@ -28,7 +28,6 @@
 @since 5.3
 
 """
-from __future__ import print_function
 
 import sys, os
 import re
@@ -102,7 +101,7 @@ def AddKeysToMatchingFiles( conn, Id, global_kv, template, file_keys, spec_kv=No
 
         existing_kv = GetExistingMapAnnotions(image)
         updated_kv  = copy.deepcopy(existing_kv)
-        for key,vals in global_kv.iteritems():
+        for key,vals in global_kv.items():
             if key not in updated_kv: updated_kv[key] = set()
             for val in vals:
                 updated_kv[key].add(val)
@@ -129,19 +128,12 @@ def AddKeysToMatchingFiles( conn, Id, global_kv, template, file_keys, spec_kv=No
                         updated_kv[key].add(val)
 
                 if( spec_kv is not None ):
-                    for key,vals in spec_kv.iteritems():
+                    for key,vals in spec_kv.items():
                         if key not in updated_kv: updated_kv[key] = set()
                         for val in vals:
                             updated_kv[key].add(val)
 
 
-        #print("existing_kv")
-        #for k,v in existing_kv.iteritems():
-        #    print("  {} : {}".format(k,v))
-        #print("updated_kv")
-        #for k,v in updated_kv.iteritems():
-        #    print("  {} : {}".format(k,v))
-        #print("Are they the same?",existing_kv == updated_kv )
         nold_i = sum(map( len, existing_kv.values()))
         nnew_i = sum(map( len, updated_kv.values()))
         nkv_added = nkv_added+(nnew_i+nold_i)
@@ -155,7 +147,7 @@ def AddKeysToMatchingFiles( conn, Id, global_kv, template, file_keys, spec_kv=No
             map_ann.setNs(namespace)
             # convert the ordered dict to a list of lists
             kv_list=[]
-            for k,vset in updated_kv.iteritems():
+            for k,vset in updated_kv.items():
                 for v in vset:
                     kv_list.append( [k,v] )
             map_ann.setValue( kv_list )
@@ -268,9 +260,6 @@ def AddMapAnnotations(conn, dtype, Id ):
                  val = match.group(2)
                  if( key not in spec_kv ): spec_kv[key]=set()
                  spec_kv[key].add(val)
-    #print("Global k-v's")
-    #for k,v in global_kv.iteritems():
-    #    print( k,v)
 
     # now add the key value pairs to the dataset
     existing_kv = GetExistingMapAnnotions(dataset)
@@ -282,7 +271,7 @@ def AddMapAnnotations(conn, dtype, Id ):
         map_ann.setNs(namespace)    
         # convert the ordered dict to a list of lists
         kv_list=[]
-        for k,vset in global_kv.iteritems():
+        for k,vset in global_kv.items():
             for v in vset:
                 kv_list.append( [k,v] )
         map_ann.setValue( kv_list )        
@@ -325,10 +314,10 @@ def AddMapAnnotations(conn, dtype, Id ):
                             updated_kv[key].add(val)
 
             print("existing_kv")
-            for k,v in existing_kv.iteritems():
+            for k,v in existing_kv.items():
                 print("  {} : {}".format(k,v))             
             print("updated_kv")
-            for k,v in updated_kv.iteritems():
+            for k,v in updated_kv.items():
                 print("  {} : {}".format(k,v))    
             print("Are they the same?",existing_kv == updated_kv )
 
@@ -343,7 +332,7 @@ def AddMapAnnotations(conn, dtype, Id ):
                 print(map_ann)
                 # convert the ordered dict to a list of lists
                 kv_list=[]
-                for k,vset in updated_kv.iteritems():
+                for k,vset in updated_kv.items():
                     for v in vset:
                         kv_list.append( [k,v] )            
                 map_ann.setValue( kv_list )
@@ -454,5 +443,8 @@ if __name__ == "__main__":
         #                   " details")
         #        # Insight will display the 'Message' parameter
         #client.setOutput("Message", rstring(message))
+    except:
+        raise
+
     finally:
         client.closeSession()
