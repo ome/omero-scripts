@@ -96,7 +96,7 @@ def get_original_file(conn, object_type, object_id, file_ann_id=None):
     #        sys.stderr.write("Error: Screen does not exist.\n")
     #        sys.exit(1)
     omero_object = conn.getObject("Dataset", int(object_id))
-    print omero_object.getName()
+    print(omero_object.getName())
     if omero_object is None:
         sys.stderr.write("Error: Dataset does not exist.\n")
         sys.exit(1)
@@ -105,7 +105,7 @@ def get_original_file(conn, object_type, object_id, file_ann_id=None):
     for ann in omero_object.listAnnotations():
         if isinstance(ann, omero.gateway.FileAnnotationWrapper):
             file_name = ann.getFile().getName()
-            print file_name
+            print(file_name)
             # Pick file by Ann ID (or name if ID is None)
             if (file_ann_id is None and file_name.endswith(".csv")) or (
                     ann.getId() == file_ann_id):
@@ -235,7 +235,7 @@ def run_script():
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
         for k,v in script_params.items():
-            print k,v
+            print(k,v)
         message = populate_metadata(client, conn, script_params)
         client.setOutput("Message", rstring(message))
     
