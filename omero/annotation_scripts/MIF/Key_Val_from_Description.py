@@ -72,7 +72,7 @@ def RemoveMapAnnotations(conn, dtype, Id ):
         conn.c.waitOnCmd(handle, loops=10, ms=500, failonerror=True,
                      failontimeout=False, closehandle=False)
 
-    except Exception, ex:
+    except Exception as ex:
         print("Failed to delete links: {}".format(ex.message))
     return
 
