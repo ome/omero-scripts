@@ -27,8 +27,6 @@
 @since   5.3.3
 
 """
-from __future__ import print_function
-
 
 from omero.gateway import BlitzGateway
 import omero
@@ -55,7 +53,7 @@ def RemoveMapAnnotations(conn, dtype, Id ):
         conn.c.waitOnCmd(handle, loops=10, ms=500, failonerror=True,
                      failontimeout=False, closehandle=False)
         return 0
-    except Exception, ex:
+    except Exception as ex:
         print("Failed to delete links: {} ".format(ex.message) )
         return 1
     return
@@ -163,6 +161,9 @@ if __name__ == "__main__":
         nobjs = len(objs)
         message = "Key value data deleted from  {} of {} files".format( nobjs-nfailed, nobjs)
         client.setOutput("Message", rstring(message))
+    
+    except:
+        raise
 
     finally:
         client.closeSession()
