@@ -368,7 +368,7 @@ def run_script():
             "Include_Points_Coords", grouping="5",
             description=("Export the Points string for Polygons "
                          "and Polylines. Disable this to reduce the "
-                         "size of the csv file when exporting large "
+                         "size of the CSV file when exporting large "
                          "numbers of ROIs"),
             default=True),
 
