@@ -146,6 +146,7 @@ def get_export_data(conn, script_params, image, units=None):
 
 
 # well_id, well_row, well_column, well_label inserted if SPW
+# Points inserted if exporting shape points string
 COLUMN_NAMES = ["image_id",
                 "image_name",
                 "roi_id",
@@ -172,8 +173,7 @@ COLUMN_NAMES = ["image_id",
                 "X1",
                 "Y1",
                 "X2",
-                "Y2",
-                "Points"]
+                "Y2"]
 
 
 def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y,
@@ -280,6 +280,8 @@ def batch_roi_export(conn, script_params):
         COLUMN_NAMES.insert(2, "well_row")
         COLUMN_NAMES.insert(3, "well_column")
         COLUMN_NAMES.insert(4, "well_label")
+    if script_params.get("Include_Points_Coords", False):
+        COLUMN_NAMES.append("Points")
     if dtype == "Image":
         images = list(conn.getObjects("Image", ids))
     elif dtype == "Dataset":
