@@ -34,12 +34,12 @@ sizeC as input.
 # @since 3.0
 
 
-# from omero.gateway import BlitzGateway
-# import omero
-# import omero.util.script_utils as script_utils
-# import omero.util.roi_handling_utils as roi_utils
-# from omero.rtypes import rlong, rstring, robject, unwrap
-# import omero.scripts as scripts
+from omero.gateway import BlitzGateway
+import omero
+import omero.util.script_utils as script_utils
+import omero.util.roi_handling_utils as roi_utils
+from omero.rtypes import rlong, rstring, robject, unwrap
+import omero.scripts as scripts
 from numpy import zeros, hstack, vstack, asarray, math
 import logging
 from PIL import Image
