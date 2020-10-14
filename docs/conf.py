@@ -19,7 +19,7 @@ master_doc = 'index'
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../omero/analysis_scripts/'))
+sys.path.insert(0, os.path.abspath('../omero/'))
 
 
 # -- Project information -----------------------------------------------------
