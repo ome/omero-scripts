@@ -3,3 +3,4 @@
 *.pyc
 .gitignore
 *.DS_Store*
+docs/_build

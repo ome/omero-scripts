@@ -40,7 +40,7 @@ sizeC as input.
 # import omero.util.roi_handling_utils as roi_utils
 # from omero.rtypes import rlong, rstring, robject, unwrap
 # import omero.scripts as scripts
-# from numpy import zeros, hstack, vstack, asarray, math
+from numpy import zeros, hstack, vstack, asarray, math
 import logging
 from PIL import Image
 from io import BytesIO
