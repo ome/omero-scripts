@@ -13,7 +13,7 @@ Welcome to will-moore-omero-scripts's documentation!
 Python scripts for running on an OMERO.server via the OMERO scripting service.
 
 
-.. automodule:: Kymograph
+.. automodule:: analysis_scripts
    :members:
 
 Indices and tables
