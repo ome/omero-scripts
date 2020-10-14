@@ -4,6 +4,8 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+import os
+import sys
 
 # To fix 'docs/contents.rst not found' errors we need this, see
 # https://github.com/readthedocs/readthedocs.org/issues/2569
@@ -17,8 +19,6 @@ master_doc = 'index'
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
-import sys
 sys.path.insert(0, os.path.abspath('../omero/'))
 
 
