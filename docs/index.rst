@@ -9,12 +9,11 @@ Welcome to will-moore-omero-scripts's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+   analysis_scripts
+
 
 Python scripts for running on an OMERO.server via the OMERO scripting service.
 
-
-.. automodule:: analysis_scripts
-   :members:
 
 Indices and tables
 ==================
