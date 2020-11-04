@@ -73,7 +73,7 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
-version = '5.6.1'
+version = '5.6.2.dev0'
 url = "https://github.com/ome/omero-scripts/"
 
 setup(
