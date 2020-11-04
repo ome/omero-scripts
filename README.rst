@@ -1,5 +1,5 @@
-.. image:: https://travis-ci.org/ome/omero-scripts.svg
-    :target: https://travis-ci.org/ome/omero-scripts
+.. image:: https://github.com/ome/omero-scripts/workflows/OMERO/badge.svg
+    :target: https://github.com/ome/omero-scripts/actions
 
 .. image:: https://badge.fury.io/py/omero-scripts.svg
     :target: https://badge.fury.io/py/omero-scripts
