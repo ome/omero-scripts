@@ -25,12 +25,51 @@ Populate metadata from CSV.
 import omero
 from omero.gateway import BlitzGateway
 from omero.rtypes import rstring, rlong
+from omero.util.temp_files import create_path
 import omero.scripts as scripts
 import omero.model
 
+import tempfile
 import sys
 
-from omero.util.populate_roi import DownloadingOriginalFileProvider
+
+class DownloadingOriginalFileProvider(object):
+
+    """
+    Provides original file data by downloading it from an OMERO raw file store.
+
+    Ported from omero.util.populate_roi to use NamedTemporaryFile instead
+    of TemporaryFile
+    """
+
+    # Default raw file store buffer size
+    BUFFER_SIZE = 1024 * 1024  # 1MB
+
+    def __init__(self, service_factory):
+        self.service_factory = service_factory
+        self.raw_file_store = self.service_factory.createRawFileStore()
+        self.dir = create_path("populate_roi", "dir", folder=True)
+
+    def get_original_file_data(self, original_file):
+        """
+        Downloads an original file to a temporary file and returns an open
+        file handle to that temporary file seeked to zero. The caller is
+        responsible for closing the temporary file.
+        """
+        print("Downloading original file: %d" % original_file.id.val)
+        self.raw_file_store.setFileId(original_file.id.val)
+        temporary_file = tempfile.NamedTemporaryFile(mode='rt+', dir=str(self.dir))
+        size = original_file.size.val
+        for i in range((size // self.BUFFER_SIZE) + 1):
+            index = i * self.BUFFER_SIZE
+            data = self.raw_file_store.read(index, self.BUFFER_SIZE)
+            temporary_file.write(data.decode("utf-8"))
+        temporary_file.seek(0)
+        temporary_file.truncate(size)
+        return temporary_file
+
+    def __delete__(self):
+        self.raw_file_store.close()
 
 try:
     # Hopefully this will import
@@ -114,19 +153,24 @@ def populate_metadata(client, conn, script_params):
         conn, data_type, object_id, file_ann_id)
     provider = DownloadingOriginalFileProvider(conn)
     data_for_preprocessing = provider.get_original_file_data(original_file)
-    data = provider.get_original_file_data(original_file)
+    temp_name = data_for_preprocessing.name
     objecti = getattr(omero.model, data_type + 'I')
     omero_object = objecti(int(object_id), False)
     ctx = ParsingContext(client, omero_object, "")
 
     try:
         # Old
-        ctx.parse_from_handle(data)
-        ctx.write_to_omero()
+        with open(temp_name, 'rt', encoding='utf-8-sig') as f1:
+            ctx.parse_from_handle(data)
+            ctx.write_to_omero()
     except AttributeError:
         # omero-metadata >= 0.3.0
-        ctx.preprocess_from_handle(data_for_preprocessing)
-        ctx.parse_from_handle_stream(data)
+        with open(temp_name, 'rt', encoding='utf-8-sig') as f1:
+            ctx.preprocess_from_handle(f1)
+            with open(temp_name, 'rt', encoding='utf-8-sig') as f2:
+                ctx.parse_from_handle_stream(f2)
+    finally:
+        data_for_preprocessing.close()
     return "Table data populated for %s: %s" % (data_type, object_id)
 
 
