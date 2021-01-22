@@ -58,7 +58,8 @@ class DownloadingOriginalFileProvider(object):
         """
         print("Downloading original file: %d" % original_file.id.val)
         self.raw_file_store.setFileId(original_file.id.val)
-        temporary_file = tempfile.NamedTemporaryFile(mode='rt+', dir=str(self.dir))
+        temporary_file = tempfile.NamedTemporaryFile(mode='rt+',
+                                                     dir=str(self.dir))
         size = original_file.size.val
         for i in range((size // self.BUFFER_SIZE) + 1):
             index = i * self.BUFFER_SIZE
@@ -70,6 +71,7 @@ class DownloadingOriginalFileProvider(object):
 
     def __delete__(self):
         self.raw_file_store.close()
+
 
 try:
     # Hopefully this will import
@@ -161,7 +163,7 @@ def populate_metadata(client, conn, script_params):
     try:
         # Old
         with open(temp_name, 'rt', encoding='utf-8-sig') as f1:
-            ctx.parse_from_handle(data)
+            ctx.parse_from_handle(f1)
             ctx.write_to_omero()
     except AttributeError:
         # omero-metadata >= 0.3.0
