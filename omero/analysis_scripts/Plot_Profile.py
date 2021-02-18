@@ -105,6 +105,8 @@ def process_lines(conn, script_params, image, lines, line_width, fout):
         the_t = l['theT']
         the_z = l['theZ']
         roi_id = l['id']
+        if round(l['x1'] - l['x2']) == 0 and round(l['y1'] - l['y2']) == 0:
+            continue
         for the_c in the_cs:
             line_data = []
             line_data = roi_utils.get_line_data(pixels, l['x1'], l['y1'],
