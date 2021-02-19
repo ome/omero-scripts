@@ -28,7 +28,7 @@ sys.path.insert(0, os.path.abspath('../omero/util_scripts'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'jburel-omero-scripts'
+project = 'omero scripts'
 copyright = '2021, OME'
 author = 'OME'
 
@@ -72,7 +72,7 @@ html_static_path = []
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'OMEROROIs.tex', u'OMERO ROIs Documentation',
+    (master_doc, 'OMEROScripts.tex', u'OMERO Scripts Documentation',
      u'Open Microscopy Environment', 'manual'),
 ]
 

@@ -1,12 +1,10 @@
-Welcome to jburel-omero-scripts's documentation!
-====================================================
+Welcome to OEMRO Scripts documentation
+======================================
 
 Python scripts for running on an OMERO.server via the OMERO scripting service.
 
 .. toctree::
    scripts
-
-
 
 
 Indices and tables
