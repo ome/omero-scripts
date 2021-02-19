@@ -60,6 +60,8 @@ def process_polylines(conn, script_params, image, polylines, line_width, fout):
             for l in range(len(points)-1):
                 x1, y1 = points[l]
                 x2, y2 = points[l+1]
+                if round(x1 - x2) == 0 and round(y1 - y2) == 0:
+                    continue
                 ld = roi_utils.get_line_data(
                     pixels, x1, y1, x2, y2, line_width,
                     the_z, the_c, the_t)

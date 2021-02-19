@@ -82,7 +82,10 @@ class TestAnalysisScripts(ScriptTest):
         session = client.getSession()
         image = self.create_test_image(size_x, size_y, 1, 2, size_t, session)
         image_id = image.id.val
-        roi = create_roi(image_id, 0, size_x / 2, 0, size_y / 2, size_t, False)
+        roi = create_roi(image_id, 0, size_x / 2, 0, size_y / 2, size_t, True)
+        session.getUpdateService().saveAndReturnObject(roi)
+        # Test zero-length line
+        roi = create_roi(image_id, 1, 1, 1, 1, 1, False)
         session.getUpdateService().saveAndReturnObject(roi)
         image_ids = []
         image_ids.append(omero.rtypes.rlong(image_id))
@@ -159,7 +162,8 @@ def create_roi(image_id, x1, x2, y1, y2, size_t, with_polylines):
             polyline = omero.model.PolylineI()
             polyline.theZ = omero.rtypes.rint(0)
             polyline.theT = omero.rtypes.rint(t)
-            points = [[10.5, 20], [50.55, 50], [75, 60]]
+            # Includes a zero-length section - possible with iviewer freehand
+            points = [[10.5, 20], [50.55, 50], [75, 60], [75, 60]]
             polyline.points = omero.rtypes.rstring(points_to_string(points))
             roi.addShape(polyline)
     return roi
