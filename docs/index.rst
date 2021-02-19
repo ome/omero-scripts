@@ -1,4 +1,4 @@
-Welcome to will-moore-omero-scripts's documentation!
+Welcome to jburel-omero-scripts's documentation!
 ====================================================
 
 Python scripts for running on an OMERO.server via the OMERO scripting service.
