@@ -28,12 +28,14 @@ sys.path.insert(0, os.path.abspath('../omero/util_scripts'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'omero scripts'
-copyright = '2021, OME'
-author = 'OME'
+project = u'omero scripts'
+copyright = u'2021, Open Microscopy Environment'
+author = u'Open Microscopy Environment'
 
 # The full version, including alpha/beta/rc tags
-release = '5.6.0'
+# The short X.Y version.
+version = '0.2.0'
+release = version
 
 
 # -- General configuration ---------------------------------------------------
@@ -56,12 +58,15 @@ exclude_patterns = [u'_build', 'Thumbs.db', '.DS_Store']
 # Build docs without external dependencies
 autodoc_mock_imports = ['numpy', 'omero-py', 'omero', "PIL"]
 
+# The name of the Pygments (syntax highlighting) style to use.
+pygments_style = 'sphinx'
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = 'default'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -73,7 +78,7 @@ html_static_path = []
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'OMEROScripts.tex', u'OMERO Scripts Documentation',
-     u'Open Microscopy Environment', 'manual'),
+     author, 'manual'),
 ]
 
 
