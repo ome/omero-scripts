@@ -1,33 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+# -----------------------------------------------------------------------------
+#   Copyright (C) 2006-2021 University of Dundee. All rights reserved.
+
+
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+#   You should have received a copy of the GNU General Public License along
+#   with this program; if not, write to the Free Software Foundation, Inc.,
+#   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+# ------------------------------------------------------------------------------
+
 """
------------------------------------------------------------------------------
-  Copyright (C) 2006-2014 University of Dundee. All rights reserved.
-
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or
-  (at your option) any later version.
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write to the Free Software Foundation, Inc.,
-  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
-------------------------------------------------------------------------------
-
 This script takes a number of images and saves individual image planes in a
 zip file for download.
-
-@author Will Moore
-<a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
-@version 4.3
-@since 3.0-Beta4.3
 """
+
+# @author Will Moore
+# <a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
+# @version 4.3
+# @since 3.0-Beta4.3
 
 import omero.scripts as scripts
 from omero.gateway import BlitzGateway
@@ -66,9 +67,8 @@ def compress(target, base):
     """
     Creates a ZIP recursively from a given base directory.
 
-    @param target:      Name of the zip file we want to write E.g.
-                        "folder.zip"
-    @param base:        Name of folder that we want to zip up E.g. "folder"
+    | @param target: Name of the zip file we want to write e.g. "folder.zip"
+    | @param base: Name of folder that we want to zip up E.g. "folder"
     """
     zip_file = zipfile.ZipFile(target, 'w')
     try:
@@ -85,18 +85,16 @@ def save_plane(image, format, c_name, z_range, project_z, t=0, channel=None,
     """
     Renders and saves an image to disk.
 
-    @param image:           The image to render
-    @param format:          The format to save as
-    @param c_name:          The name to use
-    @param z_range:         Tuple of (zIndex,) OR (zStart, zStop) for
-                            projection
-    @param t:               T index
-    @param channel:         Active channel index. If None, use current
-                            rendering settings
-    @param greyscale:       If true, all visible channels will be
-                            greyscale
-    @param zoom_percent:    Resize image by this percent if specified
-    @param folder_name:     Indicate where to save the plane
+    | @param image: The image to render
+    | @param format: The format to save as
+    | @param c_name: The name to use
+    | @param z_range: Tuple of (zIndex,) OR (zStart, zStop) for projection
+    | @param t: T index
+    | @param channel: Active channel index.
+                      If None, use current rendering settings
+    | @param greyscale: If true, all visible channels will begreyscale
+    | @param zoom_percent: Resize image by this percent if specified
+    | @param folder_name: Indicate where to save the plane
     """
 
     original_name = image.getName()
@@ -199,17 +197,14 @@ def save_planes_for_image(conn, image, size_c, split_cs, merged_cs,
     Saves all the required planes for a single image, either as individual
     planes or projection.
 
-    @param renderingEngine:     Rendering Engine, NOT initialised.
-    @param queryService:        OMERO query service
-    @param imageId:             Image ID
-    @param zRange:              Tuple: (zStart, zStop). If None, use default
-                                Zindex
-    @param tRange:              Tuple: (tStart, tStop). If None, use default
-                                Tindex
-    @param greyscale:           If true, all visible channels will be
-                                greyscale
-    @param zoomPercent:         Resize image by this percent if specified.
-    @param projectZ:            If true, project over Z range.
+    | @param renderingEngine: Rendering Engine, NOT initialised.
+    | @param queryService: OMERO query service
+    | @param imageId: Image ID
+    | @param zRange: Tuple: (zStart, zStop). If None, use default Zindex
+    | @param tRange: Tuple: (tStart, tStop). If None, use default Tindex
+    | @param greyscale: If true, all visible channels will be greyscale
+    | @param zoomPercent: Resize image by this percent if specified.
+    | @param projectZ: If true, project over Z range.
     """
 
     channels = []

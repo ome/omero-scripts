@@ -58,12 +58,12 @@ def get_line_data(image, x1, y1, x2, y2, line_w=2, the_z=0, the_c=0, the_t=0):
     Uses PIL to handle rotating and interpolating the data. Converts to numpy
     to PIL and back (may change dtype.)
 
-    @param pixels:          PixelsWrapper object
-    @param x1, y1, x2, y2:  Coordinates of line
-    @param line_w:          Width of the line we want
-    @param the_z:           Z index within pixels
-    @param the_c:           Channel index
-    @param the_t:           Time index
+    | @param pixels:          PixelsWrapper object
+    | @param x1, y1, x2, y2:  Coordinates of line
+    | @param line_w:          Width of the line we want
+    | @param the_z:           Z index within pixels
+    | @param the_c:           Channel index
+    | @param the_t:           Time index
     """
     size_x = image.getSizeX()
     size_y = image.getSizeY()

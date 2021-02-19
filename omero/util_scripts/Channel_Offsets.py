@@ -1,37 +1,33 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# -----------------------------------------------------------------------------
+#   Copyright (C) 2006-2021 University of Dundee. All rights reserved.
+#
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along
+#   with this program; if not, write to the Free Software Foundation, Inc.,
+#   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# ------------------------------------------------------------------------------
+
 """
------------------------------------------------------------------------------
-  Copyright (C) 2006-2014 University of Dundee. All rights reserved.
-
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or
-  (at your option) any later version.
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write to the Free Software Foundation, Inc.,
-  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
-------------------------------------------------------------------------------
-
 This script creates new images from existing images, applying x, y, and z
 shifts to each channel independently, as specified in the parameters.
-
-@author  Will Moore &nbsp;&nbsp;&nbsp;&nbsp;
-<a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
-@version 3.0
-<small>
-(<b>Internal version:</b> $Revision: $Date: $)
-</small>
-@since 3.0-Beta4.3
-
 """
+
+# @author  Will Moore &nbsp;&nbsp;&nbsp;&nbsp;
+# <a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
+# @version 3.0
+# @since 3.0-Beta4.3
 
 import omero
 from omero.gateway import BlitzGateway
@@ -48,8 +44,8 @@ def new_image_with_channel_offsets(conn, image_id, channel_offsets,
     Process a single image here: creating a new image and passing planes from
     original image to new image - applying offsets to each channel as we go.
 
-    @param image_id:            Original image
-    @param channel_offsets:     List of map for each channel {'index':index,
+    | @param image_id:            Original image
+    | @param channel_offsets:     List of map for each channel {'index':index,
                                 'x':x, 'y'y, 'z':z}
     """
 

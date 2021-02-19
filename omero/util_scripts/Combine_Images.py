@@ -1,37 +1,33 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# -----------------------------------------------------------------------------
+#   Copyright (C) 2006-2021 University of Dundee. All rights reserved.
+#
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along
+#   with this program; if not, write to the Free Software Foundation, Inc.,
+#   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# ------------------------------------------------------------------------------
+
 """
------------------------------------------------------------------------------
-  Copyright (C) 2006-2014 University of Dundee. All rights reserved.
-
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or
-  (at your option) any later version.
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write to the Free Software Foundation, Inc.,
-  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
-------------------------------------------------------------------------------
-
 This script takes a number of images (or Z-stacks) and merges them to create
 additional C, T, Z dimensions.
-
-@author  Will Moore &nbsp;&nbsp;&nbsp;&nbsp;
-<a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
-@version 3.0
-<small>
-(<b>Internal version:</b> $Revision: $Date: $)
-</small>
-@since 3.0-Beta4.2
-
 """
+
+# @author  Will Moore &nbsp;&nbsp;&nbsp;&nbsp;
+# <a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
+# @version 3.0
+# @since 3.0-Beta4.2
 
 import re
 from numpy import zeros
@@ -74,11 +70,11 @@ def get_plane(raw_pixel_store, pixels, the_z, the_c, the_t):
     This method downloads the specified plane of the OMERO image and returns
     it as a numpy array.
 
-    @param session      The OMERO session
-    @param imageId      The ID of the image to download
-    @param pixels       The pixels object, with pixelsType
-    @param imageName    The name of the image to write. If no path, saved in
-                        the current directory.
+    | @param session: The OMERO session
+    | @param imageId: The ID of the image to download
+    | @param pixels: The pixels object, with pixelsType
+    | @param imageName: The name of the image to write.\
+                        If no path, saved in the current directory.
     """
 
     # get the plane

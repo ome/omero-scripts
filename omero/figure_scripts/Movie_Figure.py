@@ -1,37 +1,37 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+# -----------------------------------------------------------------------------
+#   Copyright (C) 2006-2021 University of Dundee. All rights reserved.
+
+
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+#   You should have received a copy of the GNU General Public License along
+#   with this program; if not, write to the Free Software Foundation, Inc.,
+#   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+# ------------------------------------------------------------------------------
+
 """
------------------------------------------------------------------------------
-  Copyright (C) 2006-2017 University of Dundee. All rights reserved.
-
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or
-  (at your option) any later version.
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write to the Free Software Foundation, Inc.,
-  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
-------------------------------------------------------------------------------
-
 Script produces a figure of a movie, showing panels of different frames.
 Saves the figure as a jpg or png attached to the first image in the figure.
-
-@author  William Moore &nbsp;&nbsp;&nbsp;&nbsp;
-<a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
-@author  Jean-Marie Burel &nbsp;&nbsp;&nbsp;&nbsp;
-<a href="mailto:j.burel@dundee.ac.uk">j.burel@dundee.ac.uk</a>
-@author Donald MacDonald &nbsp;&nbsp;&nbsp;&nbsp;
-<a href="mailto:donald@lifesci.dundee.ac.uk">donald@lifesci.dundee.ac.uk</a>
-@since 3.0
-
 """
+
+# @author  William Moore &nbsp;&nbsp;&nbsp;&nbsp;
+# <a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
+# @author  Jean-Marie Burel &nbsp;&nbsp;&nbsp;&nbsp;
+# <a href="mailto:j.burel@dundee.ac.uk">j.burel@dundee.ac.uk</a>
+# @author Donald MacDonald &nbsp;&nbsp;&nbsp;&nbsp;
+# <a href="mailto:donald@lifesci.dundee.ac.uk">donald@lifesci.dundee.ac.uk</a>
+# @since 3.0
 
 import omero.scripts as scripts
 import omero.util.image_utils as image_utils
@@ -73,22 +73,21 @@ def createmovie_figure(conn, pixel_ids, t_indexes, z_start, z_end, width,
     frame to show the time-stamp of that frame in the specified units and
     labels on the left name each image.
 
-    @param conn             The OMERO session
-    @param pixel_ids        A list of the Pixel IDs for the images in the
-                            figure
-    @param t_indexes        A list of tIndexes to display frames from
-    @param z_start          Projection Z-start
-    @param z_end            Projection Z-end
-    @param width            Maximum width of panels
-    @param height           Max height of panels
-    @param spacer           Space between panels
-    @param algorithm        Projection algorithm e.g. "MAXIMUMINTENSITY"
-    @param stepping         Projecttion z-step
-    @param scalebar         A number of microns for scale-bar
-    @param overlay_colour   Color of the scale bar as tuple (255,255,255)
-    @param time_units       A string such as "SECS"
-    @param image_labels     A list of lists, corresponding to pixelIds, for
-                            labelling each image with one or more strings.
+    | @param conn The OMERO session
+    | @param pixel_ids A list of the Pixel IDs for the images in the figure
+    | @param t_indexes A list of tIndexes to display frames from
+    | @param z_start Projection Z-start
+    | @param z_end Projection Z-end
+    | @param width Maximum width of panels
+    | @param height Max height of panels
+    | @param spacer Space between panels
+    | @param algorithm Projection algorithm e.g. "MAXIMUMINTENSITY"
+    | @param stepping Projection z-step
+    | @param scalebar A number of microns for scale-bar
+    | @param overlay_colour Color of the scale bar as tuple (255,255,255)
+    | @param time_units A string such as "SECS"
+    | @param image_labels A list of lists, corresponding to pixelIds, \
+                          for labelling each image with one or more strings.
     """
 
     mode = "RGB"
@@ -283,13 +282,13 @@ def add_left_labels(panel_canvas, image_labels, row_index, width, spacer):
     index of the current image panel) so that we know what is the max label
     count and can give all panels the same margin on the left.
 
-    @param panelCanvas:     PIL image - add labels to the left of this
-    @param imageLabels:     A series of label lists, one per image. We only
-                            add labels from one list
-    @param rowIndex:        The index of the label list we're going to use
-                            from imageLabels
-    @param width:           Simply used for finding a suitable font size
-    @param spacer:          Space between panels
+    | @param panelCanvas: PIL image - add labels to the left of this
+    | @param imageLabels: A series of label lists, one per image. We only\
+                          add labels from one list
+    | @param rowIndex: The index of the label list we're going to use from \
+                       imageLabels
+    | @param width: Simply used for finding a suitable font size
+    | @param spacer: Space between panels
     """
 
     # add lables to row...
@@ -346,10 +345,10 @@ def movie_figure(conn, command_args):
     Makes the figure using the parameters in @command_args, attaches the figure
     to the parent Project/Dataset, and returns the file-annotation ID
 
-    @param session      The OMERO session
-    @param command_args Map of parameters for the script
-    @ returns           Returns the id of the originalFileLink child. (ID
-                        object, not value)
+    | @param session The OMERO session
+    | @param command_args Map of parameters for the script
+    | @return Returns the id of the originalFileLink child. \
+              (ID object, not value)
     """
 
     log("Movie figure created by OMERO on %s" % date.today())
@@ -561,8 +560,7 @@ def run_script():
         """Export a figure of a movie, showing a row of frames for each \
 chosen image.
 NB: OMERO.insight client provides a nicer UI for this script under \
-'Publishing Options'
-See http://help.openmicroscopy.org/publish.html#movies""",
+'Publishing Options'""",
 
         # provide 'Data_Type' and 'IDs' parameters so that Insight
         # auto-populates with currently selected images.
