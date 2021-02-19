@@ -1,4 +1,4 @@
-Welcome to OEMRO Scripts documentation
+Welcome to OMERO Scripts documentation
 ======================================
 
 Python scripts for running on an OMERO.server via the OMERO scripting service.
