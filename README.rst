@@ -3,7 +3,7 @@
 
 .. image:: https://github.com/ome/omero-scripts/workflows/sphinx/badge.svg
     :target: https://github.com/ome/omero-scripts/actions
-    
+
 .. image:: https://badge.fury.io/py/omero-scripts.svg
     :target: https://badge.fury.io/py/omero-scripts
 
@@ -20,7 +20,7 @@ by default starting with OMERO 5.
 
 
 Categories
-----------
+==========
 
 Scripts are separated into several categories, one per directory.
 
@@ -52,14 +52,14 @@ be properly importable, i.e.:
 
 
 OMERO User Scripts
-------------------
+==================
 
 If you would like to provide your own scripts for others to install
-into their OMERO installations, please see http://openmicroscopy.org/info/scripts
+into their OMERO installations, please see https://openmicroscopy.org/info/scripts
 
 
 Testing
--------
+=======
 
 Integration tests under ``test/`` require an OMERO server with scripts installed.
 The tests are run by Travis for open PRs using omero-test-infra to deploy OMERO
@@ -73,7 +73,12 @@ To run tests locally:
 	# Single test in a single file
 	$ python setup.py test -t test/integration/test_util_scripts.py -k test_dataset_to_plate
 
-Copyright
----------
+Usage
+=====
 
-2010-2020, The Open Microscopy Environment
+See https://omero-scripts.readthedocs.io/en/stable/
+
+Copyright
+=========
+
+2010-2021, The Open Microscopy Environment
