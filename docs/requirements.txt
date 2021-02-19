@@ -1,2 +1,1 @@
-numpy
-omero-py
+Sphinx
