@@ -24,20 +24,23 @@ Categories
 
 Scripts are separated into several categories, one per directory.
 
-| In the directory       | should be scripts which ...                                                   |
-| ----------------       | ---------------------                                                         |
++------------------------+-------------------------------------------------------------------------------+
+| Directory              | Description                                                                   |
++========================+===============================================================================+                                                    
 | **analysis_scripts**   | crunch images to produce numerical results and similar tasks                  |
++------------------------+-------------------------------------------------------------------------------+
 | **export_scripts**     | take one or more images as an input, and produce a representation for exchange|
++------------------------+-------------------------------------------------------------------------------+
 | **figure_scripts**     | take one or more images as an input, and produce a summary representation     |
-| **hcs_scripts**        | work with screens/plates/wells rather than just images                        |
++------------------------+-------------------------------------------------------------------------------+
 | **import_scripts**     | are run on images after import for extra processing                           |
-| **processing_scripts** | create new images from existing images or other data                          |
-| **setup_scripts**      | are executed once, often by administrators, to configure OMERO itself         |
++------------------------+-------------------------------------------------------------------------------+
 | **util_scripts**       | perform other miscellaneous tasks like cleaning up or optimizing OMERO itself |
++------------------------+-------------------------------------------------------------------------------+
 
 
 Scripts which would like to rely on other scripts can
-use:
+use::
 
     import omero.<sub_dir>.<script_name>
 
