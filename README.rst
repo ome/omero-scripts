@@ -42,7 +42,7 @@ use:
     import omero.<sub_dir>.<script_name>
 
 For this to work, the official script in question must
-be properly importable, i.e.:
+be properly importable, i.e.::
 
     def run():
         client = omero.scripts.client(...)
@@ -65,7 +65,7 @@ Integration tests under ``test/`` require an OMERO server with scripts installed
 The tests are run by Travis for open PRs using omero-test-infra to deploy OMERO
 via Docker containers.
 
-To run tests locally:
+To run tests locally::
 
 	# All tests
 	$ python setup.py test
