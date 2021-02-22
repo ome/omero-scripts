@@ -6,6 +6,9 @@
 
 import os
 import sys
+from sphinx.util import logging
+logger = logging.getLogger(__name__)
+
 
 # To fix 'docs/contents.rst not found' errors we need this, see
 # https://github.com/readthedocs/readthedocs.org/issues/2569
@@ -19,11 +22,59 @@ master_doc = 'index'
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-sys.path.insert(0, os.path.abspath('../omero/analysis_scripts'))
-sys.path.insert(0, os.path.abspath('../omero/export_scripts'))
-sys.path.insert(0, os.path.abspath('../omero/figure_scripts'))
-sys.path.insert(0, os.path.abspath('../omero/import_scripts'))
-sys.path.insert(0, os.path.abspath('../omero/util_scripts'))
+def get_scripts(directory):
+    """
+    Find all the scripts available
+    """
+    scripts = []
+
+    # Walk the tree.
+    for root, directories, files in os.walk(directory):
+        for filename in files:
+            if filename.endswith(".py") and "_init_" not in filename:
+                scripts.append(filename.replace('\n', '').replace(".py", ""))
+
+    return scripts
+
+
+def find_scripts_entry():
+    """
+    Find the entries corresponding to the scripts.
+    """
+
+    with open("scripts.rst") as file:
+        lines = file.readlines()
+
+    entries = []
+    for line in lines:
+        if "automodule" in line:
+            values = line.split(".. automodule::")
+            entries.append(values[1].replace('\n', '').strip())
+    return entries
+
+
+def compare(list1, list2):
+    """
+    Return the elements not common to both lists
+    """
+    return [i for i in list1 + list2 if i not in list1 or i not in list2]
+
+
+# List of directories to scan and add the path.
+directories = ['../omero/analysis_scripts', '../omero/export_scripts',
+               '../omero/figure_scripts', '../omero/import_scripts',
+               '../omero/util_scripts']
+scripts = []
+for d in directories:
+    sys.path.insert(0, d)
+    scripts.extend(get_scripts(d))
+
+entries = find_scripts_entry()
+
+# Indicate the scripts not listed for documentation
+if len(entries) < len(scripts):
+    common = compare(scripts, entries)
+    logger.warning("automodule entries missing for:\n" + '\n'.join(common))
 
 
 # -- Project information -----------------------------------------------------
