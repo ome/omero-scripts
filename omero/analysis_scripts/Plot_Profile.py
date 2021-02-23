@@ -60,6 +60,8 @@ def process_polylines(conn, script_params, image, polylines, line_width, fout):
             for l in range(len(points)-1):
                 x1, y1 = points[l]
                 x2, y2 = points[l+1]
+                if round(x1 - x2) == 0 and round(y1 - y2) == 0:
+                    continue
                 ld = roi_utils.get_line_data(
                     pixels, x1, y1, x2, y2, line_width,
                     the_z, the_c, the_t)
@@ -105,6 +107,8 @@ def process_lines(conn, script_params, image, lines, line_width, fout):
         the_t = l['theT']
         the_z = l['theZ']
         roi_id = l['id']
+        if round(l['x1'] - l['x2']) == 0 and round(l['y1'] - l['y2']) == 0:
+            continue
         for the_c in the_cs:
             line_data = []
             line_data = roi_utils.get_line_data(pixels, l['x1'], l['y1'],
