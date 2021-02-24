@@ -41,6 +41,7 @@ try:
         'Screen',
         'Dataset',
         'Project',
+        'Image',
     )
     DEPRECATED = ""
 
