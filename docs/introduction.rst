@@ -35,8 +35,6 @@ include:
 
 - `OMERO scripts <https://github.com/glencoesoftware/omero-user-scripts>`_ -
   Glencoe Software
-- `Example scripts <https://github.com/ome/omero-example-scripts>`_
-  - OME Team
 - `Fixing scripts <https://github.com/ppouchin/omero-user-scripts>`_ - Pierre 
   Pouchin
 - `GDSC OMERO user scripts <https://github.com/aherbert/omero-user-scripts>`_
