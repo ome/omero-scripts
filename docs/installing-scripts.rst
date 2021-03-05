@@ -15,7 +15,7 @@ Prerequisites
 Uploading and managing scripts
 ------------------------------
 
-:doc:`/developers/scripts/user-guide` describes the workflow for developing 
+:doc:`user-guide` describes the workflow for developing 
 and uploading scripts as an Admin. **Any scripts you add to the lib/scripts/ 
 directory as a server admin will be considered 'trusted' and automatically 
 detected by OMERO, allowing them to be run on the server from the clients or 

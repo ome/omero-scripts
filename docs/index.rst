@@ -15,6 +15,8 @@ are supported natively as well as via a Python wrapper as described in
    :maxdepth: 1
 
    introduction
+   installing-scripts
+   omeromovie
    style-guide
    user-guide
    advanced
