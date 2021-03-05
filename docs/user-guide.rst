@@ -28,7 +28,7 @@ form:
 
 This is a guide to getting started with the scripting service, without
 going into the 'behind the scenes' details. More technical details can
-be found on the :doc:`/developers/scripts/advanced` page. In addition to this
+be found on the :doc:`advanced` page. In addition to this
 guide, you may find the following pages useful for more information on using
 the OMERO Python API: |OmeroClients|, |OmeroPy|.
 

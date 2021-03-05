@@ -107,7 +107,7 @@ methods to upload, delete, query and run scripts. To access these methods
 a session needs to be created and the script service started. However,
 you may find it more convenient to use the command line
 ``omero script`` or the OMERO.insight client to work with scripts
-as described on the :doc:`/developers/scripts/user-guide`.
+as described on the :doc:`user-guide`.
 
 Scripting service API
 ---------------------
@@ -127,7 +127,7 @@ This sample script allows these functions to be called from the command
 line and can be used as an example for writing your own clients.
 
 Most functions of the adminWorkflow.py script are also implemented in
-the OMERO |CLI| described on the :doc:`/developers/scripts/user-guide`,
+the OMERO |CLI| described on the :doc:`user-guide`,
 which is the preferred way of accessing the scripting service for script
 writers.
 

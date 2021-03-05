@@ -1,5 +1,10 @@
+Python Scripts
+==============
+
+Collection of Python scripts available in this repository.
+
 Analysis scripts
-================
+~~~~~~~~~~~~~~~~
 
 Kymograph
 ---------
@@ -22,7 +27,7 @@ Plot Profile
    :members:
 
 Export scripts
-==============
+~~~~~~~~~~~~~~
 
 Batch Image Export
 ------------------
@@ -43,7 +48,7 @@ Make Movie
    :members:
 
 Figure scripts
-==============
+~~~~~~~~~~~~~~
 
 Movie Figure
 ------------
@@ -76,7 +81,7 @@ Thumbnail Figure
    :members:
 
 Import scripts
-==============
+~~~~~~~~~~~~~~
 
 Populate Metadata
 -----------------
@@ -85,13 +90,13 @@ Populate Metadata
    :members:
 
 Populate ROI
------------------
+------------
 
 .. automodule:: Populate_ROI
    :members:
 
 Util scripts
-============
+~~~~~~~~~~~~
 
 Channel Offsets
 ---------------

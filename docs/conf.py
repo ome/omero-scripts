@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # https://github.com/readthedocs/readthedocs.org/issues/2569
 
 master_doc = 'index'
-
+docs_root = 'https://docs.openmicroscopy.org'
 
 # -- Path setup --------------------------------------------------------------
 
@@ -76,6 +76,21 @@ if len(entries) < len(scripts):
     common = compare(scripts, entries)
     logger.warning("automodule entries missing for:\n" + '\n'.join(common))
 
+# Variables used to define Github extlinks
+if "SOURCE_BRANCH" in os.environ and len(os.environ.get('SOURCE_BRANCH')) > 0:
+    branch = os.environ.get('SOURCE_BRANCH')
+else:
+    branch = 'develop'
+
+if "SOURCE_USER" in os.environ and len(os.environ.get('SOURCE_USER')) > 0:
+    user = os.environ.get('SOURCE_USER')
+else:
+    user = 'ome'
+
+github_root = 'https://github.com/'
+omero_github_root = github_root + user + '/openmicroscopy/'
+docs_root = 'https://docs.openmicroscopy.org'
+downloads_root = 'https://downloads.openmicroscopy.org'
 
 # -- Project information -----------------------------------------------------
 
@@ -88,14 +103,25 @@ author = u'Open Microscopy Environment'
 version = '5.6.2.dev0'
 release = version
 
+version_blitz = '5.5.8'
+
 
 # -- General configuration ---------------------------------------------------
+
+extlinks = {
+    'slicedoc_blitz': (docs_root + '/omero-blitz/' +
+                       version_blitz + '/slice2html/%s', ''),
+    'source': (omero_github_root + 'blob/'+ branch + '/%s', ''),
+    'devs_doc': (docs_root + '/contributing/%s', ''),
+    'downloads': (downloads_root + '/%s', ''),
+    }
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.extlinks',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
