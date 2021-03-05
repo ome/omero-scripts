@@ -1,5 +1,5 @@
-OMERO.scripts
-=============
+Installation
+============
 
 OMERO.scripts are the OME version of plugins, allowing you to extend the 
 functionality of OMERO. Official core OMERO.scripts come bundled with every 
