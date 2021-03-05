@@ -1,7 +1,8 @@
-Python Scripts
-==============
+Python Scripts Technical Description
+====================================
 
-Collection of Python scripts available in this repository.
+Description of the methods in the
+collection of Python scripts available in this repository.
 
 Analysis scripts
 ~~~~~~~~~~~~~~~~

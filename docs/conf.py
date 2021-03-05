@@ -114,6 +114,7 @@ extlinks = {
     'source': (omero_github_root + 'blob/'+ branch + '/%s', ''),
     'devs_doc': (docs_root + '/contributing/%s', ''),
     'downloads': (downloads_root + '/%s', ''),
+    'general_doc': (docs_root + '/omero/latest%s', ''),
     }
 
 # Add any Sphinx extension module names here, as strings. They can be

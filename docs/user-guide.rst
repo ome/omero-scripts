@@ -1,7 +1,7 @@
 OMERO.scripts user guide
 ========================
 
-:doc:`/developers/server-blitz` provides a service to run scripts
+:general_doc:`OMERO.blitz </developers/server-blitz.html>` provides a service to run scripts
 on the server. The scripts are then passed on to a grid of processors
 called OMERO.grid that executes the script and returns the result to the
 server which in turn passes the result onto the caller. All scripts are of the
@@ -30,7 +30,7 @@ This is a guide to getting started with the scripting service, without
 going into the 'behind the scenes' details. More technical details can
 be found on the :doc:`advanced` page. In addition to this
 guide, you may find the following pages useful for more information on using
-the OMERO Python API: |OmeroClients|, |OmeroPy|.
+the OMERO Python API: :general_doc:`OMERO clients</developers/GettingStarted.html>`, :general_doc:`OMERO Python bindings</developers/Python.html>`.
 
 Sample scripts
 --------------
@@ -104,10 +104,10 @@ recalculate its arguments on each invocation, use the
 `NSDYNAMIC` namespace:
 
 
-.. literalinclude:: Example_Dynamic_Script.py
-   :start-after: # Included in
+.. literalinclude:: ../omero/analysis_scripts/Kymograph.py
+   :start-at: def run_script():
 
-:download:`Example_Dynamic_Script.py <Example_Dynamic_Script.py>`
+:download:`Kymograph <../omero/analysis_scripts/Kymograph.py>`
 
 
 Script writing as 'Admin'
@@ -136,9 +136,7 @@ Download / Edit script
 ^^^^^^^^^^^^^^^^^^^^^^
 
 The easiest way to get started is to take an existing script and edit it
-for your needs. An example created for the purpose of this tutorial can
-be found at
-:source:`Edit_Descriptions.py <examples/ScriptingService/Edit_Descriptions.py>`.
+for your needs.
 You should organize your scripts on your local machine in a way that
 makes sense to users, since your local file paths will be mimicked on
 the server and used to organize script menus in the clients (see screen-shot

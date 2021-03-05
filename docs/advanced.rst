@@ -23,7 +23,7 @@ the client (see diagram, below).
 
 -  Install 'Ice' from ZeroC and set the environment
    variables, as described in the
-   :doc:`server installation page </sysadmins/unix/server-installation>`.
+   :general_doc:`server installation page </sysadmins/unix/server-installation.html>`.
 -  You also need the OMERO server download. Go to the :downloads:`OMERO
    downloads <>` page and get the appropriate server package (version
    must match the server you are connecting to). Unzip the package in a
@@ -127,7 +127,7 @@ This sample script allows these functions to be called from the command
 line and can be used as an example for writing your own clients.
 
 Most functions of the adminWorkflow.py script are also implemented in
-the OMERO |CLI| described on the :doc:`user-guide`,
+the OMERO Command Line Interface described on the :doc:`user-guide`,
 which is the preferred way of accessing the scripting service for script
 writers.
 
