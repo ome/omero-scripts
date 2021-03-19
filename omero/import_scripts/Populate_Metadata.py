@@ -137,11 +137,11 @@ def run_script():
     client = scripts.client(
         'Populate_Metadata.py',
         """
-    This script processes a CSV file, attached to a container,
-    converting it to an OMERO.table, with one row per Image or Well.
+    This script processes a CSV file, using it to,
+    'populate' an OMERO.table, with one row per Image, Well or ROI.
     The table data can then be displayed in the OMERO clients.
     For full details of the supported CSV format, see
-    https://github.com/ome/omero-metadata/
+    https://github.com/ome/omero-metadata/#populate
         """ + DEPRECATED,
         scripts.String(
             "Data_Type", optional=False, grouping="1",
