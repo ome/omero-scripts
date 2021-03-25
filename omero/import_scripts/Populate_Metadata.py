@@ -27,7 +27,6 @@ from omero.gateway import BlitzGateway
 from omero.rtypes import rstring, rlong
 import omero.scripts as scripts
 import omero.model
-import os
 import sys
 
 from omero.util.populate_roi import DownloadingOriginalFileProvider
