@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 master_doc = 'index'
 docs_root = 'https://docs.openmicroscopy.org'
 
+
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -111,7 +112,7 @@ version_blitz = '5.5.8'
 extlinks = {
     'slicedoc_blitz': (docs_root + '/omero-blitz/' +
                        version_blitz + '/slice2html/%s', ''),
-    'source': (omero_github_root + 'blob/'+ branch + '/%s', ''),
+    'source': (omero_github_root + 'blob/' + branch + '/%s', ''),
     'devs_doc': (docs_root + '/contributing/%s', ''),
     'downloads': (downloads_root + '/%s', ''),
     'general_doc': (docs_root + '/omero/latest%s', ''),
