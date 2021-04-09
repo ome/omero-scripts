@@ -4,17 +4,11 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+from datetime import datetime
 import os
 import sys
 from sphinx.util import logging
 logger = logging.getLogger(__name__)
-
-
-# To fix 'docs/contents.rst not found' errors we need this, see
-# https://github.com/readthedocs/readthedocs.org/issues/2569
-
-master_doc = 'index'
-docs_root = 'https://docs.openmicroscopy.org'
 
 
 # -- Path setup --------------------------------------------------------------
@@ -38,12 +32,12 @@ def get_scripts(directory):
     return scripts
 
 
-def find_scripts_entry():
+def find_scripts_entry(file_name):
     """
     Find the entries corresponding to the scripts.
     """
 
-    with open("scripts.rst") as file:
+    with open(file_name) as file:
         lines = file.readlines()
 
     entries = []
@@ -65,58 +59,40 @@ def compare(list1, list2):
 directories = ['../omero/analysis_scripts', '../omero/export_scripts',
                '../omero/figure_scripts', '../omero/import_scripts',
                '../omero/util_scripts']
+
 scripts = []
+entries = []
 for d in directories:
     sys.path.insert(0, d)
     scripts.extend(get_scripts(d))
-
-entries = find_scripts_entry()
+    p = d.split("/")
+    name = "%s.rst" % (p[len(p) - 1])
+    entries.extend(find_scripts_entry(name))
 
 # Indicate the scripts not listed for documentation
 if len(entries) < len(scripts):
     common = compare(scripts, entries)
     logger.warning("automodule entries missing for:\n" + '\n'.join(common))
 
-# Variables used to define Github extlinks
-if "SOURCE_BRANCH" in os.environ and len(os.environ.get('SOURCE_BRANCH')) > 0:
-    branch = os.environ.get('SOURCE_BRANCH')
-else:
-    branch = 'develop'
-
-if "SOURCE_USER" in os.environ and len(os.environ.get('SOURCE_USER')) > 0:
-    user = os.environ.get('SOURCE_USER')
-else:
-    user = 'ome'
-
-github_root = 'https://github.com/'
-omero_github_root = github_root + user + '/openmicroscopy/'
-docs_root = 'https://docs.openmicroscopy.org'
-downloads_root = 'https://downloads.openmicroscopy.org'
-
 # -- Project information -----------------------------------------------------
 
+# The master toctree document.
+master_doc = 'index'
+
 project = u'omero scripts'
-copyright = u'2021, Open Microscopy Environment'
+now = datetime.now()
 author = u'Open Microscopy Environment'
+copyright = u'2016-%d, %s ' % (now.year, author)
 
 # The full version, including alpha/beta/rc tags
 # The short X.Y version.
 version = '5.6.2.dev0'
 release = version
 
-version_blitz = '5.5.8'
-
 
 # -- General configuration ---------------------------------------------------
 
-extlinks = {
-    'slicedoc_blitz': (docs_root + '/omero-blitz/' +
-                       version_blitz + '/slice2html/%s', ''),
-    'source': (omero_github_root + 'blob/' + branch + '/%s', ''),
-    'devs_doc': (docs_root + '/contributing/%s', ''),
-    'downloads': (downloads_root + '/%s', ''),
-    'general_doc': (docs_root + '/omero/latest%s', ''),
-    }
+extlinks = {}
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -124,6 +100,7 @@ extlinks = {
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.extlinks',
+    "sphinx_rtd_theme",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
