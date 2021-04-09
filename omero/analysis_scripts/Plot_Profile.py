@@ -1,33 +1,33 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+# -----------------------------------------------------------------------------
+#   Copyright (C) 2006-2017 University of Dundee. All rights reserved.
+
+
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+#   You should have received a copy of the GNU General Public License along
+#   with this program; if not, write to the Free Software Foundation, Inc.,
+#   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+# ------------------------------------------------------------------------------
+
 """
-
------------------------------------------------------------------------------
-  Copyright (C) 2006-2017 University of Dundee. All rights reserved.
-
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or
-  (at your option) any later version.
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write to the Free Software Foundation, Inc.,
-  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
-------------------------------------------------------------------------------
-
 This script processes Images which have Line or PolyLine ROIs,
 saving the intensity of chosen channels to Excel (csv) files.
-
-@author Will Moore
-<a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
-@since 3.0
 """
+
+# @author Will Moore
+# <a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
+# @since 3.0
 
 from omero.gateway import BlitzGateway
 import omero
@@ -45,7 +45,7 @@ def process_polylines(conn, script_params, image, polylines, line_width, fout):
     """
     Output data from one or more polylines on an image. Attach csv to image.
 
-    @param polylines list of theT:T, theZ:Z, points: list of (x,y)}
+    :param polylines: list of theT:T, theZ:Z, points: list of (x,y)}
     """
     pixels = image.getPrimaryPixels()
     the_cs = script_params['Channels']

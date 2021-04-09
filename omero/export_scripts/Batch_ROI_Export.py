@@ -19,7 +19,9 @@
 
 # ------------------------------------------------------------------------------
 
-"""This script exports ROI intensities for selected images."""
+"""
+This script exports ROI intensities for selected images.
+"""
 
 
 import omero.scripts as scripts

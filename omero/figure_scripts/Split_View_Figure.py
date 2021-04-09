@@ -1,35 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# -----------------------------------------------------------------------------
+#   Copyright (C) 2006-2021 University of Dundee. All rights reserved.
+#
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along
+#   with this program; if not, write to the Free Software Foundation, Inc.,
+#   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# ------------------------------------------------------------------------------
+
 """
------------------------------------------------------------------------------
-  Copyright (C) 2006-2017 University of Dundee. All rights reserved.
-
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or
-  (at your option) any later version.
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write to the Free Software Foundation, Inc.,
-  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
-------------------------------------------------------------------------------
-
 This script takes a number of images an makes a split view figure, one
 image per row, displayed as a split view with merged image.
-
-@author  Jean-Marie Burel &nbsp;&nbsp;&nbsp;&nbsp;
-<a href="mailto:j.burel@dundee.ac.uk">j.burel@dundee.ac.uk</a>
-@author Donald MacDonald &nbsp;&nbsp;&nbsp;&nbsp;
-<a href="mailto:donald@lifesci.dundee.ac.uk">donald@lifesci.dundee.ac.uk</a>
-@since 3.0
-
 """
+
+# @author  Jean-Marie Burel &nbsp;&nbsp;&nbsp;&nbsp;
+# <a href="mailto:j.burel@dundee.ac.uk">j.burel@dundee.ac.uk</a>
+# @author Donald MacDonald &nbsp;&nbsp;&nbsp;&nbsp;
+# <a href="mailto:donald@lifesci.dundee.ac.uk">donald@lifesci.dundee.ac.uk</a>
+# @since 3.0
 
 import omero.scripts as scripts
 import omero.util.figureUtil as figUtil
@@ -75,28 +74,28 @@ def get_split_view(conn, pixel_ids, z_start, z_end, split_indexes,
     each row being the split-view of a single image. The channels are arranged
     left to right, with the combined image added on the right.
     The combined image is rendered according to current settings on the
-    server, but it's channels will be turned on/off according to
+    server, but its channels will be turned on/off according to
     @merged_indexes.
     No text labels are added to the image at this stage.
 
     The figure is returned as a PIL 'Image'
 
-    @ conn              session for server access
-    @ pixel_ids         a list of the Ids for the pixels we want to display
-    @ z_start           the start of Z-range for projection
-    @ z_end             the end of Z-range for projection
-    @ split_indexes     a list of the channel indexes to display. Same
-                        channels for each image/row
-    @ channel_names     the Map of index:names to go above the columns for
-                        each split channel
-    @ colour_channels   the colour to make each column/ channel
-    @ merged_indexes    list or set of channels in the merged image
-    @ merged_colours    index: colour dictionary of channels in the merged
-                        image
-    @ width             the size in pixels to show each panel
-    @ height            the size in pixels to show each panel
-    @ spacer            the gap between images and around the figure. Doubled
-                        between rows.
+    :param conn: session for server access
+    :param pixel_ids: a list of the Ids for the pixels we want to display
+    :param z_start: the start of Z-range for projection
+    :param z_end: the end of Z-range for projection
+    :param split_indexes: a list of the channel indexes to display.\
+                            Same channels for each image/row
+    :param channel_names: the Map of index:names to go above the columns\
+                            for each split channel
+    :param colour_channels: the colour to make each column/ channel
+    :param merged_indexes: list or set of channels in the merged image
+    :param merged_colours: index: colour dictionary of channels in the\
+                             merged image
+    :param width: the size in pixels to show each panel
+    :param height: the size in pixels to show each panel
+    :param spacer: the gap between images and around the figure.\
+                     Doubled between rows.
     """
 
     if algorithm is None:    # omero::constants::projection::ProjectionType
@@ -328,38 +327,38 @@ def make_split_view_figure(conn, pixel_ids, z_start, z_end, split_indexes,
     each row being the split-view of a single image. The channels are arranged
     left to right, with the combined image added on the right.
     The combined image is rendered according to current settings on the
-    server, but it's channels will be turned on/off according to
+    server, but its channels will be turned on/off according to
     @merged_indexes.
     The colour of each channel turned white if colour_channels is false or the
     channel is not in the merged image.
     Otherwise channel is changed to merged_colours[i]
     Text is added at the top of the figure, to display channel names above
-    each column, and the combined image may have it's various channels named
+    each column, and the combined image may have its various channels named
     in coloured text. The optional image_labels is a list of string lists for
     naming the images at the left of the figure (Each image may have 0 or
     multiple labels).
 
     The figure is returned as a PIL 'Image'
 
-    @ conn              session for server access
-    @ pixel_ids         a list of the Ids for the pixels we want to display
-    @ z_start           the start of Z-range for projection
-    @ z_end             the end of Z-range for projection
-    @ split_indexes     a list of the channel indexes to display. Same
-                        channels for each image/row
-    @ channel_names     map of index:name to go above the columns for each
-                        split channel
-    @ colour_channels   true if split channels are
-    @ merged_indexes    list (or set) of channels in the merged image
-    @ merged_colours    index: colour map of channels in the merged image
-    @ merged_names      if true, label with merged panel with channel names
-                        (otherwise, label "Merged")
-    @ width             the width of primary image (all images zoomed to this
-                        height)
-    @ height            the height of primary image
-    @ image_labels      optional list of string lists.
-    @ algorithm         for projection MAXIMUMINTENSITY or MEANINTENSITY
-    @ stepping          projection increment
+    :param conn: session for server access
+    :param pixel_ids: a list of the Ids for the pixels we want to display
+    :param z_start: the start of Z-range for projection
+    :param z_end: the end of Z-range for projection
+    :param split_indexes: a list of the channel indexes to display.\
+                            Same channels for each image/row
+    :param channel_names: map of index:name to go above the columns for\
+                            each split channel
+    :param colour_channels: true if split channels are
+    :param merged_indexes: list (or set) of channels in the merged image
+    :param merged_colours: index: colour map of channels in the merged image
+    :param merged_names: if true, label with merged panel with channel names\
+                           (otherwise, label "Merged")
+    :param width: the width of primary image.\
+                    All images zoomed to this height
+    :param height: the height of primary image
+    :param image_labels: optional list of string lists.
+    :param algorithm: for projection MAXIMUMINTENSITY or MEANINTENSITY
+    :param stepping: projection increment
     """
 
     fontsize = 12
@@ -488,7 +487,7 @@ def split_view_figure(conn, script_params):
     then calls make_split_view_figure() to make the figure, attaches it to the
     Image as an 'originalFile' annotation, with fig-legend as the description.
 
-    @return: the id of the originalFileLink child. (ID object, not value)
+    :return: the id of the originalFileLink child. (ID object, not value)
     """
 
     log("Split-View figure created by OMERO on %s" % date.today())
