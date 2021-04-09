@@ -8,7 +8,11 @@ collection of Python scripts available in this repository.
 .. toctree::
    :maxdepth: 1
 
-   scripts
+   analysis_scripts
+   export_scripts
+   figure_scripts
+   import_scripts
+   util_scripts
    
 
 Indices and tables
