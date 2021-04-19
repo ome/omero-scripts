@@ -82,7 +82,7 @@ def remove_MapAnnotations(conn, dtype, Id ):
         conn.c.waitOnCmd(handle, loops=10, ms=500, failonerror=True,
                      failontimeout=False, closehandle=False)
 
-    except Exception, ex:
+    except Exception as ex:
         print("Failed to delete links: {}".format(ex.message))
     return
 
@@ -162,7 +162,7 @@ def populate_metadata(client, conn, script_params):
                 existing_kv = get_existing_MapAnnotions( img )
                 updated_kv  = copy.deepcopy(existing_kv)
                 print("Existing kv ")
-                for k,vset in existing_kv.iteritems():
+                for k,vset in existing_kv.items():
                     print(type(vset),len(vset))
                     for v in vset:
                         print(k,v)
@@ -187,7 +187,7 @@ def populate_metadata(client, conn, script_params):
                     map_ann.setNs(namespace)
                     # convert the ordered dict to a list of lists
                     kv_list=[]
-                    for k,vset in updated_kv.iteritems():
+                    for k,vset in updated_kv.items():
                         for v in vset:
                             kv_list.append( [k,v] )
                     map_ann.setValue(kv_list)
@@ -234,12 +234,14 @@ def run_script():
 
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
-        message="here I am"
-        print "scaript params"
-        for k,v in script_params.iteritems():
-            print k,v
+        print("script params")
+        for k,v in script_params.items():
+            print(k,v)
         message = populate_metadata(client, conn, script_params)
         client.setOutput("Message", rstring(message))
+    
+    except:
+        pass
 
     finally:
         client.closeSession()

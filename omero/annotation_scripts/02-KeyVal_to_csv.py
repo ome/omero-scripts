@@ -73,8 +73,8 @@ def attach_csv_file( conn, obj, data ):
     # get the list of  keys and maximum number of occurences
     # A key can appear multiple times, for example multiple dyes can be used
     key_union=OrderedDict()
-    for img_n,img_kv in data.iteritems():
-        for key, vset  in img_kv.iteritems():
+    for img_n,img_kv in data.items():
+        for key, vset  in img_kv.items():
             key_union[key] = max(key_union.get(key,0),len(vset))
     all_keys = key_union.keys()
 
@@ -86,15 +86,15 @@ def attach_csv_file( conn, obj, data ):
 
     # construct the header of the CSV file
     header = ['filename']
-    for key,count in key_union.iteritems():
+    for key,count in key_union.items():
         header.extend( [key]*count )      # keys can repeat multiple times
     tfile.write( to_csv( header ) )
 
     # write the keys values for each file
-    for filename,kv_dict in data.iteritems():
+    for filename,kv_dict in data.items():
         row    = [""]*len(header)   # empty row 
         row[0] = filename
-        for key,vset, in kv_dict.iteritems():
+        for key,vset, in kv_dict.items():
             n0   = header.index(key)     # first occurence of key in header
             for i,val in enumerate(vset):
                 row[n0+i] = val
@@ -173,7 +173,7 @@ def run_script():
                             conn.c.waitOnCmd(handle, loops=10, ms=500, failonerror=True,
                                          failontimeout=False, closehandle=False)
                             print("Deleted existing csv")
-                        except Exception, ex:
+                        except Exception as ex:
                             print("Failed to delete existing csv: {}".format(ex.message))
                 else:
                     print("No exisiting file")
@@ -191,6 +191,9 @@ def run_script():
             print(mess)
         mess="done" 
         client.setOutput("Message", rstring(mess))
+    
+    except:
+        pass
 
     finally:
         client.closeSession()
