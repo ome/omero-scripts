@@ -1,5 +1,12 @@
+Omero Bulk Annotatiot Tools (OBAT)
+==================================
+
+This repository was forked from https://github.com/evenhuis/omero-user-scripts and debugged. 
+
+Original README follows:
+
 MIF developed scripts for OMERO
-===========================
+===============================
 
 This is a collection of python scripts written for 
 the [OMERO](https://www.openmicroscopy.org/omero/) installation in the 
