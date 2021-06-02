@@ -84,9 +84,9 @@ def create_image_from_tiles(conn, source, image_name, description,
         for c in range(0, size_c):
             for z in range(0, size_z):
                 for tile_offset_y in range(
-                        0, ((size_y + tile_height - 1) / tile_height)):
+                        0, ((size_y + tile_height - 1) // tile_height)):
                     for tile_offset_x in range(
-                            0, ((size_x + tile_width - 1) / tile_width)):
+                            0, ((size_x + tile_width - 1) // tile_width)):
                         x = tile_offset_x * tile_width
                         y = tile_offset_y * tile_height
                         w = tile_width
@@ -104,7 +104,7 @@ def create_image_from_tiles(conn, source, image_name, description,
     tile_gen = primary_pixels.getTiles(zct_tile_list)
 
     def next_tile():
-        return tile_gen.next()
+        return next(tile_gen)
 
     class Iteration(TileLoopIteration):
 
