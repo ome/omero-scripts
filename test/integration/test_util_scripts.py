@@ -101,7 +101,8 @@ class TestUtilScripts(ScriptTest):
         size_x = size + 100
         size_y = size + 50
         size_z = 5
-        name = "test&sizeX=%s&sizeY=%s&sizeZ=%s.fake" % (size_x, size_y, size_z)
+        name = "test&sizeX=%s&sizeY=%s&sizeZ=%s.fake" % (size_x, size_y,
+                                                         size_z)
         # Supports import of big and small images
         image_id = self.import_pyramid(tmpdir, name=name, client=client)
         image_ids = []
@@ -259,10 +260,10 @@ class TestUtilScripts(ScriptTest):
                  " where l.parent.id in (:ids)")
         params = omero.sys.ParametersI().addIds(well_ids)
         links = query_service.findAllByQuery(query, params)
-        link_ids = [l.id.val for l in links]
+        link_ids = [link.id.val for link in links]
         assert len(link_ids) == field_count * 3
-        for l in links:
-            assert l.getDetails().owner.id.val == user_id
+        for link in links:
+            assert link.getDetails().owner.id.val == user_id
         delete = Delete2(targetObjects={'WellAnnotationLink': link_ids})
         handle = client.sf.submit(delete)
         client.waitOnCmd(handle, loops=10, ms=500, failonerror=True,
