@@ -87,8 +87,11 @@ class TestUtilScripts(ScriptTest):
         assert combine_img.getValue().id.val > 0
 
     @pytest.mark.parametrize("image_stack", [True, False])
-    @pytest.mark.parametrize("size", [100, 3000])
-    def test_images_from_rois(self, image_stack, size):
+    @pytest.mark.parametrize("size", [100, 4000])
+    def test_images_from_rois(self, image_stack, size, tmpdir):
+        if image_stack and size > 3000:
+            # Not supported
+            return
         script_id = super(TestUtilScripts, self).get_script(images_from_rois)
         assert script_id > 0
         # root session is root.sf
@@ -98,8 +101,9 @@ class TestUtilScripts(ScriptTest):
         size_x = size + 100
         size_y = size + 50
         size_z = 5
-        image = self.create_test_image(size_x, size_y, size_z, 1, 1)
-        image_id = image.id.val
+        name = "test&sizeX=%s&sizeY=%s&sizeZ=%s.fake" % (size_x, size_y, size_z)
+        # Supports import of big and small images
+        image_id = self.import_pyramid(tmpdir, name=name, client=client)
         image_ids = []
         image_ids.append(omero.rtypes.rlong(image_id))
 
