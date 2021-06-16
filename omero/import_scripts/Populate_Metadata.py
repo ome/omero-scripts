@@ -36,21 +36,20 @@ try:
     # Hopefully this will import
     # https://github.com/ome/omero-metadata/blob/v0.3.1/src/populate_metadata.py
     from omero_metadata.populate import ParsingContext
-    OBJECT_TYPES = (
+    OBJECT_TYPES = [
         'Plate',
         'Screen',
         'Dataset',
-        'Project',
-        'Image',
-    )
+        'Project'
+    ]
     DEPRECATED = ""
 
 except ImportError:
     from omero.util.populate_metadata import ParsingContext
-    OBJECT_TYPES = (
+    OBJECT_TYPES = [
         'Plate',
         'Screen',
-    )
+    ]
     DEPRECATED = """
 
     Warning: This script is using an outdated metadata plugin.
@@ -58,6 +57,14 @@ except ImportError:
     for additional features: https://pypi.org/project/omero-metadata/
     """
 
+try:
+    # If we have omero-metadata v0.6.0 or later, can support 'Image' input
+    from omero_metadata.populate import ImageWrapper
+    OBJECT_TYPES.append('Image')
+except ImportError:
+    pass
+
+OBJECT_TYPES = tuple(OBJECT_TYPES)
 
 def link_file_ann(conn, object_type, object_id, file_ann_id):
     """Link File Annotation to the Object, if not already linked."""
