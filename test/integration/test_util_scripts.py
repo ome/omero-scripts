@@ -87,15 +87,16 @@ class TestUtilScripts(ScriptTest):
         assert combine_img.getValue().id.val > 0
 
     @pytest.mark.parametrize("image_stack", [True, False])
-    def test_images_from_rois(self, image_stack):
+    @pytest.mark.parametrize("size", [100, 3000])
+    def test_images_from_rois(self, image_stack, size):
         script_id = super(TestUtilScripts, self).get_script(images_from_rois)
         assert script_id > 0
         # root session is root.sf
         session = self.root.sf
         client = self.root
 
-        size_x = 100
-        size_y = 100
+        size_x = size + 100
+        size_y = size + 50
         size_z = 5
         image = self.create_test_image(size_x, size_y, size_z, 1, 1)
         image_id = image.id.val
@@ -106,10 +107,10 @@ class TestUtilScripts(ScriptTest):
         roi = omero.model.RoiI()
         roi.setImage(omero.model.ImageI(image_id, False))
         rect = omero.model.RectangleI()
-        rect.x = omero.rtypes.rdouble(0)
-        rect.y = omero.rtypes.rdouble(0)
-        rect.width = omero.rtypes.rdouble(size_x / 2)
-        rect.height = omero.rtypes.rdouble(size_y / 2)
+        rect.x = omero.rtypes.rdouble(5)
+        rect.y = omero.rtypes.rdouble(10)
+        rect.width = omero.rtypes.rdouble(size)
+        rect.height = omero.rtypes.rdouble(size)
         roi.addShape(rect)
         session.getUpdateService().saveAndReturnObject(roi)
         args = {
