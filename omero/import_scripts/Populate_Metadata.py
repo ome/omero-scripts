@@ -110,7 +110,7 @@ def populate_metadata(client, conn, script_params):
 
     if data_type == "Image":
         try:
-            from omero_metadata.populate import ImageWrapper
+            from omero_metadata.populate import ImageWrapper    # noqa: F401
         except ImportError:
             return "Please update omero-metadata to support Image type"
     file_ann_id = None
