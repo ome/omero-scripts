@@ -177,7 +177,7 @@ COLUMN_NAMES = ["image_id",
 
 
 def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y,
-                     include_points=False):
+                     include_points=True):
     """Add shape coordinates and length or area to the row_data dict."""
     if shape.getTextValue():
         row_data['Text'] = shape.getTextValue().getValue()
