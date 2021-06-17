@@ -114,19 +114,29 @@ def populate_metadata(client, conn, script_params):
         conn, data_type, object_id, file_ann_id)
     provider = DownloadingOriginalFileProvider(conn)
     data_for_preprocessing = provider.get_original_file_data(original_file)
-    data = provider.get_original_file_data(original_file)
+    temp_name = data_for_preprocessing.name
+    # 5.9.1 returns NamedTempFile where name is a string.
+    if isinstance(temp_name, int):
+        print("omero-py 5.9.1 DownloadingOriginalFileProvider returns "
+              "NamedTempFile. Please Upgrade to omero-py 5.9.1 or later")
+        return "Please upgrade omero-py to 5.9.1 or later"
     objecti = getattr(omero.model, data_type + 'I')
     omero_object = objecti(int(object_id), False)
     ctx = ParsingContext(client, omero_object, "")
 
     try:
         # Old
-        ctx.parse_from_handle(data)
-        ctx.write_to_omero()
+        with open(temp_name, 'rt', encoding='utf-8-sig') as f1:
+            ctx.parse_from_handle(f1)
+            ctx.write_to_omero()
     except AttributeError:
         # omero-metadata >= 0.3.0
-        ctx.preprocess_from_handle(data_for_preprocessing)
-        ctx.parse_from_handle_stream(data)
+        with open(temp_name, 'rt', encoding='utf-8-sig') as f1:
+            ctx.preprocess_from_handle(f1)
+            with open(temp_name, 'rt', encoding='utf-8-sig') as f2:
+                ctx.parse_from_handle_stream(f2)
+    finally:
+        data_for_preprocessing.close()
     return "Table data populated for %s: %s" % (data_type, object_id)
 
 
