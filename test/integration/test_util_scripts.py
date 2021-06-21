@@ -87,18 +87,24 @@ class TestUtilScripts(ScriptTest):
         assert combine_img.getValue().id.val > 0
 
     @pytest.mark.parametrize("image_stack", [True, False])
-    def test_images_from_rois(self, image_stack):
+    @pytest.mark.parametrize("size", [100, 4000])
+    def test_images_from_rois(self, image_stack, size, tmpdir):
+        if image_stack and size > 3000:
+            # Not supported
+            return
         script_id = super(TestUtilScripts, self).get_script(images_from_rois)
         assert script_id > 0
         # root session is root.sf
         session = self.root.sf
         client = self.root
 
-        size_x = 100
-        size_y = 100
+        size_x = size + 100
+        size_y = size + 50
         size_z = 5
-        image = self.create_test_image(size_x, size_y, size_z, 1, 1)
-        image_id = image.id.val
+        name = "test&sizeX=%s&sizeY=%s&sizeZ=%s.fake" % (size_x, size_y,
+                                                         size_z)
+        # Supports import of big and small images
+        image_id = self.import_pyramid(tmpdir, name=name, client=client)
         image_ids = []
         image_ids.append(omero.rtypes.rlong(image_id))
 
@@ -106,10 +112,10 @@ class TestUtilScripts(ScriptTest):
         roi = omero.model.RoiI()
         roi.setImage(omero.model.ImageI(image_id, False))
         rect = omero.model.RectangleI()
-        rect.x = omero.rtypes.rdouble(0)
-        rect.y = omero.rtypes.rdouble(0)
-        rect.width = omero.rtypes.rdouble(size_x / 2)
-        rect.height = omero.rtypes.rdouble(size_y / 2)
+        rect.x = omero.rtypes.rdouble(5)
+        rect.y = omero.rtypes.rdouble(10)
+        rect.width = omero.rtypes.rdouble(size)
+        rect.height = omero.rtypes.rdouble(size)
         roi.addShape(rect)
         session.getUpdateService().saveAndReturnObject(roi)
         args = {
@@ -254,10 +260,10 @@ class TestUtilScripts(ScriptTest):
                  " where l.parent.id in (:ids)")
         params = omero.sys.ParametersI().addIds(well_ids)
         links = query_service.findAllByQuery(query, params)
-        link_ids = [l.id.val for l in links]
+        link_ids = [link.id.val for link in links]
         assert len(link_ids) == field_count * 3
-        for l in links:
-            assert l.getDetails().owner.id.val == user_id
+        for link in links:
+            assert link.getDetails().owner.id.val == user_id
         delete = Delete2(targetObjects={'WellAnnotationLink': link_ids})
         handle = client.sf.submit(delete)
         client.waitOnCmd(handle, loops=10, ms=500, failonerror=True,
