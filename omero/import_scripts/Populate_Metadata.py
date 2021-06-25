@@ -41,6 +41,7 @@ try:
         'Screen',
         'Dataset',
         'Project',
+        'Image',
     )
     DEPRECATED = ""
 
@@ -106,6 +107,12 @@ def populate_metadata(client, conn, script_params):
     object_ids = script_params["IDs"]
     object_id = object_ids[0]
     data_type = script_params["Data_Type"]
+
+    if data_type == "Image":
+        try:
+            from omero_metadata.populate import ImageWrapper    # noqa: F401
+        except ImportError:
+            return "Please update omero-metadata to support Image type"
     file_ann_id = None
     if "File_Annotation" in script_params:
         file_ann_id = int(script_params["File_Annotation"])
@@ -146,11 +153,11 @@ def run_script():
     client = scripts.client(
         'Populate_Metadata.py',
         """
-    This script processes a CSV file, attached to a container,
-    converting it to an OMERO.table, with one row per Image or Well.
+    This script processes a CSV file, using it to
+    'populate' an OMERO.table, with one row per Image, Well or ROI.
     The table data can then be displayed in the OMERO clients.
     For full details of the supported CSV format, see
-    https://github.com/ome/omero-metadata/
+    https://github.com/ome/omero-metadata/#populate
         """ + DEPRECATED,
         scripts.String(
             "Data_Type", optional=False, grouping="1",
