@@ -1,8 +1,5 @@
-Omero Bulk Annotation Tools (OBAT)
+Omero Bulk Annotation Tools
 ==================================
-
-This repository was forked from https://github.com/evenhuis/omero-user-scripts. Some fixes were applied to make the scripts work with the 
-omero instance at [Max Planck Institute for Evolutionary Biology](www.evolbio.mpg.de). A short tutorial on its usage in combination with the [omero.forms](https://pypi.org/project/omero-forms) plugin was posted [here](https://mpievolbio-scicomp.pages.gwdg.de/blog/post/2020-09-03_omerobulkannotation/) .
 
 Content
 -------
@@ -21,11 +18,22 @@ first column (filename or image id).
   filename.
 
 Installation
-------------
+---------------
 The scripts must be placed in the `OMERODIR/lib/scripts/omero` directory of your
-omero installation, preferrentially in a seperatate subdirectory. `OMERODIR`
+omero installation, preferrentially in a seperatate subdirectory, e.g. `Bulk
+Annotation/`. `OMERODIR`
 refers to the root directory of you omero server. If you followed the
 installation procedures, you should have the `$OMERODIR` environment variable set.
+Logged in omero admins can also use the "Upload scripts" button in the *Gears*
+menu.
+
+After installation, the scripts will be accessible in omero web by clicking the *Gears*
+icon in the  menu bar.
 
 **NOTE**: The original readme of this repository moved [here](readme.orig.md).
+
+
+Tutorial
+----------
+A short tutorial on its usage in combination with the [omero.forms](https://pypi.org/project/omero-forms) plugin was posted [here](https://mpievolbio-scicomp.pages.gwdg.de/blog/post/2020-09-03_omerobulkannotation/) .
 
