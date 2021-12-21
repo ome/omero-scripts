@@ -1,5 +1,12 @@
-Omero Bulk Annotation Tools
-==================================
+ometa: contributed scripts for metadata handling in omero-web
+============================================================================
+
+Summary
+--------
+This is the central repository for community contributed scripts to [omero-web]() to support metadata handling and bulk annotation with *key-value* pairs.
+These scripts, in combination with the [omero.forms](https://pypi.org/project/omero-forms),
+support the bulk annotation workflow described in [this blog post](https://mpievolbio-scicomp.pages.gwdg.de/blog/post/2020-09-03_omerobulkannotation/).
+
 
 Content
 -------
@@ -21,7 +28,9 @@ Installation
 ---------------
 The scripts must be placed in the `OMERODIR/lib/scripts/omero` directory of your
 omero installation, preferrentially in a seperatate subdirectory, e.g. `Bulk
-Annotation/`. `OMERODIR`
+Annotation/`. 
+
+`OMERODIR`
 refers to the root directory of you omero server. If you followed the
 installation procedures, you should have the `$OMERODIR` environment variable set.
 Logged in omero admins can also use the "Upload scripts" button in the *Gears*
@@ -30,10 +39,12 @@ menu.
 After installation, the scripts will be accessible in omero web by clicking the *Gears*
 icon in the  menu bar.
 
-**NOTE**: The original readme of this repository moved [here](readme.orig.md).
+History
+--------
+This repository started as a fork of [evehuis/omero-user-scripts](). Ownership was transferred to @CFGrote after merging a pull request that fixed a number of bugs and
+ported the original code from python2.7 to python3.x
 
 
-Tutorial
-----------
-A short tutorial on its usage in combination with the [omero.forms](https://pypi.org/project/omero-forms) plugin was posted [here](https://mpievolbio-scicomp.pages.gwdg.de/blog/post/2020-09-03_omerobulkannotation/) .
-
+Contributions
+----------------
+Contributions are welcome: Bugfixes, enhancements, additional scripts, tests etc should be submitted as pull requests. We also encourage you to post suggestions or bug reports in our github issues.
