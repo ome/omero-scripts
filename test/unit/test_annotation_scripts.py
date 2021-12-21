@@ -33,9 +33,8 @@ logger.setLevel(logging.DEBUG)
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                 '..',
                                                 '..',
-                                                '..',
                                                 'omero',
-                                                'keyval_scripts'
+                                                'annotation_scripts'
                                                 )
                                    )
                 )
@@ -43,7 +42,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__),
 import pytest
 
 # Test class.
-class TestKeyValScripts():
+class TestAnnotationScripts():
 
     def test_module_imports(self):
         """ Test that the scripts can be imported. """
