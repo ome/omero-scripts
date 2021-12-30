@@ -51,7 +51,7 @@ from collections import OrderedDict
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def get_existing_map_annotions( obj ):
+def get_existing_map_annotations( obj ):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     print("getting the existing kv's")
     ord_dict = OrderedDict()
@@ -87,12 +87,9 @@ def remove_map_annotations(conn, dtype, Id ):
     return
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def get_original_file(conn, object_type, object_id, file_ann_id=None):
+def get_original_file(omero_object, file_ann_id=None):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    omero_object = conn.getObject("Dataset", int(object_id))
-    if omero_object is None:
-        sys.stderr.write("Error: Dataset does not exist.\n")
-        sys.exit(1)
+
     file_ann = None
 
     for ann in omero_object.listAnnotations():
@@ -109,53 +106,69 @@ def get_original_file(conn, object_type, object_id, file_ann_id=None):
     return file_ann.getFile()._obj
 
 
+def get_images_by_name(omero_obj):
+
+    images_by_name={}
+
+    if omero_obj.OMERO_CLASS == "Dataset":
+        for img in omero_obj.listChildren():
+            img_name = img.getName()
+            if( img_name in images_by_name ):
+                sys.stderr.write("File names not unique: {}".format(img_name))
+                sys.exit(1)
+            images_by_name[img_name] = img
+    elif omero_obj.OMERO_CLASS == "Plate":
+        for well in omero_obj.listChildren():
+            for ws in well.listChildren():
+                img = ws.getImage()
+                img_name = img.getName()
+                if( img_name in images_by_name ):
+                    sys.stderr.write("File names not unique: {}".format(img_name))
+                    sys.exit(1)
+                images_by_name[img_name] = img
+    else:
+        sys.stderr.write(f'{omero_obj.OMERO_CLASS} objects not supported')
+
+    return images_by_name
+
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def populate_metadata(client, conn, script_params):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     dataType = script_params["Data_Type"]
     ids      = script_params["IDs"]
 
-    datasets = list(conn.getObjects(dataType, ids))
-    for ds in datasets:
-        ID = ds.getId()
+    for target_object in conn.getObjects(dataType, ids):
 
-        # not sure what this is doing
+        # file_ann_id is Optional. If not supplied, use first .csv attached
         file_ann_id = None
         if "File_Annotation" in script_params:
             file_ann_id = long(script_params["File_Annotation"])
             print("set ann id")
 
-        original_file = get_original_file(
-            conn, dataType, ID, file_ann_id)
+        original_file = get_original_file(target_object, file_ann_id)
         provider = DownloadingOriginalFileProvider(conn)
 
         # read the csv
         file_handle = provider.get_original_file_data(original_file)
-        data =list(csv.reader(file_handle,delimiter=','))
+        data =list(csv.reader(file_handle, delimiter=','))
         file_handle.close()
 
         # create a dictionary for image_name:id
-        dict_name_id={}
-        for img in ds.listChildren():
-            img_name = img.getName()
-            if( img_name in dict_name_id ):
-                sys.stderr.write("File names not unique: {}".format(imageaname))
-                sys.exit(1)
-            dict_name_id[img_name] = int(img.getId())
+        images_by_name=get_images_by_name(target_object)
 
         # keys are in the header row
-        header =data[0]
-        kv_data = header[1:]  # first header is the fimename columns
-        rows    = data[1:]
+        header = data[0]
+        # kv_data = header[1:]  # first header is the fimename columns
+        rows = data[1:]
 
         nimg_updated = 0
         for row in rows: # loop over images
             img_name = row[0]
-            if( img_name not in dict_name_id ):
+            if( img_name not in images_by_name ):
                 print("Can't find filename : {}".format(img_name) )
             else:
-                img_ID = dict_name_id[img_name]         # look up the ID
-                img    = conn.getObject('Image',img_ID) # get the img
+                img = images_by_name[img_name]
 
                 existing_kv = get_existing_map_annotations( img )
                 updated_kv  = copy.deepcopy(existing_kv)
@@ -193,12 +206,12 @@ def populate_metadata(client, conn, script_params):
                 else:
                     print("No change change in kv's")
 
-    return "Added {} kv pairs to {}/{} files  ".format(len(header)-1,nimg_updated,len(dict_name_id))
+    return "Added {} kv pairs to {}/{} files  ".format(len(header)-1,nimg_updated,len(images_by_name))
 
 
 def run_script():
 
-    data_types = [rstring('Dataset')]
+    data_types = [rstring('Dataset'), rstring('Plate')]
     client = scripts.client(
         'Add_Key_Val_from_csv',
         """
