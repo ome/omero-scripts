@@ -51,7 +51,7 @@ from collections import OrderedDict
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def get_existing_MapAnnotions( obj ):
+def get_existing_map_annotions( obj ):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     print("getting the existing kv's")
     ord_dict = OrderedDict()
@@ -65,7 +65,7 @@ def get_existing_MapAnnotions( obj ):
     return ord_dict
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def remove_MapAnnotations(conn, dtype, Id ):
+def remove_map_annotations(conn, dtype, Id ):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     image = conn.getObject(dtype,int(Id))
     namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
@@ -129,9 +129,9 @@ def populate_metadata(client, conn, script_params):
             conn, dataType, ID, file_ann_id)
         provider = DownloadingOriginalFileProvider(conn)
 
-        # read the csv 
+        # read the csv
         file_handle = provider.get_original_file_data(original_file)
-        data =list(csv.reader(file_handle,delimiter=','))   
+        data =list(csv.reader(file_handle,delimiter=','))
         file_handle.close()
 
         # create a dictionary for image_name:id
@@ -142,8 +142,6 @@ def populate_metadata(client, conn, script_params):
                 sys.stderr.write("File names not unique: {}".format(imageaname))
                 sys.exit(1)
             dict_name_id[img_name] = int(img.getId())
-
-
 
         # keys are in the header row
         header =data[0]
@@ -159,7 +157,7 @@ def populate_metadata(client, conn, script_params):
                 img_ID = dict_name_id[img_name]         # look up the ID
                 img    = conn.getObject('Image',img_ID) # get the img
 
-                existing_kv = get_existing_MapAnnotions( img )
+                existing_kv = get_existing_map_annotations( img )
                 updated_kv  = copy.deepcopy(existing_kv)
                 print("Existing kv ")
                 for k,vset in existing_kv.items():
@@ -176,7 +174,6 @@ def populate_metadata(client, conn, script_params):
                                 if key not in updated_kv: updated_kv[key] = set()
                                 print("adding",key,val)
                                 updated_kv[key].add(val)
-                          
 
                 if( existing_kv != updated_kv ):
                     nimg_updated = nimg_updated + 1
@@ -192,7 +189,7 @@ def populate_metadata(client, conn, script_params):
                             kv_list.append( [k,v] )
                     map_ann.setValue(kv_list)
                     map_ann.save()
-                    img.linkAnnotation(map_ann)                     
+                    img.linkAnnotation(map_ann)
                 else:
                     print("No change change in kv's")
 
@@ -239,7 +236,6 @@ def run_script():
             print(k,v)
         message = populate_metadata(client, conn, script_params)
         client.setOutput("Message", rstring(message))
-    
     except:
         pass
 
