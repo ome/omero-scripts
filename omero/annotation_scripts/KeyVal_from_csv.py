@@ -144,9 +144,10 @@ def populate_metadata(client, conn, script_params):
         file_ann_id = None
         if "File_Annotation" in script_params:
             file_ann_id = long(script_params["File_Annotation"])
-            print("set ann id")
+            print("set ann id", file_ann_id)
 
         original_file = get_original_file(target_object, file_ann_id)
+        print("Original File", original_file.id.val, original_file.name.val)
         provider = DownloadingOriginalFileProvider(conn)
 
         # read the csv
@@ -156,19 +157,24 @@ def populate_metadata(client, conn, script_params):
 
         # create a dictionary for image_name:id
         images_by_name=get_images_by_name(target_object)
+        print("images_by_name", images_by_name.keys())
 
         # keys are in the header row
         header = data[0]
+        image_column_index = header.index("image")
+        if image_column_index == -1:
+            image_column_index = 0
         # kv_data = header[1:]  # first header is the fimename columns
         rows = data[1:]
 
         nimg_updated = 0
         for row in rows: # loop over images
-            img_name = row[0]
+            img_name = row[image_column_index]
             if( img_name not in images_by_name ):
                 print("Can't find filename : {}".format(img_name) )
             else:
                 img = images_by_name[img_name]
+                print("Annotating image:", img.id, img.name)
 
                 existing_kv = get_existing_map_annotations( img )
                 updated_kv  = copy.deepcopy(existing_kv)
@@ -191,7 +197,7 @@ def populate_metadata(client, conn, script_params):
                 if( existing_kv != updated_kv ):
                     nimg_updated = nimg_updated + 1
                     print("The key-values pairs are different")
-                    remove_MapAnnotations( conn, 'Image', img.getId()  )
+                    remove_map_annotations( conn, 'Image', img.getId()  )
                     map_ann = omero.gateway.MapAnnotationWrapper(conn)
                     namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
                     map_ann.setNs(namespace)
@@ -202,6 +208,7 @@ def populate_metadata(client, conn, script_params):
                             kv_list.append( [k,v] )
                     map_ann.setValue(kv_list)
                     map_ann.save()
+                    print("Map Annotation created", map_ann.id)
                     img.linkAnnotation(map_ann)
                 else:
                     print("No change change in kv's")
@@ -249,8 +256,6 @@ def run_script():
             print(k,v)
         message = populate_metadata(client, conn, script_params)
         client.setOutput("Message", rstring(message))
-    except:
-        pass
 
     finally:
         client.closeSession()
