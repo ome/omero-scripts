@@ -105,6 +105,21 @@ def get_original_file(omero_object, file_ann_id=None):
     return file_ann.getFile()._obj
 
 
+def link_file_ann(conn, object_type, object_id, file_ann_id):
+    """Link File Annotation to the Object, if not already linked."""
+    file_ann = conn.getObject("Annotation", file_ann_id)
+    if file_ann is None:
+        sys.stderr.write("Error: File Annotation not found: %s.\n"
+                         % file_ann_id)
+        sys.exit(1)
+    omero_object = conn.getObject(object_type, object_id)
+    # Check for existing links
+    links = list(conn.getAnnotationLinks(object_type, parent_ids=[object_id],
+                                         ann_ids=[file_ann_id]))
+    if len(links) == 0:
+        omero_object.linkAnnotation(file_ann)
+
+
 def get_children_by_name(omero_obj):
 
     images_by_name = {}
@@ -137,15 +152,16 @@ def get_children_by_name(omero_obj):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def populate_metadata(client, conn, script_params):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    dataType = script_params["Data_Type"]
-    ids      = script_params["IDs"]
+    data_type = script_params["Data_Type"]
+    ids = script_params["IDs"]
 
-    for target_object in conn.getObjects(dataType, ids):
+    for target_object in conn.getObjects(data_type, ids):
 
         # file_ann_id is Optional. If not supplied, use first .csv attached
         file_ann_id = None
         if "File_Annotation" in script_params:
             file_ann_id = long(script_params["File_Annotation"])
+            link_file_ann(conn, data_type, target_object.id, file_ann_id)
             print("set ann id", file_ann_id)
 
         original_file = get_original_file(target_object, file_ann_id)
