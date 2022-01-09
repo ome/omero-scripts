@@ -225,7 +225,7 @@ def annotate_object(conn, obj, header, row, cols_to_ignore):
 
     print("Adding kv:")
     for i in range(len(row)):
-        if i in cols_to_ignore:
+        if i in cols_to_ignore or i >= len(header):
             continue
         key = header[i].strip()
         vals = row[i].strip().split(';')
