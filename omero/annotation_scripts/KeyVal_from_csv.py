@@ -182,25 +182,26 @@ def keyval_from_csv(conn, script_params):
             well_name = None
             plate_name = None
             obj = None
-            if image_name in images_by_name:
-                obj = images_by_name[image_name]
-                print("Annotating Image:", obj.id, image_name)
-            elif well_index > -1:
+            if len(image_name) > 0:
+                if image_name in images_by_name:
+                    obj = images_by_name[image_name]
+                    print("Annotating Image:", obj.id, image_name)
+                else:
+                    print("Image not found:", image_name)
+            if obj is None and well_index > -1 and len(row[well_index]) > 0:
                 well_name = row[well_index]
                 if well_name in wells_by_name:
                     obj = wells_by_name[well_name]
                     print("Annotating Well:", obj.id, well_name)
+                else:
+                    print("Well not found:", well_name)
             if obj is None and plate_index > -1:
                 plate_name = row[plate_index]
                 if plate_name == target_object.name:
                     obj = target_object
                     print("Annotating Plate:", obj.id, plate_name)
             if obj is None:
-                msg = f"Can't find image: {image_name}"
-                if well_name:
-                    msg = msg + f" or well: {well_name}"
-                if plate_name:
-                    msg = msg + f" or plate: {plate_name}"
+                msg = f"Can't find object by image, well or plate name"
                 print(msg)
                 continue
 
