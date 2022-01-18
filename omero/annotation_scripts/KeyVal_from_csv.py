@@ -51,7 +51,7 @@ from collections import OrderedDict
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def get_existing_map_annotions( obj ):
+def get_existing_map_annotations( obj ):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     print("getting the existing kv's")
     ord_dict = OrderedDict()
@@ -139,7 +139,7 @@ def populate_metadata(client, conn, script_params):
         for img in ds.listChildren():
             img_name = img.getName()
             if( img_name in dict_name_id ):
-                sys.stderr.write("File names not unique: {}".format(imageaname))
+                sys.stderr.write("File names not unique: {}".format(img_name))
                 sys.exit(1)
             dict_name_id[img_name] = int(img.getId())
 
@@ -178,7 +178,7 @@ def populate_metadata(client, conn, script_params):
                 if( existing_kv != updated_kv ):
                     nimg_updated = nimg_updated + 1
                     print("The key-values pairs are different")
-                    remove_MapAnnotations( conn, 'Image', img.getId()  )
+                    remove_map_annotations( conn, 'Image', img.getId()  )
                     map_ann = omero.gateway.MapAnnotationWrapper(conn)
                     namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
                     map_ann.setNs(namespace)
