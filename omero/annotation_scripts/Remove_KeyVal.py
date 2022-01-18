@@ -21,10 +21,7 @@
   with this program; if not, write to the Free Software Foundation, Inc.,
   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 ------------------------------------------------------------------------------
-@author Christian Evenhuis
-<a href="mailto:christian.evenhuis@gmail.com">christian.evenhuis@gmail.com</a>
-@version 5.3.3
-@since   5.3.3
+Created by Christian Evenhuis
 
 """
 
@@ -128,10 +125,9 @@ if __name__ == "__main__":
             description="The new description to set for each Image in the"
             " Dataset"),
 
-        version="5.3.3",
         authors=["Christian Evenhuis", "MIF"],
         institutions=["University of Technology Sydney"],
-        contact="christian.evenhuis@gmail.com"
+        contact="https://forum.image.sc/tag/omero"
     )
 
     try:
