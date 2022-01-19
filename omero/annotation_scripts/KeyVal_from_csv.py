@@ -151,7 +151,15 @@ def keyval_from_csv(conn, script_params):
 
         # read the csv
         file_handle = provider.get_original_file_data(original_file)
-        data = list(csv.reader(file_handle, delimiter=','))
+        try:
+            delimiter = csv.Sniffer().sniff(file_handle.read(1024)).delimiter
+            print("Using delimiter: ", delimiter)
+        except Exception:
+            print("Failed to sniff delimiter, using ','")
+            delimiter = ","
+        # reset to start and read whole file...
+        file_handle.seek(0)
+        data = list(csv.reader(file_handle, delimiter=delimiter))
         file_handle.close()
 
         # keys are in the header row
