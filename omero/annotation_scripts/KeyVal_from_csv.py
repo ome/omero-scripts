@@ -180,6 +180,7 @@ def keyval_from_csv(conn, script_params):
         rows = data[1:]
 
         nimg_updated = 0
+        missing_names = 0
         # loop over csv rows...
         for row in rows:
             # try to find 'image', then 'well', then 'plate'
@@ -192,6 +193,7 @@ def keyval_from_csv(conn, script_params):
                     obj = images_by_name[image_name]
                     print("Annotating Image:", obj.id, image_name)
                 else:
+                    missing_names += 1
                     print("Image not found:", image_name)
             if obj is None and well_index > -1 and len(row[well_index]) > 0:
                 well_name = row[well_index]
@@ -199,6 +201,7 @@ def keyval_from_csv(conn, script_params):
                     obj = wells_by_name[well_name]
                     print("Annotating Well:", obj.id, well_name)
                 else:
+                    missing_names += 1
                     print("Well not found:", well_name)
             if obj is None and plate_index > -1:
                 plate_name = row[plate_index]
@@ -215,8 +218,11 @@ def keyval_from_csv(conn, script_params):
             if updated:
                 nimg_updated += 1
 
-    return "Added {} kv pairs to {}/{} files  ".format(
+    message = "Added {} kv pairs to {}/{} files".format(
         len(header)-1, nimg_updated, len(images_by_name))
+    if missing_names > 0:
+        message += f". {missing_names} image names not found."
+    return message
 
 
 def annotate_object(conn, obj, header, row, cols_to_ignore):
