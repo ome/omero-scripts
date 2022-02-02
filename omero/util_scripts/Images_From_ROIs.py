@@ -167,7 +167,8 @@ def get_rectangles(conn, image_id):
             t_end = max(t_indexes) if t_indexes else None
             z_start = min(z_indexes) if z_indexes else None
             z_end = max(z_indexes) if z_indexes else None
-            rois.append((x, y, width, height, z_start, z_end, t_start, t_end, xy_by_time))
+            rois.append((x, y, width, height, z_start, z_end,
+                         t_start, t_end, xy_by_time))
 
     return rois
 
