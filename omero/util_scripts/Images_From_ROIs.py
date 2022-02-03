@@ -453,7 +453,7 @@ def run_script():
         'Images_From_ROIs.py',
         """Crop an Image using Rectangular ROIs, to create new Images.
 ROIs that extend across Z and T will crop according to the Z and T limits
-of each ROI. If NO Z set, use all Z planes. If NO T set, use all T planes.
+of each ROI.
 If you choose to 'make an image stack' from all the ROIs, the script \
 will create a single new Z-stack image with a single plane from each ROI.
 ROIs that are 'Big', typically over 3k x 3k pixels will create 'tiled'
