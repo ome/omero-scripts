@@ -451,9 +451,9 @@ def run_script():
 
     client = scripts.client(
         'Images_From_ROIs.py',
-        """Crop an Image using Rectangular ROIs, to create new Images.
-ROIs that extend across Z and T will crop according to the Z and T limits
-of each ROI.
+        """Crop an Image using Rectangular ROIs, to create a new Image
+for each ROI. ROIs that extend across Z and T will crop according to
+the Z and T limits of each ROI.
 If you choose to 'make an image stack' from all the ROIs, the script \
 will create a single new Z-stack image with a single plane from each ROI.
 ROIs that are 'Big', typically over 3k x 3k pixels will create 'tiled'
