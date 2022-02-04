@@ -277,6 +277,8 @@ def process_image(conn, image_id, parameter_map):
         for index, roi in enumerate(rois):
             new_name = "%s_%0d" % (image_name, index)
             x, y, w, h, z1, z2, t1, t2, xy_by_time = roi
+            x_max = img_w - w
+            y_max = img_h - h
 
             if z1 is None:
                 z1 = 0
@@ -303,7 +305,7 @@ def process_image(conn, image_id, parameter_map):
                             if t in xy_by_time:
                                 x = xy_by_time[t]['x']
                                 y = xy_by_time[t]['y']
-                            tile = (x, y, w, h)
+                            tile = (max(0, min(x, x_max)), max(0, min(y, y_max)), w, h)
                             zct_tile_list.append((z, c, t, tile))
 
                 def tile_gen():
