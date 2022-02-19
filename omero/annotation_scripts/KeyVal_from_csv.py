@@ -150,17 +150,19 @@ def keyval_from_csv(conn, script_params):
         provider = DownloadingOriginalFileProvider(conn)
 
         # read the csv
-        file_handle = provider.get_original_file_data(original_file)
-        try:
-            delimiter = csv.Sniffer().sniff(file_handle.read(1024)).delimiter
-            print("Using delimiter: ", delimiter)
-        except Exception:
-            print("Failed to sniff delimiter, using ','")
-            delimiter = ","
-        # reset to start and read whole file...
-        file_handle.seek(0)
-        data = list(csv.reader(file_handle, delimiter=delimiter))
-        file_handle.close()
+        temp_file = provider.get_original_file_data(original_file)
+        # Needs omero-py 5.9.1 or later
+        temp_name = temp_file.name
+        with open(temp_name, 'rt', encoding='utf-8-sig') as file_handle:
+            try:
+                delimiter = csv.Sniffer().sniff(file_handle.read(1024)).delimiter
+                print("Using delimiter: ", delimiter)
+            except Exception:
+                print("Failed to sniff delimiter, using ','")
+                delimiter = ","
+            # reset to start and read whole file...
+            file_handle.seek(0)
+            data = list(csv.reader(file_handle, delimiter=delimiter))
 
         # keys are in the header row
         header = data[0]
