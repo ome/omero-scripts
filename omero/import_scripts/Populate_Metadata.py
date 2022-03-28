@@ -107,7 +107,7 @@ def populate_metadata(client, conn, script_params):
     object_ids = script_params["IDs"]
     object_id = object_ids[0]
     data_type = script_params["Data_Type"]
-
+    encoding = script_params["CSV Encoding"]
     if data_type == "Image":
         try:
             from omero_metadata.populate import ImageWrapper    # noqa: F401
@@ -120,7 +120,7 @@ def populate_metadata(client, conn, script_params):
     original_file = get_original_file(
         conn, data_type, object_id, file_ann_id)
     provider = DownloadingOriginalFileProvider(conn)
-    data_for_preprocessing = provider.get_original_file_data(original_file)
+    data_for_preprocessing = provider.get_original_file_data(original_file, encoding=encoding)
     temp_name = data_for_preprocessing.name
     # 5.9.1 returns NamedTempFile where name is a string.
     if isinstance(temp_name, int):
@@ -172,6 +172,13 @@ def run_script():
             "File_Annotation", grouping="3",
             description="File Annotation ID containing metadata to populate. "
             "Note this is not the same as the File ID."),
+        
+        scripts.String(
+            "CSV Encoding", grouping="4",
+            description="""Encoding of the CSV File provided. Can depend on your system locale 
+            as well as the program used to generate the CSV File. E.g. Excel defaults to machine specific
+            ANSI encoding during export to CSV (i.e. cp1252 on US machines, iso-8859-1 on german machines ...).""",
+            default="utf-8"),
 
         authors=["Emil Rozbicki", "OME Team"],
         institutions=["Glencoe Software Inc."],
