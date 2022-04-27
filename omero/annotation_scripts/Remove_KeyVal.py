@@ -49,33 +49,33 @@ def remove_map_annotations(conn, obj):
     return
 
 
-def getObjects(conn, scriptParams):
+def get_objects(conn, script_params):
     """
     File the list of objects
     @param conn:             Blitz Gateway connection wrapper
-    @param scriptParams:     A map of the input parameters
+    @param script_params:     A map of the input parameters
     """
-    # we know scriptParams will have "Data_Type" and "IDs" since these
+    # we know script_params will have "Data_Type" and "IDs" since these
     # parameters are not optional
-    dataType = scriptParams["Data_Type"]
-    ids = scriptParams["IDs"]
+    data_type = script_params["Data_Type"]
+    ids = script_params["IDs"]
 
-    # dataType is 'Dataset', 'Plate' or 'Image' so we can use it directly in
-    objs = list(conn.getObjects(dataType, ids))
+    # data_type is 'Dataset', 'Plate' or 'Image' so we can use it directly in
+    objs = list(conn.getObjects(data_type, ids))
 
     if len(objs) == 0:
-        print("No {} found for specified IDs".format(dataType))
+        print("No {} found for specified IDs".format(data_type))
         return
 
     objs_ret = []
 
-    if dataType == 'Dataset':
+    if data_type == 'Dataset':
         for ds in objs:
             print("Processing Images from Dataset: {}".format(ds.getName()))
             objs_ret.append(ds)
             imgs = list(ds.listChildren())
             objs_ret.extend(imgs)
-    elif dataType == "Plate":
+    elif data_type == "Plate":
         for plate in objs:
             print("Processing Wells and Images from Plate:", plate.getName())
             objs_ret.append(plate)
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     scripting service, passing the required parameters.
     """
 
-    dataTypes = wrap(['Dataset', 'Plate', 'Image'])
+    data_types = wrap(['Dataset', 'Plate', 'Image'])
 
     # Here we define the script name and description.
     # Good practice to put url here to give users more guidance on how to run
@@ -111,7 +111,7 @@ if __name__ == "__main__":
 
         scripts.String(
             "Data_Type", optional=False, grouping="1",
-            description="The data you want to work with.", values=dataTypes,
+            description="The data you want to work with.", values=data_types,
             default="Dataset"),
 
         scripts.List(
@@ -124,19 +124,19 @@ if __name__ == "__main__":
     )
 
     try:
-        scriptParams = {}
+        script_params = {}
         for key in client.getInputKeys():
             if client.getInput(key):
                 # unwrap rtypes to String, Integer etc
-                scriptParams[key] = client.getInput(key, unwrap=True)
+                script_params[key] = client.getInput(key, unwrap=True)
 
-        print(scriptParams)   # handy to have inputs in the std-out log
+        print(script_params)   # handy to have inputs in the std-out log
 
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
 
         # do the editing...
-        objs = getObjects(conn, scriptParams)
+        objs = get_objects(conn, script_params)
 
         nfailed = 0
         for obj in objs:
