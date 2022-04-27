@@ -28,23 +28,18 @@ Created by Christian Evenhuis
 
 from omero.gateway import BlitzGateway
 import omero
-from omero.cmd import Delete2
 from omero.rtypes import rlong, rstring, wrap
 import omero.scripts as scripts
 
-import re
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def RemoveMapAnnotations(conn, obj ):
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-    anns = list( obj.listAnnotations())
+def remove_map_annotations(conn, obj):
+    anns = list(obj.listAnnotations())
     mapann_ids = [ann.id for ann in anns
-         if isinstance(ann, omero.gateway.MapAnnotationWrapper) ]
+                  if isinstance(ann, omero.gateway.MapAnnotationWrapper)]
     if len(mapann_ids) == 0:
         return 0
 
-    print("Map Annotation IDs to delete:", mapann_ids )
+    print("Map Annotation IDs to delete:", mapann_ids)
     try:
         conn.deleteObjects("Annotation", mapann_ids)
         return 0
@@ -53,9 +48,8 @@ def RemoveMapAnnotations(conn, obj ):
         return 1
     return
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 def getObjects(conn, scriptParams):
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     """
     File the list of objects
     @param conn:             Blitz Gateway connection wrapper
@@ -64,28 +58,26 @@ def getObjects(conn, scriptParams):
     # we know scriptParams will have "Data_Type" and "IDs" since these
     # parameters are not optional
     dataType = scriptParams["Data_Type"]
-    ids      = scriptParams["IDs"]
+    ids = scriptParams["IDs"]
 
     # dataType is 'Dataset', 'Plate' or 'Image' so we can use it directly in
-    # getObjects()
-    objs = list(conn.getObjects(dataType, ids))   # generator of images or datasets
+    objs = list(conn.getObjects(dataType, ids))
 
     if len(objs) == 0:
-        print("No {} found for specified IDs".format(dataType) )
-        return 
-
+        print("No {} found for specified IDs".format(dataType))
+        return
 
     objs_ret = []
 
     if dataType == 'Dataset':
         for ds in objs:
-            print("Processing Images from Dataset: {}".format(ds.getName()) )
-            objs_ret.append( ds )
+            print("Processing Images from Dataset: {}".format(ds.getName()))
+            objs_ret.append(ds)
             imgs = list(ds.listChildren())
             objs_ret.extend(imgs)
     elif dataType == "Plate":
         for plate in objs:
-            print("Processing Wells and Images from Plate: {}".format(plate.getName()) )
+            print("Processing Wells and Images from Plate:", plate.getName())
             objs_ret.append(plate)
             for well in plate.listChildren():
                 objs_ret.append(well)
@@ -94,7 +86,7 @@ def getObjects(conn, scriptParams):
                     objs_ret.append(img)
     else:
         print("Processing Images identified by ID")
-        objs_ret= objs
+        objs_ret = objs
 
     return objs_ret
 
@@ -106,7 +98,6 @@ if __name__ == "__main__":
     """
 
     dataTypes = wrap(['Dataset', 'Plate', 'Image'])
-  
 
     # Here we define the script name and description.
     # Good practice to put url here to give users more guidance on how to run
@@ -144,20 +135,20 @@ if __name__ == "__main__":
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
 
-        ## do the editing...
+        # do the editing...
         objs = getObjects(conn, scriptParams)
 
         nfailed = 0
         for obj in objs:
             print("Processing object:", obj)
-            ret = RemoveMapAnnotations(conn, obj)
+            ret = remove_map_annotations(conn, obj)
             nfailed = nfailed + ret
 
-
-        ## now handle the result, displaying message and returning image if
-        ## appropriate
+        # now handle the result, displaying message and returning image if
+        # appropriate
         nobjs = len(objs)
-        message = "Key value data deleted from  {} of {} objects".format( nobjs-nfailed, nobjs)
+        message = "Key value data deleted from  {} of {} objects".format(
+                nobjs-nfailed, nobjs)
         client.setOutput("Message", rstring(message))
 
     finally:
