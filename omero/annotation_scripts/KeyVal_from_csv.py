@@ -155,11 +155,23 @@ def keyval_from_csv(conn, script_params):
         temp_name = temp_file.name
         with open(temp_name, 'rt', encoding='utf-8-sig') as file_handle:
             try:
-                delimiter = csv.Sniffer().sniff(file_handle.read(1024)).delimiter
-                print("Using delimiter: ", delimiter)
+                delimiter = csv.Sniffer().sniff(file_handle.read(500),",;\t").delimiter
+                print("Using delimiter: ", delimiter,"  after reading 500 characters")
             except Exception:
-                print("Failed to sniff delimiter, using ','")
-                delimiter = ","
+                 pass
+                file_handle.seek(0)
+                try:
+                    delimiter = csv.Sniffer().sniff(file_handle.read(1000),",;\t").delimiter
+                    print("Using delimiter: ", delimiter, "  after reading 1000 characters")
+                except Exception:
+                    pass
+                    file_handle.seek(0)
+                    try:
+                        delimiter = csv.Sniffer().sniff(file_handle.read(2000),";,\t").delimiter
+                        print("Using delimiter: ", delimiter, "  after reading 2000 characters")
+                    except Exception:
+                        print("Failed to sniff delimiter, using ','")
+                        delimiter = ","
             # reset to start and read whole file...
             file_handle.seek(0)
             data = list(csv.reader(file_handle, delimiter=delimiter))
