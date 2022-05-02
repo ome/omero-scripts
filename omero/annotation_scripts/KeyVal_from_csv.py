@@ -205,9 +205,10 @@ def keyval_from_csv(conn, script_params):
                 else:
                     missing_names += 1
                     print("Well not found:", well_name)
-            if obj is None and plate_index > -1:
-                plate_name = row[plate_index]
-                if plate_name == target_object.name:
+            # always check that Plate name matches if it is given:
+            if data_type == "Plate" and plate_index > -1 and len(row[plate_index]) > 0:
+                assert row[plate_index] == target_object.name
+                if obj is None:
                     obj = target_object
                     print("Annotating Plate:", obj.id, plate_name)
             if obj is None:
