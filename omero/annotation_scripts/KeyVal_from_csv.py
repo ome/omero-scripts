@@ -158,13 +158,11 @@ def keyval_from_csv(conn, script_params):
                 delimiter = csv.Sniffer().sniff(file_handle.read(500),",;\t").delimiter
                 print("Using delimiter: ", delimiter,"  after reading 500 characters")
             except Exception:
-                 pass
                 file_handle.seek(0)
                 try:
                     delimiter = csv.Sniffer().sniff(file_handle.read(1000),",;\t").delimiter
                     print("Using delimiter: ", delimiter, "  after reading 1000 characters")
                 except Exception:
-                    pass
                     file_handle.seek(0)
                     try:
                         delimiter = csv.Sniffer().sniff(file_handle.read(2000),";,\t").delimiter
