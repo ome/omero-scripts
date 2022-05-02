@@ -171,9 +171,9 @@ def keyval_from_csv(conn, script_params):
         # create dictionaries for well/image name:object
         images_by_name, wells_by_name = get_children_by_name(target_object)
 
-        image_index = header.index("image")
-        well_index = header.index("well")
-        plate_index = header.index("plate")
+        image_index = header.index("image") if "image" in header else -1
+        well_index = header.index("well") if "well" in header else -1
+        plate_index = header.index("plate") if "plate" in header else -1
         if image_index == -1:
             # first header is the img-name column, if 'image' not found
             image_index = 0
