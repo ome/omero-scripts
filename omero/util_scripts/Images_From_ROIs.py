@@ -49,7 +49,7 @@ def create_image_from_tiles(conn, source, image_name, description,
 
     pixels_service = conn.getPixelsService()
     query_service = conn.getQueryService()
-    xbox, ybox, wbox, hbox, z1box, z2box, t1box, t2box = box
+    xbox, ybox, wbox, hbox, z1box, z2box, t1box, t2box, xy_by_time = box
     size_x = wbox
     size_y = hbox
     size_z = source.getSizeZ()
@@ -137,9 +137,11 @@ def get_rectangles(conn, image_id):
     result = roi_service.findByImage(image_id, None)
 
     for roi in result.rois:
-        x = None
+        width = None
         z_indexes = []
         t_indexes = []
+        # note x and y for every T, to track moving object
+        xy_by_time = {}
         for shape in roi.copyShapes():
             if type(shape) == omero.model.RectangleI:
                 # check t range and z range for every rectangle
@@ -152,18 +154,21 @@ def get_rectangles(conn, image_id):
                 if the_z is not None:
                     z_indexes.append(the_z)
 
-                if x is None:   # get x, y, width, height for first rect only
-                    x = int(shape.getX().getValue())
-                    y = int(shape.getY().getValue())
+                if width is None:   # get width, height for first rect only
                     width = int(shape.getWidth().getValue())
                     height = int(shape.getHeight().getValue())
+                x = int(shape.getX().getValue())
+                y = int(shape.getY().getValue())
+                if the_t is not None:
+                    xy_by_time[the_t] = {'x': x, 'y': y}
         # if we have found any rectangles at all for this ROI...
-        if x is not None:
+        if width is not None:
             t_start = min(t_indexes) if t_indexes else None
             t_end = max(t_indexes) if t_indexes else None
             z_start = min(z_indexes) if z_indexes else None
             z_end = max(z_indexes) if z_indexes else None
-            rois.append((x, y, width, height, z_start, z_end, t_start, t_end))
+            rois.append((x, y, width, height, z_start, z_end,
+                         t_start, t_end, xy_by_time))
 
     return rois
 
@@ -201,8 +206,8 @@ def process_image(conn, image_id, parameter_map):
     img_w = image.getSizeX()
     img_h = image.getSizeY()
 
-    for index, r in enumerate(rois):
-        x, y, w, h, z1, z2, t1, t2 = r
+    for index, roi in enumerate(rois):
+        x, y, w, h, z1, z2, t1, t2, xy_by_time = roi
         # Bounding box
         x_max = max(x, 0)
         y_max = max(y, 0)
@@ -221,22 +226,22 @@ def process_image(conn, image_id, parameter_map):
     if image_stack:
         # use width and height from first roi to make sure that all are the
         # same.
-        x, y, width, height, z1, z2, t1, t2 = rois[0]
+        x, y, width, height, z1, z2, t1, t2, xy_by_time = rois[0]
 
         def tile_gen():
             # list a tile from each ROI and create a generator of 2D planes
             zct_tile_list = []
             # assume single channel image Electron Microscopy use case
             c = 0
-            for r in rois:
-                x, y, w, h, z1, z2, t1, t2 = r
+            for roi in rois:
+                x, y, w, h, z1, z2, t1, t2, xy_by_time = roi
                 tile = (x, y, width, height)
                 the_z = z1 if z1 is not None else 0
                 the_t = t1 if t1 is not None else 0
                 zct_tile_list.append((the_z, c, the_t, tile))
             print('image_stack zct_tile_list:', zct_tile_list)
-            for t in pixels.getTiles(zct_tile_list):
-                yield t
+            for tile in pixels.getTiles(zct_tile_list):
+                yield tile
 
         if 'Container_Name' in parameter_map:
             new_image_name = "%s_%s" % (os.path.basename(image_name),
@@ -269,9 +274,11 @@ def process_image(conn, image_id, parameter_map):
         big_image_size = conn.getMaxPlaneSize()
         big_image_pixel_count = big_image_size[0] * big_image_size[1]
 
-        for index, r in enumerate(rois):
+        for index, roi in enumerate(rois):
             new_name = "%s_%0d" % (image_name, index)
-            x, y, w, h, z1, z2, t1, t2 = r
+            x, y, w, h, z1, z2, t1, t2, xy_by_time = roi
+            x_max = img_w - w
+            y_max = img_h - h
 
             if z1 is None:
                 z1 = 0
@@ -292,10 +299,13 @@ def process_image(conn, image_id, parameter_map):
                 size_t = t2-t1 + 1
                 size_c = image.getSizeC()
                 zct_tile_list = []
-                tile = (x, y, w, h)
                 for z in range(z1, z2+1):
                     for c in range(size_c):
                         for t in range(t1, t2+1):
+                            if t in xy_by_time:
+                                x = xy_by_time[t]['x']
+                                y = xy_by_time[t]['y']
+                            tile = (max(0, min(x, x_max)), max(0, min(y, y_max)), w, h)
                             zct_tile_list.append((z, c, t, tile))
 
                 def tile_gen():
@@ -309,7 +319,7 @@ def process_image(conn, image_id, parameter_map):
             else:
                 tile_size = parameter_map['Tile_Size']
                 new_img = create_image_from_tiles(conn, image, new_name,
-                                                  description, r, tile_size)
+                                                  description, roi, tile_size)
 
             images.append(new_img)
             iids.append(new_img.getId())
@@ -443,9 +453,9 @@ def run_script():
 
     client = scripts.client(
         'Images_From_ROIs.py',
-        """Crop an Image using Rectangular ROIs, to create new Images.
-ROIs that extend across Z and T will crop according to the Z and T limits
-of each ROI. If NO Z set, use all Z planes. If NO T set, use all T planes.
+        """Crop an Image using Rectangular ROIs, to create a new Image
+for each ROI. ROIs that extend across Z and T will crop according to
+the Z and T limits of each ROI.
 If you choose to 'make an image stack' from all the ROIs, the script \
 will create a single new Z-stack image with a single plane from each ROI.
 ROIs that are 'Big', typically over 3k x 3k pixels will create 'tiled'

@@ -6,9 +6,10 @@
  Remove all key-value  pairs from:
    * selected image(s)
    * selected dataset(s) and the images contained in them
+   * selected screens(s) and the wells & images contained in them
 
 -----------------------------------------------------------------------------
-  Copyright (C) 2018
+  Copyright (C) 2018 - 2022
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
@@ -27,67 +28,65 @@ Created by Christian Evenhuis
 
 from omero.gateway import BlitzGateway
 import omero
-from omero.cmd import Delete2
-from omero.rtypes import rlong, rstring, robject
+from omero.rtypes import rlong, rstring, wrap
 import omero.scripts as scripts
 
-import re
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def RemoveMapAnnotations(conn, dtype, Id ):
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    obj = conn.getObject(dtype,int(Id))
-    name = obj.getName()
-
-    anns = list( obj.listAnnotations())
+def remove_map_annotations(conn, obj):
+    anns = list(obj.listAnnotations())
     mapann_ids = [ann.id for ann in anns
-         if isinstance(ann, omero.gateway.MapAnnotationWrapper) ]
-
-    print(mapann_ids )
-    try:
-        delete = Delete2(targetObjects={'MapAnnotation': mapann_ids})
-        handle = conn.c.sf.submit(delete)
-        conn.c.waitOnCmd(handle, loops=10, ms=500, failonerror=True,
-                     failontimeout=False, closehandle=False)
+                  if isinstance(ann, omero.gateway.MapAnnotationWrapper)]
+    if len(mapann_ids) == 0:
         return 0
-    except Exception as ex:
-        print("Failed to delete links: {} ".format(ex.message) )
+
+    print("Map Annotation IDs to delete:", mapann_ids)
+    try:
+        conn.deleteObjects("Annotation", mapann_ids)
+        return 0
+    except Exception:
+        print("Failed to delete links")
         return 1
     return
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def getObjects(conn, scriptParams):
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+def get_objects(conn, script_params):
     """
     File the list of objects
     @param conn:             Blitz Gateway connection wrapper
-    @param scriptParams:     A map of the input parameters
+    @param script_params:     A map of the input parameters
     """
-    # we know scriptParams will have "Data_Type" and "IDs" since these
+    # we know script_params will have "Data_Type" and "IDs" since these
     # parameters are not optional
-    dataType = scriptParams["Data_Type"]
-    ids      = scriptParams["IDs"]
+    data_type = script_params["Data_Type"]
+    ids = script_params["IDs"]
 
-    # dataType is 'Dataset' or 'Image' so we can use it directly in
-    # getObjects()
-    objs = list(conn.getObjects(dataType, ids))   # generator of images or datasets
+    # data_type is 'Dataset', 'Plate' or 'Image' so we can use it directly in
+    objs = list(conn.getObjects(data_type, ids))
 
     if len(objs) == 0:
-        print("No {} found for specified IDs".format(dataType) )
-        return 
-
+        print("No {} found for specified IDs".format(data_type))
+        return
 
     objs_ret = []
 
-    if dataType == 'Dataset':
+    if data_type == 'Dataset':
         for ds in objs:
-            print("Processing Images from Dataset: {}".format(ds.getName()) )
-            objs_ret.append( ds )
+            print("Processing Images from Dataset: {}".format(ds.getName()))
+            objs_ret.append(ds)
             imgs = list(ds.listChildren())
             objs_ret.extend(imgs)
+    elif data_type == "Plate":
+        for plate in objs:
+            print("Processing Wells and Images from Plate:", plate.getName())
+            objs_ret.append(plate)
+            for well in plate.listChildren():
+                objs_ret.append(well)
+                for ws in well.listChildren():
+                    img = ws.getImage()
+                    objs_ret.append(img)
     else:
         print("Processing Images identified by ID")
-        objs_ret= objs
+        objs_ret = objs
 
     return objs_ret
 
@@ -98,8 +97,7 @@ if __name__ == "__main__":
     scripting service, passing the required parameters.
     """
 
-    dataTypes = [rstring('Dataset'),rstring('Image')] # only works on datasets
-  
+    data_types = wrap(['Dataset', 'Plate', 'Image'])
 
     # Here we define the script name and description.
     # Good practice to put url here to give users more guidance on how to run
@@ -113,17 +111,12 @@ if __name__ == "__main__":
 
         scripts.String(
             "Data_Type", optional=False, grouping="1",
-            description="The data you want to work with.", values=dataTypes,
+            description="The data you want to work with.", values=data_types,
             default="Dataset"),
 
         scripts.List(
             "IDs", optional=False, grouping="2",
             description="List of Dataset IDs or Image IDs").ofType(rlong(0)),
-
-        scripts.String(
-            "New_Description", grouping="3",
-            description="The new description to set for each Image in the"
-            " Dataset"),
 
         authors=["Christian Evenhuis", "MIF"],
         institutions=["University of Technology Sydney"],
@@ -131,35 +124,32 @@ if __name__ == "__main__":
     )
 
     try:
-        scriptParams = {}
+        script_params = {}
         for key in client.getInputKeys():
             if client.getInput(key):
                 # unwrap rtypes to String, Integer etc
-                scriptParams[key] = client.getInput(key, unwrap=True)
+                script_params[key] = client.getInput(key, unwrap=True)
 
-        print(scriptParams)   # handy to have inputs in the std-out log
+        print(script_params)   # handy to have inputs in the std-out log
 
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
 
-        ## do the editing...
-        objs  = getObjects(conn, scriptParams)
+        # do the editing...
+        objs = get_objects(conn, script_params)
 
         nfailed = 0
         for obj in objs:
-            print("Processing : {}".format(obj.getName() ))
-            ret = RemoveMapAnnotations( conn, obj.OMERO_CLASS, obj.getId() )
+            print("Processing object:", obj)
+            ret = remove_map_annotations(conn, obj)
             nfailed = nfailed + ret
 
-
-        ## now handle the result, displaying message and returning image if
-        ## appropriate
+        # now handle the result, displaying message and returning image if
+        # appropriate
         nobjs = len(objs)
-        message = "Key value data deleted from  {} of {} files".format( nobjs-nfailed, nobjs)
+        message = "Key value data deleted from  {} of {} objects".format(
+                nobjs-nfailed, nobjs)
         client.setOutput("Message", rstring(message))
-    
-    except:
-        pass
 
     finally:
         client.closeSession()
