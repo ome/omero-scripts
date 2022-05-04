@@ -138,10 +138,10 @@ def run_script():
         conn = BlitzGateway(client_obj=client)
         print("connection made")
 
-        dataType = script_params["Data_Type"]
-        print(dataType)
+        data_type = script_params["Data_Type"]
+        print(data_type)
         ids = script_params["IDs"]
-        datasets = list(conn.getObjects(dataType, ids))
+        datasets = list(conn.getObjects(data_type, ids))
         print(ids)
         print("datasets:")
         print(datasets)
