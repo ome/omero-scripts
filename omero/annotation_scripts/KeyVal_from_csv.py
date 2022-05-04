@@ -155,18 +155,24 @@ def keyval_from_csv(conn, script_params):
         temp_name = temp_file.name
         with open(temp_name, 'rt', encoding='utf-8-sig') as file_handle:
             try:
-                delimiter = csv.Sniffer().sniff(file_handle.read(500),",;\t").delimiter
-                print("Using delimiter: ", delimiter,"  after reading 500 characters")
+                delimiter = csv.Sniffer().sniff(
+                    file_handle.read(500), ",;\t").delimiter
+                print("Using delimiter: ", delimiter,
+                      " after reading 500 characters")
             except Exception:
                 file_handle.seek(0)
                 try:
-                    delimiter = csv.Sniffer().sniff(file_handle.read(1000),",;\t").delimiter
-                    print("Using delimiter: ", delimiter, "  after reading 1000 characters")
+                    delimiter = csv.Sniffer().sniff(
+                        file_handle.read(1000), ",;\t").delimiter
+                    print("Using delimiter: ", delimiter,
+                          " after reading 1000 characters")
                 except Exception:
                     file_handle.seek(0)
                     try:
-                        delimiter = csv.Sniffer().sniff(file_handle.read(2000),";,\t").delimiter
-                        print("Using delimiter: ", delimiter, "  after reading 2000 characters")
+                        delimiter = csv.Sniffer().sniff(
+                            file_handle.read(2000), ";,\t").delimiter
+                        print("Using delimiter: ", delimiter,
+                              " after reading 2000 characters")
                     except Exception:
                         print("Failed to sniff delimiter, using ','")
                         delimiter = ","
@@ -216,7 +222,8 @@ def keyval_from_csv(conn, script_params):
                     missing_names += 1
                     print("Well not found:", well_name)
             # always check that Plate name matches if it is given:
-            if data_type == "Plate" and plate_index > -1 and len(row[plate_index]) > 0:
+            if data_type == "Plate" and plate_index > -1 and \
+                    len(row[plate_index]) > 0:
                 if row[plate_index] != target_object.name:
                     print("plate", row[plate_index],
                           "doesn't match object", target_object.name)
@@ -225,7 +232,7 @@ def keyval_from_csv(conn, script_params):
                     obj = target_object
                     print("Annotating Plate:", obj.id, plate_name)
             if obj is None:
-                msg = f"Can't find object by image, well or plate name"
+                msg = "Can't find object by image, well or plate name"
                 print(msg)
                 continue
 

@@ -305,7 +305,8 @@ def process_image(conn, image_id, parameter_map):
                             if t in xy_by_time:
                                 x = xy_by_time[t]['x']
                                 y = xy_by_time[t]['y']
-                            tile = (max(0, min(x, x_max)), max(0, min(y, y_max)), w, h)
+                            tile = (max(0, min(x, x_max)),
+                                    max(0, min(y, y_max)), w, h)
                             zct_tile_list.append((z, c, t, tile))
 
                 def tile_gen():
