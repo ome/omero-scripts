@@ -1,5 +1,4 @@
-
-#!/usr/bin/env python
+# !/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # -----------------------------------------------------------------------------
@@ -17,17 +16,16 @@
 #   You should have received a copy of the GNU General Public License along
 #   with this program; if not, write to the Free Software Foundation, Inc.,
 #   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-# 
 
 # This script exports the OME.xml from all Images in a Dataset.
 # The OME.xml from Images with the same Name is compared and
 # any differences are shown in the printed log.
 
-from xml.etree import ElementTree as ET
+from xml.etree import ElementTree
 
 import omero.scripts as scripts
 from omero.gateway import BlitzGateway
-from omero.rtypes import rlong, rstring, robject, unwrap
+from omero.rtypes import rlong, rstring
 
 
 def get_image_ome_xml(conn, image_id):
@@ -41,8 +39,8 @@ def get_image_ome_xml(conn, image_id):
 
 
 def compare_xml(xml1, xml2):
-    tree1 = ET.ElementTree(ET.fromstring(xml1))
-    tree2 = ET.ElementTree(ET.fromstring(xml2))
+    tree1 = ElementTree.ElementTree(ElementTree.fromstring(xml1))
+    tree2 = ElementTree.ElementTree(ElementTree.fromstring(xml2))
 
     mismatch = False
     for child1, child2 in zip(tree1.iter(), tree2.iter()):
@@ -128,7 +126,8 @@ def run_script():
 
         # call the main script
         mismatch_count, comparison_count = process_data(conn, script_params)
-        message = f"Compared OME.xml for {comparison_count} images, found {mismatch_count} diffs"
+        message = (f"Compared OME.xml for {comparison_count} images," +
+                   f" found {mismatch_count} diffs")
 
         client.setOutput("Message", rstring(message))
 
