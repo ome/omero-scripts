@@ -27,6 +27,7 @@ import omero.scripts as scripts
 from omero.gateway import BlitzGateway
 from omero.rtypes import rlong, rstring
 
+elements_by_id = {}
 
 def get_image_ome_xml(conn, image_id):
 
@@ -44,20 +45,55 @@ def compare_xml(xml1, xml2):
 
     mismatch = False
     for child1, child2 in zip(tree1.iter(), tree2.iter()):
-        # Ignore IDs which will be unique
-        child1.attrib.pop("ID", None)
-        child2.attrib.pop("ID", None)
-
-        print("Checking element", child1)
-
-        if child1.attrib != child2.attrib:
+        if nodes_mismatch(child1, child2):
             mismatch = True
-            print("-------- ** difference... ** --------------")
-            print("CHILD1", child1.attrib)
-            print("CHILD2", child2.attrib)
-            print("...----------------------")
 
     return mismatch
+
+
+def nodes_mismatch(node1, node2):
+    # Ignore IDs which will be unique
+    node1.attrib.pop("ID", None)
+    node2.attrib.pop("ID", None)
+
+    print("Checking element", node1)
+    if node1.tag != node2.tag:
+        print("Node names mismatch:", node1.tag, node2.tag)
+        return False
+
+    print("TAGS", node1.tag, node2.tag)
+    # if node comes in List, compare identical nodes
+    if node1.tag.endswith("Plane"):
+        for node in [node1, node2]:
+            theZ = node.attrib.get("TheZ")
+            theC = node.attrib.get("TheC")
+            theT = node.attrib.get("TheT")
+            plane_id = f"Plane:{theZ}:{theC}:{theT}"
+            print("plane_id", plane_id)
+            if plane_id in elements_by_id:
+                nodeA = elements_by_id[plane_id]
+                nodeB = node
+                print("Comparing planes", plane_id)
+                if nodeA.attrib != nodeB.attrib:
+                    print("-------- ** difference... ** --------------")
+                    print("nodeA", nodeA.attrib)
+                    print("nodeB", nodeB.attrib)
+                    print("...----------------------")
+                    return True
+            else:
+                elements_by_id[plane_id] = node
+        return False
+
+    # Directly compare nodes
+    if node1.attrib != node2.attrib:
+        print("-------- ** difference... ** --------------")
+        print("node1", node1.attrib)
+        print("node2", node2.attrib)
+        print("...----------------------")
+        return True
+    return False
+
+
 
 
 def process_data(conn, script_params):
@@ -74,6 +110,8 @@ def process_data(conn, script_params):
         for dataset in conn.getObjects("Dataset", ids):
             xml_by_image_name = {}
             for image in dataset.listChildren():
+                # reset elements registry
+                elements_by_id = {}
                 xml = get_image_ome_xml(conn, image.id)
                 name = image.name
                 print("Image...", image.id, image.name)
