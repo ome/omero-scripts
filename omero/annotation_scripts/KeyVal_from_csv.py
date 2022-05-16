@@ -136,6 +136,10 @@ def keyval_from_csv(conn, script_params):
     data_type = script_params["Data_Type"]
     ids = script_params["IDs"]
 
+    nimg_processed = 0
+    nimg_updated = 0
+    missing_names = 0
+
     for target_object in conn.getObjects(data_type, ids):
 
         # file_ann_id is Optional. If not supplied, use first .csv attached
@@ -186,6 +190,7 @@ def keyval_from_csv(conn, script_params):
 
         # create dictionaries for well/image name:object
         images_by_name, wells_by_name = get_children_by_name(target_object)
+        nimg_processed += len(images_by_name)
 
         image_index = header.index("image") if "image" in header else -1
         well_index = header.index("well") if "well" in header else -1
@@ -197,8 +202,6 @@ def keyval_from_csv(conn, script_params):
               "plate_index:", plate_index)
         rows = data[1:]
 
-        nimg_updated = 0
-        missing_names = 0
         # loop over csv rows...
         for row in rows:
             # try to find 'image', then 'well', then 'plate'
@@ -241,8 +244,8 @@ def keyval_from_csv(conn, script_params):
             if updated:
                 nimg_updated += 1
 
-    message = "Added {} kv pairs to {}/{} files".format(
-        len(header)-1, nimg_updated, len(images_by_name))
+    message = "Added kv pairs to {}/{} files".format(
+        nimg_updated, nimg_processed)
     if missing_names > 0:
         message += f". {missing_names} image names not found."
     return message
@@ -309,7 +312,7 @@ def run_script():
 
         scripts.List(
             "IDs", optional=False, grouping="2",
-            description="Plate or Screen ID.").ofType(rlong(0)),
+            description="Dataset or Plate ID(s).").ofType(rlong(0)),
 
         scripts.String(
             "File_Annotation", grouping="3",
