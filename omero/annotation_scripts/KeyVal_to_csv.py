@@ -27,94 +27,111 @@ import omero
 from omero.gateway import BlitzGateway
 from omero.rtypes import rstring, rlong
 import omero.scripts as scripts
-from omero.model import PlateI, ScreenI, DatasetI
-from omero.rtypes import *
 from omero.cmd import Delete2
 
 import tempfile
 
-import os,sys
 import csv
-import copy
+import os
 
 from collections import OrderedDict
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def GetExistingMapAnnotions( obj ):
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+def get_existing_map_annotions(obj):
     ord_dict = OrderedDict()
     for ann in obj.listAnnotations():
-        if( isinstance(ann, omero.gateway.MapAnnotationWrapper) ):
+        if(isinstance(ann, omero.gateway.MapAnnotationWrapper)):
             kvs = ann.getValue()
-            for k,v in kvs:
-                if k not in ord_dict: ord_dict[k] = set()
+            for k, v in kvs:
+                if k not in ord_dict:
+                    ord_dict[k] = set()
                 ord_dict[k].add(v)
     return ord_dict
 
 
+def list_children(obj, export_wells):
+    children = []
+    if obj.OMERO_CLASS == "Dataset":
+        children = list(obj.listChildren())
+    elif obj.OMERO_CLASS == "Plate":
+        for well in obj.listChildren():
+            if export_wells:
+                children.append(well)
+            else:
+                for ws in well.listChildren():
+                    children.append(ws.getImage())
+    return children
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def attach_csv_file( conn, obj, data ):
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+def get_name(obj):
+    print("hasstr", hasattr(obj, "getWellPos"))
+    if hasattr(obj, "getWellPos"):
+        # Handle Wells
+        return obj.getWellPos()
+    else:
+        return obj.getName()
+
+
+def attach_csv_file(conn, obj, data, export_wells):
     ''' writes the data (list of dicts) to a file
     and attaches it to the object
         conn : connection to OMERO (need to annotation creation
-        obj  : the object to attach the file file to 
+        obj  : the object to attach the file file to
         data : the data
     '''
     # create the tmp directory
     tmp_dir = tempfile.mkdtemp(prefix='MIF_meta')
     (fd, tmp_file) = tempfile.mkstemp(dir=tmp_dir, text=True)
-    tfile = os.fdopen(fd, 'w')
 
     # get the list of  keys and maximum number of occurences
     # A key can appear multiple times, for example multiple dyes can be used
-    key_union=OrderedDict()
-    for img_n,img_kv in data.items():
-        for key, vset  in img_kv.items():
-            key_union[key] = max(key_union.get(key,0),len(vset))
-    all_keys = key_union.keys()
+    key_union = OrderedDict()
+    for img_n, img_kv in data.items():
+        for key, vset in img_kv.items():
+            key_union[key] = max(key_union.get(key, 0), len(vset))
 
     # convience function to write a csv line
-    def to_csv( ll ):
+    def to_csv(ll):
         nl = len(ll)
         fmstr = "{}, "*(nl-1)+"{}\n"
         return fmstr.format(*ll)
 
     # construct the header of the CSV file
-    header = ['filename']
-    for key,count in key_union.items():
-        header.extend( [key]*count )      # keys can repeat multiple times
-    tfile.write( to_csv( header ) )
+    header = ['well' if export_wells else 'image']
+    for key, count in key_union.items():
+        header.extend([key] * count)      # keys can repeat multiple times
+    print("header", header)
 
-    # write the keys values for each file
-    for filename,kv_dict in data.items():
-        row    = [""]*len(header)   # empty row 
-        row[0] = filename
-        for key,vset, in kv_dict.items():
-            n0   = header.index(key)     # first occurence of key in header
-            for i,val in enumerate(vset):
-                row[n0+i] = val
-        tfile.write( to_csv( row ) )
-    tfile.close()
+    with open(fd, 'w') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',')
+        writer.writerow(header)
+
+        # write the keys values for each file
+        for filename, kv_dict in data.items():
+            row = [""] * len(header)   # empty row
+            row[0] = filename
+            for key, vset in kv_dict.items():
+                n0 = header.index(key)     # first occurence of key in header
+                for i, val in enumerate(vset):
+                    row[n0 + i] = val
+            writer.writerow(row)
 
     name = "{}_metadata_out.csv".format(obj.getName())
     # link it to the object
     ann = conn.createFileAnnfromLocalFile(
         tmp_file, origFilePathAndName=name,
-        ns='MIF_test' )
+        ns='MIF_test')
     ann = obj.linkAnnotation(ann)
 
     # remove the tmp file
     os.remove(tmp_file)
-    os.rmdir (tmp_dir )
-    return "done"
+    os.rmdir(tmp_dir)
+    return name
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 def run_script():
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    data_types = [rstring('Dataset')]
+    data_types = [rstring('Dataset'), rstring('Plate')]
     client = scripts.client(
         'Create_Metadata_csv',
         """
@@ -128,7 +145,13 @@ def run_script():
 
         scripts.List(
             "IDs", optional=False, grouping="2",
-            description="Plate or Screen ID.").ofType(rlong(0)),
+            description="Dataset or Plate ID(s).").ofType(rlong(0)),
+
+        scripts.Bool(
+            "Export_Wells", optional=True, grouping="3",
+            default=False,
+            description=("For Plates, export KeyValue pairs from Wells "
+                         "(instead of Images)?")),
 
 
         authors=["Christian Evenhuis"],
@@ -146,51 +169,58 @@ def run_script():
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
         print("connection made")
+        print(script_params)
+        export_wells = script_params.get("Export_Wells", False)
 
-        dataType = script_params["Data_Type"]
-        print(dataType)
-        ids      = script_params["IDs"]
-        datasets = list(conn.getObjects(dataType, ids))    # generator of images or datasets
+        data_type = script_params["Data_Type"]
+        ids = script_params["IDs"]
+        parents = list(conn.getObjects(data_type, ids))
         print(ids)
-        print("datasets:")
-        print( datasets )
-        for ds in datasets:
+        print(parents)
+        message = ""
+        file_names = []
+        for obj in parents:
             # name of the file
-            csv_name = "{}_metadata_out.csv".format(ds.getName()) 
+            csv_name = "{}_metadata_out.csv".format(obj.getName())
             print(csv_name)
 
             # remove the csv if it exists
-            for ann in ds.listAnnotations():
-                if( isinstance(ann, omero.gateway.FileAnnotationWrapper) ):
-                    if( ann.getFileName() == csv_name ):
+            for ann in obj.listAnnotations():
+                if(isinstance(ann, omero.gateway.FileAnnotationWrapper)):
+                    if(ann.getFileName() == csv_name):
                         # if the name matches delete it
                         try:
-                            delete = Delete2(targetObjects={'FileAnnotation': [int(ann.getId())]})
+                            delete = Delete2(
+                                targetObjects={'FileAnnotation':
+                                               [ann.getId()]})
                             handle = conn.c.sf.submit(delete)
-                            conn.c.waitOnCmd(handle, loops=10, ms=500, failonerror=True,
-                                         failontimeout=False, closehandle=False)
+                            conn.c.waitOnCmd(
+                                handle, loops=10,
+                                ms=500, failonerror=True,
+                                failontimeout=False, closehandle=False)
                             print("Deleted existing csv")
                         except Exception as ex:
-                            print("Failed to delete existing csv: {}".format(ex.message))
+                            print("Failed to delete existing csv: {}".format(
+                                ex.message))
                 else:
                     print("No exisiting file")
-       
-            #                                 filename         key          multiple vals
-            # assemble the metadata into an OrderedDict of ( OrderedDict of Sets          )
-            file_names = [ img.getName() for img in list(ds.listChildren()) ]
-            kv_dict = OrderedDict()
-            for img in ds.listChildren():
-                fn = img.getName()
-                kv_dict[fn] = GetExistingMapAnnotions(img)
 
+            # assemble the metadata into an OrderedDict
+            kv_dict = OrderedDict()
+            for child in list_children(obj, export_wells):
+                fn = get_name(child)
+                print("processing...", child, fn)
+                kv_dict[fn] = get_existing_map_annotions(child)
+
+            print("kv_dict", kv_dict)
             # attach the data
-            mess = attach_csv_file( conn, ds, kv_dict )
-            print(mess)
-        mess="done" 
-        client.setOutput("Message", rstring(mess))
-    
-    except:
-        pass
+            file_name = attach_csv_file(conn, obj, kv_dict, export_wells)
+            file_names.append(file_name)
+        if len(file_names) == 1:
+            message = f"Attached {file_names[0]} to {data_type}"
+        else:
+            message = f"Attached {len(file_names)} files to {data_type}s"
+        client.setOutput("Message", rstring(message))
 
     finally:
         client.closeSession()
