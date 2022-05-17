@@ -49,7 +49,7 @@ def get_existing_map_annotions(obj):
     return ord_dict
 
 
-def listChildren(obj, export_wells):
+def list_children(obj, export_wells):
     children = []
     if obj.OMERO_CLASS == "Dataset":
         children = list(obj.listChildren())
@@ -63,7 +63,7 @@ def listChildren(obj, export_wells):
     return children
 
 
-def getName(obj):
+def get_name(obj):
     print("hasstr", hasattr(obj, "getWellPos"))
     if hasattr(obj, "getWellPos"):
         # Handle Wells
@@ -207,8 +207,8 @@ def run_script():
 
             # assemble the metadata into an OrderedDict
             kv_dict = OrderedDict()
-            for child in listChildren(obj, export_wells):
-                fn = getName(child)
+            for child in list_children(obj, export_wells):
+                fn = get_name(child)
                 print("processing...", child, fn)
                 kv_dict[fn] = get_existing_map_annotions(child)
 
