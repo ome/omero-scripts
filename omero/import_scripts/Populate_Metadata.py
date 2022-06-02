@@ -31,6 +31,7 @@ import omero.model
 import sys
 
 from omero.util.populate_roi import DownloadingOriginalFileProvider
+from omero.util.populate_roi import DecodingError
 
 try:
     # Hopefully this will import
@@ -120,7 +121,12 @@ def populate_metadata(client, conn, script_params):
     original_file = get_original_file(
         conn, data_type, object_id, file_ann_id)
     provider = DownloadingOriginalFileProvider(conn)
-    data_for_preprocessing = provider.get_original_file_data(original_file, encoding=encoding)
+    try:
+        data_for_preprocessing = provider.get_original_file_data(original_file, encoding=encoding)
+    except DecodingError as e:
+        e.add_note("The CSV file provided could not be decoded using the specified encoding. Please check the encoding and contents of the file!")
+        raise
+        
     temp_name = data_for_preprocessing.name
     # 5.9.1 returns NamedTempFile where name is a string.
     if isinstance(temp_name, int):
