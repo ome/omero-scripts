@@ -125,106 +125,69 @@ class TestImportScripts(ScriptTest):
         assert message.getValue().startswith('Table data populated')
         conn.close()
 
-    def test_populate_metadata_for_cp1252(self):
+    def test_populate_metadata_for_encodings(self):
         sid = super(TestImportScripts, self).get_script(populate_metadata)
         assert sid > 0
+        import encodings
+        import os
+        import os
+        def encodinglist():
+            r=[]
+            for i in os.listdir(os.path.split(__import__("encodings").__file__)[0]):
+            name=os.path.splitext(i)[0]
+            try:
+                "".encode(name)
+            except:
+                pass
+            else:
+                r.append(name.replace("_","-"))
+            return r
+        
 
+        encodings = encodinglist()
         client, user = self.new_client_and_user()
-        update_service = client.getSession().getUpdateService()
-        plates = self.import_plates(client, plate_cols=3, plate_rows=1)
-        plate = plates[0]
-        name = plate.name.val
-        screen = omero.model.ScreenI()
-        screen.name = omero.rtypes.rstring("test_for_cp1252")
-        spl = omero.model.ScreenPlateLinkI()
-        spl.setParent(screen)
-        spl.setChild(plate)
-        spl = update_service.saveAndReturnObject(spl)
-        screen_id = spl.getParent().id.val
-        assert screen_id > 0
-        assert spl.getChild().id.val == plate.id.val
-
-        cvs_file = create_path("test_cp1252", ".csv")
-
-        # create a file annotation
-        with open(cvs_file.abspath(), 'wb+') as f:
-            f.write("Well,Plate, Well Type, Facility-Salt-Batch-ID\n".encode("cp1252"))
-            f.write(("A01,%s,Treatment,FOOL10041-101-2\n" % name).encode("cp1252"))
-            f.write(("A02,%s,Control,\n" % name).encode("cp1252"))
-            f.write(("A03,%s,Treatment,FOOL10041-101-2\n" % name).encode("cp1252"))
-
         conn = BlitzGateway(client_obj=client)
-        fa = conn.createFileAnnfromLocalFile(cvs_file, mimetype="text/csv")
-        assert fa is not None
-        assert fa.id > 0
-        link = omero.model.ScreenAnnotationLinkI()
-        link.setParent(omero.model.ScreenI(screen_id, False))
-        link.setChild(omero.model.FileAnnotationI(fa.id, False))
-        link = update_service.saveAndReturnObject(link)
-        assert link.id.val > 0
-        # run the script
-        screen_ids = []
-        screen_ids.append(spl.getParent().id)
-
-        args = {
-            "Data_Type": omero.rtypes.rstring("Screen"),
-            "IDs": omero.rtypes.rlist(screen_ids),
-            "File_Annotation": omero.rtypes.rstring(str(fa.id)),
-            "CSV Encoding": omero.rtypes.rstring(str("cp1252"))
-        }
-        message = run_script(client, sid, args, "Message")
-        assert message is not None
-        assert message.getValue().startswith('Table data populated')
-        conn.close()
-
-    def test_populate_metadata_for_iso8859(self):
-        sid = super(TestImportScripts, self).get_script(populate_metadata)
-        assert sid > 0
-
-        client, user = self.new_client_and_user()
         update_service = client.getSession().getUpdateService()
-        plates = self.import_plates(client, plate_cols=3, plate_rows=1)
-        plate = plates[0]
-        name = plate.name.val
-        screen = omero.model.ScreenI()
-        screen.name = omero.rtypes.rstring("test_for_iso8859")
-        spl = omero.model.ScreenPlateLinkI()
-        spl.setParent(screen)
-        spl.setChild(plate)
-        spl = update_service.saveAndReturnObject(spl)
-        screen_id = spl.getParent().id.val
-        assert screen_id > 0
-        assert spl.getChild().id.val == plate.id.val
+        
+        for enc in encodings:
+            plates = self.import_plates(client, plate_cols=3, plate_rows=1)
+            plate = plates[0]
+            name = plate.name.val
+            screen = omero.model.ScreenI()
+            screen.name = omero.rtypes.rstring("test_for_%s" % (enc)")
+            spl = omero.model.ScreenPlateLinkI()
+            spl.setParent(screen)
+            spl.setChild(plate)
+            spl = update_service.saveAndReturnObject(spl)
+            screen_id = spl.getParent().id.val
+            assert screen_id > 0
+            assert spl.getChild().id.val == plate.id.val
+            cvs_file = create_path("test_cp1252", ".csv")
+            # create a file annotation
+            with open(cvs_file.abspath(), 'wb+') as f:
+                f.write("Well,Plate, Well Type, Facility-Salt-Batch-ID,Comment,\n".encode(enc))
+                f.write(("A01,%s,Treatment,FOOL10041-101-2,TestString containing greek µ\n" % name).encode(enc))
+                f.write(("A02,%s,Control,TestString containing symbol ±\n" % name).encode(enc))
+                f.write(("A03,%s,Treatment,FOOL10041-101-2,TestString containing special character §\n" % name).encode(enc))
+            fa = conn.createFileAnnfromLocalFile(cvs_file, mimetype="text/csv")
+            assert fa is not None
+            assert fa.id > 0
+            link = omero.model.ScreenAnnotationLinkI()
+            link.setParent(omero.model.ScreenI(screen_id, False))
+            link.setChild(omero.model.FileAnnotationI(fa.id, False))
+            link = update_service.saveAndReturnObject(link)
+            assert link.id.val > 0
+            # run the script
+            screen_ids = []
+            screen_ids.append(spl.getParent().id)
 
-        cvs_file = create_path("test_iso8859", ".csv")
-
-        # create a file annotation
-        with open(cvs_file.abspath(), 'wb+') as f:
-            f.write("Well,Plate, Well Type, Facility-Salt-Batch-ID\n".encode("iso-8859-1"))
-            f.write(("A01,%s,Treatment,FOOL10041-101-2\n" % name).encode("iso-8859-1"))
-            f.write(("A02,%s,Control,\n" % name).encode("iso-8859-1"))
-            f.write(("A03,%s,Treatment,FOOL10041-101-2\n" % name).encode("iso-8859-1"))
-
-        conn = BlitzGateway(client_obj=client)
-        fa = conn.createFileAnnfromLocalFile(cvs_file, mimetype="text/csv")
-        assert fa is not None
-        assert fa.id > 0
-        link = omero.model.ScreenAnnotationLinkI()
-        link.setParent(omero.model.ScreenI(screen_id, False))
-        link.setChild(omero.model.FileAnnotationI(fa.id, False))
-        link = update_service.saveAndReturnObject(link)
-        assert link.id.val > 0
-        # run the script
-        screen_ids = []
-        screen_ids.append(spl.getParent().id)
-
-        args = {
-            "Data_Type": omero.rtypes.rstring("Screen"),
-            "IDs": omero.rtypes.rlist(screen_ids),
-            "File_Annotation": omero.rtypes.rstring(str(fa.id)),
-            "CSV Encoding": omero.rtypes.rstring(str("iso-8859-1"))
-        }
-        message = run_script(client, sid, args, "Message")
-        assert message is not None
-        assert message.getValue().startswith('Table data populated')
+            args = {
+                "Data_Type": omero.rtypes.rstring("Screen"),
+                "IDs": omero.rtypes.rlist(screen_ids),
+                "File_Annotation": omero.rtypes.rstring(str(fa.id)),
+                "CSV Encoding": omero.rtypes.rstring(str(enc))
+            }
+            message = run_script(client, sid, args, "Message")
+            assert message is not None
+            assert message.getValue().startswith('Table data populated') or message.getValue.startswith('The CSV file provided could not be decoded')
         conn.close()
