@@ -31,7 +31,6 @@ import omero.model
 import sys
 
 from omero.util.populate_roi import DownloadingOriginalFileProvider
-from omero.util.populate_roi import DecodingError
 
 try:
     # Hopefully this will import
@@ -58,6 +57,36 @@ except ImportError:
     Ask your administrator to install the omero-metadata plugin
     for additional features: https://pypi.org/project/omero-metadata/
     """
+
+# Check if the populate_roi scripts was updated to include functionality for encodings other than utf-8
+# If yes, define a function to query all available encodings and set a flag
+# If no, add information for the user
+
+try:
+    from omero.util.populate_roi import DecodingError
+except ImportError:
+    encoding = 'utf-8'
+    EncSup = False
+    DEPRECATED += """
+    
+    Warning: This script is using an omero-py version without support for different CSV encodings. 
+    All CSV files will be assumed to be utf-8 encoded. If you need support for different encodings,
+    ask your administrator to update the installation.
+    """
+else:
+    EncSup = True
+    import os
+    def encodinglist():
+        r=[]
+        for i in os.listdir(os.path.split(__import__("encodings").__file__)[0]):
+            name=os.path.splitext(i)[0]
+            try:
+                "".encode(name)
+            except:
+                pass
+            else:
+                r.append(name.replace("_","-"))
+        return r
 
 
 def link_file_ann(conn, object_type, object_id, file_ann_id):
@@ -156,16 +185,8 @@ def populate_metadata(client, conn, script_params):
 def run_script():
 
     data_types = [rstring(otype) for otype in OBJECT_TYPES]
-    client = scripts.client(
-        'Populate_Metadata.py',
-        """
-    This script processes a CSV file, using it to
-    'populate' an OMERO.table, with one row per Image, Well or ROI.
-    The table data can then be displayed in the OMERO clients.
-    For full details of the supported CSV format, see
-    https://github.com/ome/omero-metadata/#populate
-        """ + DEPRECATED,
-        scripts.String(
+
+    fields = [scripts.String(
             "Data_Type", optional=False, grouping="1",
             description="Choose source of images",
             values=data_types, default=OBJECT_TYPES[0]),
@@ -177,15 +198,27 @@ def run_script():
         scripts.String(
             "File_Annotation", grouping="3",
             description="File Annotation ID containing metadata to populate. "
-            "Note this is not the same as the File ID."),
-        
-        scripts.String(
+            "Note this is not the same as the File ID.")]
+    
+    # Only display the Encoding field if omero.util.populate_roi has support for different encodings
+    if EncSup:
+        fields.append( scripts.String(
             "CSV Encoding", grouping="4",
             description="""Encoding of the CSV File provided. Can depend on your system locale 
             as well as the program used to generate the CSV File. E.g. Excel defaults to machine specific
             ANSI encoding during export to CSV (i.e. cp1252 on US machines, iso-8859-1 on german machines ...).""",
-            default="utf-8"),
-
+            values=encodinglist(),default="utf-8"))
+    
+    client = scripts.client(
+        'Populate_Metadata.py',
+        """
+    This script processes a CSV file, using it to
+    'populate' an OMERO.table, with one row per Image, Well or ROI.
+    The table data can then be displayed in the OMERO clients.
+    For full details of the supported CSV format, see
+    https://github.com/ome/omero-metadata/#populate
+        """ + DEPRECATED,
+        *fields,
         authors=["Emil Rozbicki", "OME Team"],
         institutions=["Glencoe Software Inc."],
         contact="ome-users@lists.openmicroscopy.org.uk",
