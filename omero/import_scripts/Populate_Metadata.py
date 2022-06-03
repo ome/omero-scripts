@@ -62,32 +62,26 @@ except ImportError:
 # If yes, define a function to query all available encodings and set a flag
 # If no, add information for the user
 
-try:
-    from omero.util.populate_roi import DecodingError
-except ImportError:
+if "encoding" in DownloadingOriginalFileProvider.get_original_file_data.__code__.co_varnames:
+    import os
+    EncSup = True
+    AvailEncodings= []
+    for i in os.listdir(os.path.split(__import__("encodings").__file__)[0]):
+        name=os.path.splitext(i)[0]
+        try:
+            "".encode(name)
+        except:
+            pass
+        else:
+            AvailEncodings.append(name.replace("_","-"))
+else:
     encoding = 'utf-8'
     EncSup = False
     DEPRECATED += """
-    
     Warning: This script is using an omero-py version without support for different CSV encodings. 
     All CSV files will be assumed to be utf-8 encoded. If you need support for different encodings,
     ask your administrator to update the installation.
     """
-else:
-    EncSup = True
-    import os
-    def encodinglist():
-        r=[]
-        for i in os.listdir(os.path.split(__import__("encodings").__file__)[0]):
-            name=os.path.splitext(i)[0]
-            try:
-                "".encode(name)
-            except:
-                pass
-            else:
-                r.append(name.replace("_","-"))
-        return r
-
 
 def link_file_ann(conn, object_type, object_id, file_ann_id):
     """Link File Annotation to the Object, if not already linked."""
@@ -152,7 +146,7 @@ def populate_metadata(client, conn, script_params):
     provider = DownloadingOriginalFileProvider(conn)
     try:
         data_for_preprocessing = provider.get_original_file_data(original_file, encoding=encoding)
-    except DecodingError as e:
+    except UnicodeDecodeError as e:
         e.add_note("The CSV file provided could not be decoded using the specified encoding. Please check the encoding and contents of the file!")
         raise
         
@@ -207,7 +201,7 @@ def run_script():
             description="""Encoding of the CSV File provided. Can depend on your system locale 
             as well as the program used to generate the CSV File. E.g. Excel defaults to machine specific
             ANSI encoding during export to CSV (i.e. cp1252 on US machines, iso-8859-1 on german machines ...).""",
-            values=encodinglist(),default="utf-8"))
+            values=AvailEncodings,default="utf-8"))
     
     client = scripts.client(
         'Populate_Metadata.py',
