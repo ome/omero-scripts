@@ -130,31 +130,33 @@ class TestImportScripts(ScriptTest):
         assert sid > 0
         import encodings
         import os
-        import os
-        def encodinglist():
-            r=[]
-            for i in os.listdir(os.path.split(__import__("encodings").__file__)[0]):
+        from omero.util.populate_roi import DownloadingOriginalFileProvider
+        
+        # Skip test if the omero-py version does not yet provide support for the encodings
+        if "encoding" in DownloadingOriginalFileProvider.get_original_file_data.__code__.co_varnames:
+            print("Skipping test of populate_metadata.py for encodings as omero-py version does not support it!")
+            return
+        
+        AvailEncodings=[]
+        for i in os.listdir(os.path.split(__import__("encodings").__file__)[0]):
             name=os.path.splitext(i)[0]
             try:
                 "".encode(name)
             except:
                 pass
             else:
-                r.append(name.replace("_","-"))
-            return r
-        
-
-        encodings = encodinglist()
+                AvailEncodings.append(name.replace("_","-"))
+            
         client, user = self.new_client_and_user()
         conn = BlitzGateway(client_obj=client)
         update_service = client.getSession().getUpdateService()
         
-        for enc in encodings:
+        for enc in AvailEncodings:
             plates = self.import_plates(client, plate_cols=3, plate_rows=1)
             plate = plates[0]
             name = plate.name.val
             screen = omero.model.ScreenI()
-            screen.name = omero.rtypes.rstring("test_for_%s" % (enc)")
+            screen.name = omero.rtypes.rstring("test_for_%s" % (enc))
             spl = omero.model.ScreenPlateLinkI()
             spl.setParent(screen)
             spl.setChild(plate)
