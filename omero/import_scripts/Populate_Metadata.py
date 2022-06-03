@@ -131,7 +131,7 @@ def populate_metadata(client, conn, script_params):
     object_ids = script_params["IDs"]
     object_id = object_ids[0]
     data_type = script_params["Data_Type"]
-    encoding = script_params["CSV Encoding"]
+    if encSup: encoding = script_params["CSV Encoding"]
     if data_type == "Image":
         try:
             from omero_metadata.populate import ImageWrapper    # noqa: F401
