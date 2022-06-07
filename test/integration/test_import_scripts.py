@@ -165,12 +165,15 @@ class TestImportScripts(ScriptTest):
             assert screen_id > 0
             assert spl.getChild().id.val == plate.id.val
             cvs_file = create_path("test_cp1252", ".csv")
-            # create a file annotation
-            with open(cvs_file.abspath(), 'wb+') as f:
-                f.write("Well, Plate, Well Type, Facility-Salt-Batch-ID, Comment,\n".encode(enc))
-                f.write(("A01, %s, Treatment, FOOL10041-101-2, TestString containing greek µ\n" % name).encode(enc))
-                f.write(("A02, %s, Control, FOOL10041-101-2, TestString containing symbol ±\n" % name).encode(enc))
-                f.write(("A03, %s, Treatment, FOOL10041-101-2,TestString containing special character §\n" % name).encode(enc))
+            # create a file annotation. 
+            try:
+                with open(cvs_file.abspath(), 'wb+') as f:
+                    f.write("Well, Plate, Well Type, Facility-Salt-Batch-ID, Comment,\n".encode(enc))
+                    f.write(("A01, %s, Treatment, FOOL10041-101-2, TestString containing greek µ\n" % name).encode(enc))
+                    f.write(("A02, %s, Control, FOOL10041-101-2, TestString containing symbol ±\n" % name).encode(enc))
+                    f.write(("A03, %s, Treatment, FOOL10041-101-2,TestString containing special character §\n" % name).encode(enc))
+            except UnicodeError:  #Skip if test strings are not supported
+                next
             fa = conn.createFileAnnfromLocalFile(cvs_file, mimetype="text/csv")
             assert fa is not None
             assert fa.id > 0
