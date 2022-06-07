@@ -134,10 +134,10 @@ def populate_metadata(client, conn, script_params):
     object_ids = script_params["IDs"]
     object_id = object_ids[0]
     data_type = script_params["Data_Type"]
-    
-    if EncSup: #Only get from user if support for encoding is there
+
+    if EncSup:  # Only get from user if support for encoding is there
         encoding = script_params["CSV Encoding"]
-    
+
     if data_type == "Image":
         try:
             from omero_metadata.populate import ImageWrapper    # noqa: F401
@@ -154,8 +154,8 @@ def populate_metadata(client, conn, script_params):
         data_for_preprocessing = provider.get_original_file_data(original_file, encoding=encoding)
     except UnicodeDecodeError as e:
         raise ValueError("The CSV file provided could not be decoded using "
-              "the specified encoding. Please check the encoding "
-              "and contents of the file!") from e
+                         "the specified encoding. Please check the encoding "
+                         "and contents of the file!") from e
 
     temp_name = data_for_preprocessing.name
     # 5.9.1 returns NamedTempFile where name is a string.
@@ -203,7 +203,7 @@ def run_script():
 
     # Add Encoding field if support for encodings
     if EncSup:
-        fields.append( scripts.String(
+        fields.append(scripts.String(
             "CSV Encoding", grouping="4",
             description="""Encoding of the CSV File provided. Can depend on
             your system locale as well as the program used to generate the
