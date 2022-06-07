@@ -128,24 +128,24 @@ class TestImportScripts(ScriptTest):
     def test_populate_metadata_for_encodings(self):
         sid = super(TestImportScripts, self).get_script(populate_metadata)
         assert sid > 0
-        import encodings
         import os
         from omero.util.populate_roi import DownloadingOriginalFileProvider
         
-        # Skip test if the omero-py version does not yet provide support for the encodings
+        # Skip test if the omero-py version does not support encodings
         if "encoding" in DownloadingOriginalFileProvider.get_original_file_data.__code__.co_varnames:
-            print("Skipping test of populate_metadata.py for encodings as omero-py version does not support it!")
+            print("Skipping test of populate_metadata.py for encodings"
+                  "as omero-py version does not support it!")
             return
         
-        AvailEncodings=[]
+        AvailEncodings = []
         for i in os.listdir(os.path.split(__import__("encodings").__file__)[0]):
-            name=os.path.splitext(i)[0]
+            name = os.path.splitext(i)[0]
             try:
                 "".encode(name)
             except:
                 pass
             else:
-                AvailEncodings.append(name.replace("_","-"))
+                AvailEncodings.append(name.replace("_", "-"))
             
         client, user = self.new_client_and_user()
         conn = BlitzGateway(client_obj=client)
@@ -167,10 +167,10 @@ class TestImportScripts(ScriptTest):
             cvs_file = create_path("test_cp1252", ".csv")
             # create a file annotation
             with open(cvs_file.abspath(), 'wb+') as f:
-                f.write("Well,Plate, Well Type, Facility-Salt-Batch-ID,Comment,\n".encode(enc))
-                f.write(("A01,%s,Treatment,FOOL10041-101-2,TestString containing greek µ\n" % name).encode(enc))
-                f.write(("A02,%s,Control,TestString containing symbol ±\n" % name).encode(enc))
-                f.write(("A03,%s,Treatment,FOOL10041-101-2,TestString containing special character §\n" % name).encode(enc))
+                f.write("Well, Plate, Well Type, Facility-Salt-Batch-ID, Comment,\n".encode(enc))
+                f.write(("A01, %s, Treatment, FOOL10041-101-2, TestString containing greek µ\n" % name).encode(enc))
+                f.write(("A02, %s, Control, FOOL10041-101-2, TestString containing symbol ±\n" % name).encode(enc))
+                f.write(("A03, %s, Treatment, FOOL10041-101-2,TestString containing special character §\n" % name).encode(enc))
             fa = conn.createFileAnnfromLocalFile(cvs_file, mimetype="text/csv")
             assert fa is not None
             assert fa.id > 0
