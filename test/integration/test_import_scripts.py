@@ -189,7 +189,11 @@ class TestImportScripts(ScriptTest):
                 "File_Annotation": omero.rtypes.rstring(str(fa.id)),
                 "CSV Encoding": omero.rtypes.rstring(str(enc))
             }
-            message = run_script(client, sid, args, "Message")
-            assert message is not None
-            assert message.getValue().startswith('Table data populated') or message.getValue.startswith('The CSV file provided could not be decoded')
+            message = None
+            try:
+                message = run_script(client, sid, args, "Message")
+                assert message is not None
+                assert message.getValue().startswith('Table data populated')
+            except ValueError as e:
+                assert str(e).startswith('The CSV file provided could')
         conn.close()
