@@ -58,30 +58,33 @@ except ImportError:
     for additional features: https://pypi.org/project/omero-metadata/
     """
 
-# Check if the populate_roi scripts was updated to include functionality for encodings other than utf-8
-# If yes, define a function to query all available encodings and set a flag
+# Check if the populate_roi scripts was updated to include functionality for
+# encodings other than utf-8.
+# If yes, query all available encodings and set a flag
 # If no, add information for the user
 
 if "encoding" in DownloadingOriginalFileProvider.get_original_file_data.__code__.co_varnames:
     import os
     EncSup = True
-    AvailEncodings= []
+    AvailEncodings = []
     for i in os.listdir(os.path.split(__import__("encodings").__file__)[0]):
-        name=os.path.splitext(i)[0]
+        name = os.path.splitext(i)[0]
         try:
             "".encode(name)
         except:
             pass
         else:
-            AvailEncodings.append(name.replace("_","-"))
+            AvailEncodings.append(name.replace("_", "-"))
 else:
     encoding = 'utf-8'
     EncSup = False
     DEPRECATED += """
-    Warning: This script is using an omero-py version without support for different CSV encodings. 
-    All CSV files will be assumed to be utf-8 encoded. If you need support for different encodings,
+    Warning: This script is using an omero-py version without support
+    for different CSV encodings. All CSV files will be assumed to be
+    utf-8 encoded. If you need support for different encodings,
     ask your administrator to update the installation.
     """
+
 
 def link_file_ann(conn, object_type, object_id, file_ann_id):
     """Link File Annotation to the Object, if not already linked."""
@@ -131,7 +134,10 @@ def populate_metadata(client, conn, script_params):
     object_ids = script_params["IDs"]
     object_id = object_ids[0]
     data_type = script_params["Data_Type"]
-    if encSup: encoding = script_params["CSV Encoding"]
+    
+    if EncSup: #Only get from user if support for encoding is there
+        encoding = script_params["CSV Encoding"]
+    
     if data_type == "Image":
         try:
             from omero_metadata.populate import ImageWrapper    # noqa: F401
@@ -147,9 +153,10 @@ def populate_metadata(client, conn, script_params):
     try:
         data_for_preprocessing = provider.get_original_file_data(original_file, encoding=encoding)
     except UnicodeDecodeError as e:
-        e.add_note("The CSV file provided could not be decoded using the specified encoding. Please check the encoding and contents of the file!")
-        raise
-        
+        raise ValueError("The CSV file provided could not be decoded using "
+              "the specified encoding. Please check the encoding "
+              "and contents of the file!") from e
+
     temp_name = data_for_preprocessing.name
     # 5.9.1 returns NamedTempFile where name is a string.
     if isinstance(temp_name, int):
@@ -193,16 +200,18 @@ def run_script():
             "File_Annotation", grouping="3",
             description="File Annotation ID containing metadata to populate. "
             "Note this is not the same as the File ID.")]
-    
-    # Only display the Encoding field if omero.util.populate_roi has support for different encodings
+
+    # Add Encoding field if support for encodings
     if EncSup:
         fields.append( scripts.String(
             "CSV Encoding", grouping="4",
-            description="""Encoding of the CSV File provided. Can depend on your system locale 
-            as well as the program used to generate the CSV File. E.g. Excel defaults to machine specific
-            ANSI encoding during export to CSV (i.e. cp1252 on US machines, iso-8859-1 on german machines ...).""",
-            values=AvailEncodings,default="utf-8"))
-    
+            description="""Encoding of the CSV File provided. Can depend on
+            your system locale as well as the program used to generate the
+            CSV File. E.g. Excel defaults to machine specific ANSI encoding
+            during export to CSV (i.e. cp1252 on US machines,
+            iso-8859-1 on german machines ...).""",
+            values=AvailEncodings, default="utf-8"))
+
     client = scripts.client(
         'Populate_Metadata.py',
         """
