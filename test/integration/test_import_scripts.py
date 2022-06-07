@@ -185,7 +185,7 @@ class TestImportScripts(ScriptTest):
             # run the script
             screen_ids = []
             screen_ids.append(spl.getParent().id)
-            
+
             args = {
                 "Data_Type": omero.rtypes.rstring("Screen"),
                 "IDs": omero.rtypes.rlist(screen_ids),
