@@ -152,7 +152,7 @@ def populate_metadata(client, conn, script_params):
     provider = DownloadingOriginalFileProvider(conn)
     try:
         data_for_preprocessing = provider.get_original_file_data(original_file, encoding=encoding)
-    except UnicodeDecodeError as e:
+    except ValueError as e:
         raise ValueError("The CSV file provided could not be decoded using "
                          "the specified encoding. Please check the encoding "
                          "and contents of the file!") from e
