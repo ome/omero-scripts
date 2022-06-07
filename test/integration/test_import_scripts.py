@@ -130,13 +130,13 @@ class TestImportScripts(ScriptTest):
         assert sid > 0
         import os
         from omero.util.populate_roi import DownloadingOriginalFileProvider
-        
+
         # Skip test if the omero-py version does not support encodings
         if "encoding" in DownloadingOriginalFileProvider.get_original_file_data.__code__.co_varnames:
             print("Skipping test of populate_metadata.py for encodings"
                   "as omero-py version does not support it!")
             return
-        
+
         AvailEncodings = []
         for i in os.listdir(os.path.split(__import__("encodings").__file__)[0]):
             name = os.path.splitext(i)[0]
@@ -146,11 +146,11 @@ class TestImportScripts(ScriptTest):
                 pass
             else:
                 AvailEncodings.append(name.replace("_", "-"))
-            
+
         client, user = self.new_client_and_user()
         conn = BlitzGateway(client_obj=client)
         update_service = client.getSession().getUpdateService()
-        
+
         for enc in AvailEncodings:
             plates = self.import_plates(client, plate_cols=3, plate_rows=1)
             plate = plates[0]
@@ -165,14 +165,14 @@ class TestImportScripts(ScriptTest):
             assert screen_id > 0
             assert spl.getChild().id.val == plate.id.val
             cvs_file = create_path("test_cp1252", ".csv")
-            # create a file annotation. 
+            # create a file annotation.
             try:
                 with open(cvs_file.abspath(), 'wb+') as f:
                     f.write("Well, Plate, Well Type, Facility-Salt-Batch-ID, Comment,\n".encode(enc))
                     f.write(("A01, %s, Treatment, FOOL10041-101-2, TestString containing greek µ\n" % name).encode(enc))
                     f.write(("A02, %s, Control, FOOL10041-101-2, TestString containing symbol ±\n" % name).encode(enc))
                     f.write(("A03, %s, Treatment, FOOL10041-101-2,TestString containing special character §\n" % name).encode(enc))
-            except UnicodeError:  #Skip if test strings are not supported
+            except UnicodeError:  # Skip if test strings are not supported
                 next
             fa = conn.createFileAnnfromLocalFile(cvs_file, mimetype="text/csv")
             assert fa is not None
@@ -185,7 +185,7 @@ class TestImportScripts(ScriptTest):
             # run the script
             screen_ids = []
             screen_ids.append(spl.getParent().id)
-
+            
             args = {
                 "Data_Type": omero.rtypes.rstring("Screen"),
                 "IDs": omero.rtypes.rlist(screen_ids),
