@@ -132,16 +132,16 @@ def populate_metadata(client, conn, script_params):
     ctx = ParsingContext(client, omero_object, "")
 
     try:
-        # Old
-        with open(temp_name, 'rt', encoding='utf-8-sig') as f1:
-            ctx.parse_from_handle(f1)
-            ctx.write_to_omero()
-    except AttributeError:
-        # omero-metadata >= 0.3.0
-        with open(temp_name, 'rt', encoding='utf-8-sig') as f1:
-            ctx.preprocess_from_handle(f1)
-            with open(temp_name, 'rt', encoding='utf-8-sig') as f2:
-                ctx.parse_from_handle_stream(f2)
+        if hasattr(ctx, "parse_from_handle"):
+            with open(temp_name, 'rt', encoding='utf-8-sig') as f1:
+                ctx.parse_from_handle(f1)
+                ctx.write_to_omero()
+        else:
+            # omero-metadata >= 0.3.0
+            with open(temp_name, 'rt', encoding='utf-8-sig') as f1:
+                ctx.preprocess_from_handle(f1)
+                with open(temp_name, 'rt', encoding='utf-8-sig') as f2:
+                    ctx.parse_from_handle_stream(f2)
     finally:
         data_for_preprocessing.close()
     return "Table data populated for %s: %s" % (data_type, object_id)
