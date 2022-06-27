@@ -29,69 +29,50 @@ import omero
 from omero.gateway import BlitzGateway
 from omero.rtypes import rstring, rlong
 import omero.scripts as scripts
-from omero.model import PlateI, ScreenI, DatasetI
-from omero.rtypes import *
 from omero.cmd import Delete2
 
 import sys
 import csv
 import copy
 
-# this is for downloading a temp file
-from omero.util.temp_files import create_path
-
 from omero.util.populate_roi import DownloadingOriginalFileProvider
-from omero.util.populate_metadata import ParsingContext
 
 from collections import OrderedDict
 
 
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def get_existing_map_annotations( obj ):
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    print("getting the existing kv's")
+def get_existing_map_annotations(obj):
+    """Get all Map Annotations linked to the object"""
     ord_dict = OrderedDict()
     for ann in obj.listAnnotations():
-        if( isinstance(ann, omero.gateway.MapAnnotationWrapper) ):
+        if isinstance(ann, omero.gateway.MapAnnotationWrapper):
             kvs = ann.getValue()
-            for k,v in kvs:
+            for k, v in kvs:
                 if k not in ord_dict:
-                    ord_dict[k]=set()
+                    ord_dict[k] = set()
                 ord_dict[k].add(v)
     return ord_dict
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def remove_map_annotations(conn, dtype, Id ):
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    image = conn.getObject(dtype,int(Id))
-    namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
 
-    filename = image.getName()
-
-    anns = list( image.listAnnotations())
+def remove_map_annotations(conn, object):
+    """Remove ALL Map Annotations on the object"""
+    anns = list(object.listAnnotations())
     mapann_ids = [ann.id for ann in anns
-         if isinstance(ann, omero.gateway.MapAnnotationWrapper) ]
+                  if isinstance(ann, omero.gateway.MapAnnotationWrapper)]
 
     try:
         delete = Delete2(targetObjects={'MapAnnotation': mapann_ids})
         handle = conn.c.sf.submit(delete)
         conn.c.waitOnCmd(handle, loops=10, ms=500, failonerror=True,
-                     failontimeout=False, closehandle=False)
+                         failontimeout=False, closehandle=False)
 
     except Exception as ex:
         print("Failed to delete links: {}".format(ex.message))
     return
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def get_original_file(conn, object_type, object_id, file_ann_id=None):
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    omero_object = conn.getObject("Dataset", int(object_id))
-    if omero_object is None:
-        sys.stderr.write("Error: Dataset does not exist.\n")
-        sys.exit(1)
-    file_ann = None
 
+def get_original_file(omero_object, file_ann_id=None):
+    """Find file linked to object. Option to filter by ID."""
+    file_ann = None
     for ann in omero_object.listAnnotations():
         if isinstance(ann, omero.gateway.FileAnnotationWrapper):
             file_name = ann.getFile().getName()
@@ -106,96 +87,219 @@ def get_original_file(conn, object_type, object_id, file_ann_id=None):
     return file_ann.getFile()._obj
 
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def populate_metadata(client, conn, script_params):
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    dataType = script_params["Data_Type"]
-    ids      = script_params["IDs"]
+def link_file_ann(conn, object_type, object_id, file_ann_id):
+    """Link File Annotation to the Object, if not already linked."""
+    file_ann = conn.getObject("Annotation", file_ann_id)
+    if file_ann is None:
+        sys.stderr.write("Error: File Annotation not found: %s.\n"
+                         % file_ann_id)
+        sys.exit(1)
+    omero_object = conn.getObject(object_type, object_id)
+    # Check for existing links
+    links = list(conn.getAnnotationLinks(object_type, parent_ids=[object_id],
+                                         ann_ids=[file_ann_id]))
+    if len(links) == 0:
+        omero_object.linkAnnotation(file_ann)
 
-    datasets = list(conn.getObjects(dataType, ids))
-    for ds in datasets:
-        ID = ds.getId()
 
-        # not sure what this is doing
+def get_children_by_name(omero_obj):
+
+    images_by_name = {}
+    wells_by_name = {}
+
+    if omero_obj.OMERO_CLASS == "Dataset":
+        for img in omero_obj.listChildren():
+            img_name = img.getName()
+            if img_name in images_by_name:
+                sys.stderr.write("File names not unique: {}".format(img_name))
+                sys.exit(1)
+            images_by_name[img_name] = img
+    elif omero_obj.OMERO_CLASS == "Plate":
+        for well in omero_obj.listChildren():
+            label = well.getWellPos()
+            wells_by_name[label] = well
+            for ws in well.listChildren():
+                img = ws.getImage()
+                img_name = img.getName()
+                if img_name in images_by_name:
+                    sys.stderr.write(
+                        "File names not unique: {}".format(img_name))
+                    sys.exit(1)
+                images_by_name[img_name] = img
+    else:
+        sys.stderr.write(f'{omero_obj.OMERO_CLASS} objects not supported')
+
+    return images_by_name, wells_by_name
+
+
+def keyval_from_csv(conn, script_params):
+    data_type = script_params["Data_Type"]
+    ids = script_params["IDs"]
+
+    nimg_processed = 0
+    nimg_updated = 0
+    missing_names = 0
+
+    for target_object in conn.getObjects(data_type, ids):
+
+        # file_ann_id is Optional. If not supplied, use first .csv attached
         file_ann_id = None
         if "File_Annotation" in script_params:
-            file_ann_id = long(script_params["File_Annotation"])
-            print("set ann id")
+            file_ann_id = int(script_params["File_Annotation"])
+            link_file_ann(conn, data_type, target_object.id, file_ann_id)
+            print("set ann id", file_ann_id)
 
-        original_file = get_original_file(
-            conn, dataType, ID, file_ann_id)
+        original_file = get_original_file(target_object, file_ann_id)
+        print("Original File", original_file.id.val, original_file.name.val)
         provider = DownloadingOriginalFileProvider(conn)
 
         # read the csv
-        file_handle = provider.get_original_file_data(original_file)
-        data =list(csv.reader(file_handle,delimiter=','))
-        file_handle.close()
-
-        # create a dictionary for image_name:id
-        dict_name_id={}
-        for img in ds.listChildren():
-            img_name = img.getName()
-            if( img_name in dict_name_id ):
-                sys.stderr.write("File names not unique: {}".format(img_name))
-                sys.exit(1)
-            dict_name_id[img_name] = int(img.getId())
+        temp_file = provider.get_original_file_data(original_file)
+        # Needs omero-py 5.9.1 or later
+        temp_name = temp_file.name
+        with open(temp_name, 'rt', encoding='utf-8-sig') as file_handle:
+            try:
+                delimiter = csv.Sniffer().sniff(
+                    file_handle.read(500), ",;\t").delimiter
+                print("Using delimiter: ", delimiter,
+                      " after reading 500 characters")
+            except Exception:
+                file_handle.seek(0)
+                try:
+                    delimiter = csv.Sniffer().sniff(
+                        file_handle.read(1000), ",;\t").delimiter
+                    print("Using delimiter: ", delimiter,
+                          " after reading 1000 characters")
+                except Exception:
+                    file_handle.seek(0)
+                    try:
+                        delimiter = csv.Sniffer().sniff(
+                            file_handle.read(2000), ";,\t").delimiter
+                        print("Using delimiter: ", delimiter,
+                              " after reading 2000 characters")
+                    except Exception:
+                        print("Failed to sniff delimiter, using ','")
+                        delimiter = ","
+            # reset to start and read whole file...
+            file_handle.seek(0)
+            data = list(csv.reader(file_handle, delimiter=delimiter))
 
         # keys are in the header row
-        header =data[0]
-        kv_data = header[1:]  # first header is the fimename columns
-        rows    = data[1:]
+        header = data[0]
+        print("header", header)
 
-        nimg_updated = 0
-        for row in rows: # loop over images
-            img_name = row[0]
-            if( img_name not in dict_name_id ):
-                print("Can't find filename : {}".format(img_name) )
-            else:
-                img_ID = dict_name_id[img_name]         # look up the ID
-                img    = conn.getObject('Image',img_ID) # get the img
+        # create dictionaries for well/image name:object
+        images_by_name, wells_by_name = get_children_by_name(target_object)
+        nimg_processed += len(images_by_name)
 
-                existing_kv = get_existing_map_annotations( img )
-                updated_kv  = copy.deepcopy(existing_kv)
-                print("Existing kv ")
-                for k,vset in existing_kv.items():
-                    print(type(vset),len(vset))
-                    for v in vset:
-                        print(k,v)
+        image_index = header.index("image") if "image" in header else -1
+        well_index = header.index("well") if "well" in header else -1
+        plate_index = header.index("plate") if "plate" in header else -1
+        if image_index == -1:
+            # first header is the img-name column, if 'image' not found
+            image_index = 0
+        print("image_index:", image_index, "well_index:", well_index,
+              "plate_index:", plate_index)
+        rows = data[1:]
 
-                for i in range(1,len(row)):  # first entry is the filename
-                    key = header[i].strip()
-                    vals = row[i].strip().split(';')
-                    if( len(vals) > 0 ):
-                        for val in vals:
-                            if len(val)>0 : 
-                                if key not in updated_kv: updated_kv[key] = set()
-                                print("adding",key,val)
-                                updated_kv[key].add(val)
-
-                if( existing_kv != updated_kv ):
-                    nimg_updated = nimg_updated + 1
-                    print("The key-values pairs are different")
-                    remove_map_annotations( conn, 'Image', img.getId()  )
-                    map_ann = omero.gateway.MapAnnotationWrapper(conn)
-                    namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
-                    map_ann.setNs(namespace)
-                    # convert the ordered dict to a list of lists
-                    kv_list=[]
-                    for k,vset in updated_kv.items():
-                        for v in vset:
-                            kv_list.append( [k,v] )
-                    map_ann.setValue(kv_list)
-                    map_ann.save()
-                    img.linkAnnotation(map_ann)
+        # loop over csv rows...
+        for row in rows:
+            # try to find 'image', then 'well', then 'plate'
+            image_name = row[image_index]
+            well_name = None
+            plate_name = None
+            obj = None
+            if len(image_name) > 0:
+                if image_name in images_by_name:
+                    obj = images_by_name[image_name]
+                    print("Annotating Image:", obj.id, image_name)
                 else:
-                    print("No change change in kv's")
+                    missing_names += 1
+                    print("Image not found:", image_name)
+            if obj is None and well_index > -1 and len(row[well_index]) > 0:
+                well_name = row[well_index]
+                if well_name in wells_by_name:
+                    obj = wells_by_name[well_name]
+                    print("Annotating Well:", obj.id, well_name)
+                else:
+                    missing_names += 1
+                    print("Well not found:", well_name)
+            # always check that Plate name matches if it is given:
+            if data_type == "Plate" and plate_index > -1 and \
+                    len(row[plate_index]) > 0:
+                if row[plate_index] != target_object.name:
+                    print("plate", row[plate_index],
+                          "doesn't match object", target_object.name)
+                    continue
+                if obj is None:
+                    obj = target_object
+                    print("Annotating Plate:", obj.id, plate_name)
+            if obj is None:
+                msg = "Can't find object by image, well or plate name"
+                print(msg)
+                continue
 
-    return "Added {} kv pairs to {}/{} files  ".format(len(header)-1,nimg_updated,len(dict_name_id))
+            cols_to_ignore = [image_index, well_index, plate_index]
+            updated = annotate_object(conn, obj, header, row, cols_to_ignore)
+            if updated:
+                nimg_updated += 1
+
+    message = "Added kv pairs to {}/{} files".format(
+        nimg_updated, nimg_processed)
+    if missing_names > 0:
+        message += f". {missing_names} image names not found."
+    return message
+
+
+def annotate_object(conn, obj, header, row, cols_to_ignore):
+
+    obj_updated = False
+    existing_kv = get_existing_map_annotations(obj)
+    updated_kv = copy.deepcopy(existing_kv)
+    print("Existing kv:")
+    for k, vset in existing_kv.items():
+        for v in vset:
+            print("   ", k, v)
+
+    print("Adding kv:")
+    for i in range(len(row)):
+        if i in cols_to_ignore or i >= len(header):
+            continue
+        key = header[i].strip()
+        vals = row[i].strip().split(';')
+        if len(vals) > 0:
+            for val in vals:
+                if len(val) > 0:
+                    if key not in updated_kv:
+                        updated_kv[key] = set()
+                    print("   ", key, val)
+                    updated_kv[key].add(val)
+
+    if existing_kv != updated_kv:
+        obj_updated = True
+        print("The key-values pairs are different")
+        remove_map_annotations(conn, obj)
+        map_ann = omero.gateway.MapAnnotationWrapper(conn)
+        namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
+        map_ann.setNs(namespace)
+        # convert the ordered dict to a list of lists
+        kv_list = []
+        for k, vset in updated_kv.items():
+            for v in vset:
+                kv_list.append([k, v])
+        map_ann.setValue(kv_list)
+        map_ann.save()
+        print("Map Annotation created", map_ann.id)
+        obj.linkAnnotation(map_ann)
+    else:
+        print("No change change in kv")
+
+    return obj_updated
 
 
 def run_script():
 
-    data_types = [rstring('Dataset')]
+    data_types = [rstring('Dataset'), rstring('Plate')]
     client = scripts.client(
         'Add_Key_Val_from_csv',
         """
@@ -208,7 +312,7 @@ def run_script():
 
         scripts.List(
             "IDs", optional=False, grouping="2",
-            description="Plate or Screen ID.").ofType(rlong(0)),
+            description="Dataset or Plate ID(s).").ofType(rlong(0)),
 
         scripts.String(
             "File_Annotation", grouping="3",
@@ -229,12 +333,10 @@ def run_script():
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
         print("script params")
-        for k,v in script_params.items():
-            print(k,v)
-        message = populate_metadata(client, conn, script_params)
+        for k, v in script_params.items():
+            print(k, v)
+        message = keyval_from_csv(conn, script_params)
         client.setOutput("Message", rstring(message))
-    except:
-        pass
 
     finally:
         client.closeSession()
