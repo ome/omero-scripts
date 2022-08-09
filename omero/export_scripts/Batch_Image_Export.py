@@ -283,7 +283,7 @@ def batch_image_export(conn, script_params):
 
     if (not split_cs) and (not merged_cs):
         log("Not chosen to save Individual Channels OR Merged Image")
-        return
+        return None, "Not chosen to save Individual Channels OR Merged Image"
 
     # check if we have these params
     channel_names = []
