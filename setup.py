@@ -81,6 +81,7 @@ setup(
     name='omero-scripts',
     packages=[
         'omero.analysis_scripts',
+        'omero.annotation_scripts',
         'omero.export_scripts',
         'omero.figure_scripts',
         'omero.import_scripts',
