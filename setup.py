@@ -1,7 +1,7 @@
 import os
 import sys
 
-from setuptools import find_packages, setup
+from setuptools import setup
 from setuptools.command.test import test as test_command
 
 
@@ -79,7 +79,13 @@ url = "https://github.com/ome/omero-scripts/"
 setup(
     version=version,
     name='omero-scripts',
-    packages=find_packages(),
+    packages=[
+        'omero.analysis_scripts',
+        'omero.annotation_scripts',
+        'omero.export_scripts',
+        'omero.figure_scripts',
+        'omero.import_scripts',
+        'omero.util_scripts'],
     description="OMERO scripts",
     long_description=read('README.rst'),
     classifiers=[
