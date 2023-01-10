@@ -21,7 +21,6 @@ Created by Rémy Dornier, based on Christian Evenhuis work.
 
 
 import omero
-from omero import SecurityViolation
 from omero.gateway import BlitzGateway
 from omero.rtypes import rstring, rlong
 import omero.scripts as scripts
@@ -98,7 +97,7 @@ def annotate_object(conn, obj, key, val):
             print("Map Annotation created", map_ann.id)
             obj.linkAnnotation(map_ann)
             obj_updated = True
-        except SecurityViolation:
+        except omero.SecurityViolation:
             print("You do not have the right to write annotations for ",obj.OMERO_CLASS, "", obj.getId())
     else:
         print("No change change in kv")
@@ -343,10 +342,14 @@ def add_owner_as_keyval(conn, script_params):
                     user_conn.close()
                 
             else: 
-                print("", object_type, " ", object_id, "does not exist or you do not have access to it")
+                print(object_type, object_id, "does not exist or you do not have access to it")
                 
     # build summary message        
-    message = "Added {} as owner to {} image(s), {} dataset(s), {} project(s), {} well(s), {} plate(s), {} screen(s) ".format(owner, nImage, nDataset, nProject, nWell, nPlate, nScreen)
+    if(owner == ""):
+        message = "Owner cannot be added"
+    else:
+        message = "Added {} as owner to {} image(s), {} dataset(s), {} project(s), {} well(s), {} plate(s), {} screen(s) ".format(owner, nImage, nDataset, nProject, nWell, nPlate, nScreen)
+    print(message)
     
     return message
 
