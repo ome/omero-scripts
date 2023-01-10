@@ -298,9 +298,12 @@ def add_owner_as_keyval(conn, script_params):
                     # get sudo connection
                     user_name = omero_object.getOwner().getOmeName()
                     user_conn = conn.suConn(user_name)
+                    user_conn.SERVICE_OPTS.setOmeroGroup('-1')
+                    omero_object = user_conn.getObject(object_type, object_id)
                 else:
                     user_conn = conn
-
+                    
+            if not omero_object == None:
                 # set the correct group Id
                 user_conn.SERVICE_OPTS.setOmeroGroup(omero_object.getDetails().getGroup().getId())
                 
