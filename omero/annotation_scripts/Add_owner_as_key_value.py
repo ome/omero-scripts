@@ -25,6 +25,7 @@ from omero.gateway import BlitzGateway
 from omero.rtypes import rstring, rlong
 import omero.scripts as scripts
 from omero.cmd import Delete2
+from datetime import date
 
 import sys
 import copy
@@ -32,10 +33,10 @@ import copy
 from collections import OrderedDict
 
 
-def get_existing_map_annotations(obj):
+def get_existing_map_annotations(obj, namespace):
     """Get all Map Annotations linked to the object"""
     ord_dict = OrderedDict()
-    for ann in obj.listAnnotations():
+    for ann in obj.listAnnotations(ns=namespace):
         if isinstance(ann, omero.gateway.MapAnnotationWrapper):
             kvs = ann.getValue()
             for k, v in kvs:
@@ -45,9 +46,9 @@ def get_existing_map_annotations(obj):
     return ord_dict
 
 
-def remove_map_annotations(conn, object):
+def remove_map_annotations(conn, object, namespace):
     """Remove ALL Map Annotations on the object"""
-    anns = list(object.listAnnotations())
+    anns = list(object.listAnnotations(ns=namespace))
     mapann_ids = [ann.id for ann in anns
                   if isinstance(ann, omero.gateway.MapAnnotationWrapper)]
 
@@ -66,8 +67,10 @@ def remove_map_annotations(conn, object):
 """Code taken and adapted from Christian Evenhuis,  https://github.com/ome/omero-scripts/blob/develop/omero/annotation_scripts/KeyVal_from_csv.py"""
 def annotate_object(conn, obj, key, val):
     obj_updated = False
-    existing_kv = get_existing_map_annotations(obj)
+    namespace = "Previous Owners" 
+    existing_kv = get_existing_map_annotations(obj, namespace)
     updated_kv = copy.deepcopy(existing_kv)
+
     print("Existing kv:")
     for k, vset in existing_kv.items():
         for v in vset:
@@ -83,13 +86,12 @@ def annotate_object(conn, obj, key, val):
     if existing_kv != updated_kv:
         try:
             print("The key-values pairs are different")
-            remove_map_annotations(conn, obj)
+            remove_map_annotations(conn, obj, namespace)
             map_ann = omero.gateway.MapAnnotationWrapper(conn)
-            namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
             map_ann.setNs(namespace)
             # convert the ordered dict to a list of lists
             kv_list = []
-            for k, vset in updated_kv.items():
+            for k, vset in updated_kv.items(): 
                 for v in vset:
                     kv_list.append([k, v])
             map_ann.setValue(kv_list)
@@ -194,7 +196,9 @@ def add_owner_as_keyval(conn, script_params):
     # enter its corresponding ID (except for 'user' : enter the username)
     object_id_list = script_params["IDs"]
 
-    key = "Initial_owner"  
+    today = date.today().strftime("%Y%m%d")
+    key = "Owner_"+today  
+    
     nImage = 0
     nDataset = 0
     nProject = 0
@@ -221,7 +225,7 @@ def add_owner_as_keyval(conn, script_params):
                     
                     # get sudo connection
                     user_name = user.getName()
-                    user_conn = conn.suConn(user_name)
+                    user_conn = conn.suConn(user_name, ttl=600000)
                     user_id = user_conn.getUser().getId()
                 else:
                     for g in conn.getGroupsMemberOf():
@@ -297,7 +301,7 @@ def add_owner_as_keyval(conn, script_params):
                 if(conn.getUser().isAdmin()):
                     # get sudo connection
                     user_name = omero_object.getOwner().getOmeName()
-                    user_conn = conn.suConn(user_name)
+                    user_conn = conn.suConn(user_name, ttl=600000)
                     user_conn.SERVICE_OPTS.setOmeroGroup('-1')
                     omero_object = user_conn.getObject(object_type, object_id)
                 else:
