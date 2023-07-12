@@ -85,22 +85,37 @@ def annotate_object(conn, obj, key, val):
 
     if existing_kv != updated_kv:
         try:
+            # convert the ordered dict to a list of lists
+            kv_list = []
+
+            # if existing_kv is not None:
+            #     for k, vset in existing_kv.items():
+            #         for v in vset:
+            #             kv_list.append([k, v])
+
+            for k, vset in updated_kv.items():
+                for v in vset:
+                    kv_list.append([k, v])
+
             print("The key-values pairs are different")
             anns = list(obj.listAnnotations(ns=namespace))
             map_anns = [ann for ann in anns if isinstance(ann, omero.gateway.MapAnnotationWrapper)]
+            print(map_anns)
+
             if len(map_anns) > 0:
                 map_ann = map_anns[0]
-
-                # convert the ordered dict to a list of lists
-                kv_list = []
-                for k, vset in updated_kv.items():
-                    for v in vset:
-                        kv_list.append([k, v])
-                map_ann.append(kv_list)
+                map_ann.setValue(kv_list)
                 map_ann.save()
-                print("Map Annotation created", map_ann.id)
+            else:
+                map_ann = omero.gateway.MapAnnotationWrapper(conn)
+                map_ann.setNs(namespace)
+                map_ann.setValue(kv_list)
+                map_ann.save()
                 obj.linkAnnotation(map_ann)
-                obj_updated = True
+
+            print("Map Annotation created", map_ann.id)
+            obj_updated = True
+
         except omero.SecurityViolation:
             print("You do not have the right to write annotations for ",obj.OMERO_CLASS, "", obj.getId())
     else:
