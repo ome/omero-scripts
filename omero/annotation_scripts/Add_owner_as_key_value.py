@@ -24,7 +24,7 @@ import omero
 from omero.gateway import BlitzGateway
 from omero.rtypes import rstring, rlong
 import omero.scripts as scripts
-from omero.cmd import Delete2
+#from omero.cmd import Delete2
 from datetime import date
 
 import sys
@@ -45,7 +45,7 @@ def get_existing_map_annotations(obj, namespace):
                 ord_dict[k].add(v)
     return ord_dict
 
-
+'''
 def remove_map_annotations(conn, object, namespace):
     """Remove ALL Map Annotations on the object"""
     anns = list(object.listAnnotations(ns=namespace))
@@ -61,13 +61,13 @@ def remove_map_annotations(conn, object, namespace):
     except Exception as ex:
         print("Failed to delete links: {}".format(ex.message))
     return
-
+'''
 
 """Add a key value pair to the object"""
 """Code taken and adapted from Christian Evenhuis,  https://github.com/ome/omero-scripts/blob/develop/omero/annotation_scripts/KeyVal_from_csv.py"""
 def annotate_object(conn, obj, key, val):
     obj_updated = False
-    namespace = "Previous Owners" 
+    namespace = "Previous Owners"
     existing_kv = get_existing_map_annotations(obj, namespace)
     updated_kv = copy.deepcopy(existing_kv)
 
@@ -86,19 +86,21 @@ def annotate_object(conn, obj, key, val):
     if existing_kv != updated_kv:
         try:
             print("The key-values pairs are different")
-            remove_map_annotations(conn, obj, namespace)
-            map_ann = omero.gateway.MapAnnotationWrapper(conn)
-            map_ann.setNs(namespace)
-            # convert the ordered dict to a list of lists
-            kv_list = []
-            for k, vset in updated_kv.items(): 
-                for v in vset:
-                    kv_list.append([k, v])
-            map_ann.setValue(kv_list)
-            map_ann.save()
-            print("Map Annotation created", map_ann.id)
-            obj.linkAnnotation(map_ann)
-            obj_updated = True
+            anns = list(obj.listAnnotations(ns=namespace))
+            map_anns = [ann for ann in anns if isinstance(ann, omero.gateway.MapAnnotationWrapper)]
+            if len(map_anns) > 0:
+                map_ann = map_anns[0]
+
+                # convert the ordered dict to a list of lists
+                kv_list = []
+                for k, vset in updated_kv.items():
+                    for v in vset:
+                        kv_list.append([k, v])
+                map_ann.append(kv_list)
+                map_ann.save()
+                print("Map Annotation created", map_ann.id)
+                obj.linkAnnotation(map_ann)
+                obj_updated = True
         except omero.SecurityViolation:
             print("You do not have the right to write annotations for ",obj.OMERO_CLASS, "", obj.getId())
     else:
@@ -113,8 +115,8 @@ return 1 if owner has been added, 0 otherwise
 """
 def process_image(conn, image, key, owner):
     return (1 if annotate_object(conn, image, key, owner)== True else 0)
-    
-    
+
+
 """
 Add the owner as key value pair to a dataset and its children
 return the number of processed images
@@ -123,14 +125,14 @@ def process_dataset(conn, dataset, key, owner):
     nImage = 0
     for image in dataset.listChildren():
         nImage += process_image(conn, image, key, owner)
-    
+
     return nImage, (1 if annotate_object(conn, dataset, key, owner)== True else 0)
-  
-  
+
+
 """
 Add the owner as key value pair to a project and its children
 return the number of processed images & datasets
-"""   
+"""
 def process_project(conn, project, key, owner):
     nDataset = 0
     nImage = 0
@@ -138,26 +140,26 @@ def process_project(conn, project, key, owner):
         nImageTmp, nDatasetTmp = process_dataset(conn, dataset, key, owner)
         nDataset += nDatasetTmp
         nImage += nImageTmp
-     
+
     return nImage, nDataset, (1 if annotate_object(conn, project, key, owner)== True else 0)
 
 
 """
 Add the owner as key value pair to a well and its children
 return the number of processed images 
-"""   
+"""
 def process_well(conn, well, key, owner):
     nImage = 0
     for wellSample in well.listChildren():
         nImage += process_image(conn, wellSample.getImage(), key, owner)
-    
+
     return nImage, (1 if annotate_object(conn, well, key, owner)== True else 0)
 
 
 """
 Add the owner as key value pair to a plate and its children
 return the number of processed images & wells
-"""          
+"""
 def process_plate(conn, plate, key, owner):
     nImage = 0
     nWell = 0
@@ -165,14 +167,14 @@ def process_plate(conn, plate, key, owner):
         nImageTmp, nWellTmp = process_well(conn, well, key, owner)
         nWell += nWellTmp
         nImage += nImageTmp
-    
+
     return nImage, nWell, (1 if annotate_object(conn, plate, key, owner)== True else 0)
- 
+
 
 """
 Add the owner as key value pair to a screen and its children
 return the number of processed images, wells & plates
-"""   
+"""
 def process_screen(conn, screen, key, owner):
     nImage = 0
     nWell = 0
@@ -182,9 +184,9 @@ def process_screen(conn, screen, key, owner):
         nImage += nImageTmp
         nWell += nWellTmp
         nPlate += nPlateTmp
-    
+
     return nImage, nWell, nPlate, (1 if annotate_object(conn, screen, key, owner)== True else 0)
-        
+
 
 """
 Get the given container(s) or given experimenter(s) and scan all their children to add 
@@ -197,8 +199,8 @@ def add_owner_as_keyval(conn, script_params):
     object_id_list = script_params["IDs"]
 
     today = date.today().strftime("%Y%m%d")
-    key = "Owner_"+today  
-    
+    key = "Owner_"+today
+
     nImage = 0
     nDataset = 0
     nProject = 0
@@ -212,17 +214,17 @@ def add_owner_as_keyval(conn, script_params):
         if(object_type == 'User'):
             # set the group to all
             conn.SERVICE_OPTS.setOmeroGroup('-1')
-            
+
             # get the user
             user = conn.getObject("experimenter", attributes={"omeName": object_id})
-            
+
             if not user == None:
                 # get the list of groups to search in
                 group_list = []
                 if(conn.getUser().isAdmin()):
                     for gem in user.copyGroupExperimenterMap():
                         group_list.append(gem.getParent().getId().getValue())
-                    
+
                     # get sudo connection
                     user_name = user.getName()
                     user_conn = conn.suConn(user_name, ttl=600000)
@@ -237,11 +239,11 @@ def add_owner_as_keyval(conn, script_params):
                 owner = ""
                 owner += user.getFirstName() + " "
                 owner += user.getLastName()
-                    
+
                 for g_id in group_list:
                     # set the group
                     user_conn.SERVICE_OPTS.setOmeroGroup(g_id)
-            
+
                     # list all user's projects
                     projects = user_conn.getObjects("Project", opts={'owner': user_id})
                     for project in projects:
@@ -278,25 +280,25 @@ def add_owner_as_keyval(conn, script_params):
                     orphaned_images = user_conn.getObjects("image", opts={'owner': user_id, 'orphaned': True})
                     for orphaned_image in orphaned_images:
                         nImage += process_image(user_conn, orphaned_image, key, owner)
-                    
+
                 # close the user connection
                 if(conn.getUser().isAdmin()):
                     user_conn.close()
-                
+
             else:
                 print("The user",object_id,"does not exists or you do not have access to his/her data")
-        
+
         else:
             """ add owner to the specified object and its children"""
             # convert to long
             object_id = int(object_id)
-            
+
             # search in all the user's group
             conn.SERVICE_OPTS.setOmeroGroup('-1')
-            
+
             # get the object
             omero_object = conn.getObject(object_type, object_id)
-            
+
             if not omero_object == None:
                 if(conn.getUser().isAdmin()):
                     # get sudo connection
@@ -306,11 +308,11 @@ def add_owner_as_keyval(conn, script_params):
                     omero_object = user_conn.getObject(object_type, object_id)
                 else:
                     user_conn = conn
-                    
+
             if not omero_object == None:
                 # set the correct group Id
                 user_conn.SERVICE_OPTS.setOmeroGroup(omero_object.getDetails().getGroup().getId())
-                
+
                 # get the owner
                 owner = ""
                 owner += omero_object.getOwner().getFirstName() + " "
@@ -343,21 +345,21 @@ def add_owner_as_keyval(conn, script_params):
                     nWell += nWellTmp
                     nPlate += nPlateTmp
                     nScreen += nScreenTmp
-                
+
                 # close the user connection                
                 if(conn.getUser().isAdmin()):
                     user_conn.close()
-                
-            else: 
+
+            else:
                 print(object_type, object_id, "does not exist or you do not have access to it")
-                
+
     # build summary message        
     if(owner == ""):
         message = "Owner cannot be added"
     else:
         message = "Added {} as owner to {} image(s), {} dataset(s), {} project(s), {} well(s), {} plate(s), {} screen(s) ".format(owner, nImage, nDataset, nProject, nWell, nPlate, nScreen)
     print(message)
-    
+
     return message
 
 
