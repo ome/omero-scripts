@@ -305,7 +305,7 @@ def get_rectangle(roi_service, image_id, roi_label):
     """
     Returns (x, y, width, height, zMin, zMax, tMin, tMax) of the first
     rectange in the image that has roi_label as text.
-    
+
     :return: First rectangle.
     """
 
