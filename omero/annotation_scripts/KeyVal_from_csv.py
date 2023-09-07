@@ -158,27 +158,30 @@ def keyval_from_csv(conn, script_params):
         temp_file = provider.get_original_file_data(original_file)
         # Needs omero-py 5.9.1 or later
         temp_name = temp_file.name
+        file_length = original_file.size.val
         with open(temp_name, 'rt', encoding='utf-8-sig') as file_handle:
-            file_length = len(file_handle.read(-1))
             try:
                 delimiter = csv.Sniffer().sniff(
                     file_handle.read(floor(file_length/4)), ",;\t").delimiter
                 print("Using delimiter: ", delimiter,
-                    f" after reading {floor(file_length/4)} characters")
+                      f" after reading {floor(file_length/4)} characters")
             except Exception:
                 file_handle.seek(0)
                 try:
                     delimiter = csv.Sniffer().sniff(
-                        file_handle.read(floor(file_length/2)), ",;\t").delimiter
+                        file_handle.read(floor(file_length/2)),
+                        ",;\t").delimiter
                     print("Using delimiter: ", delimiter,
-                        f" after reading {floor(file_length/2)} characters")
+                          f"after reading {floor(file_length/2)} characters")
                 except Exception:
                     file_handle.seek(0)
                     try:
                         delimiter = csv.Sniffer().sniff(
-                            file_handle.read(floor(file_length*0.75)), ",;\t").delimiter
+                            file_handle.read(floor(file_length*0.75)),
+                            ",;\t").delimiter
                         print("Using delimiter: ", delimiter,
-                        f" after reading {floor(file_length*0.75)} characters")
+                              f" after reading {floor(file_length*0.75)}"
+                              " characters")
                     except Exception:
                         print("Failed to sniff delimiter, using ','")
                         delimiter = ","
