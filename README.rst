@@ -1,8 +1,8 @@
 .. image:: https://github.com/ome/omero-scripts/workflows/OMERO/badge.svg
     :target: https://github.com/ome/omero-scripts/actions
 
-.. image:: https://github.com/ome/omero-scripts/workflows/sphinx/badge.svg
-    :target: https://github.com/ome/omero-scripts/actions
+.. image:: https://readthedocs.org/projects/omero-scripts/badge/?version=latest
+    :target: https://readthedocs.org/projects/omero-scripts/badge/?version=latest
 
 .. image:: https://badge.fury.io/py/omero-scripts.svg
     :target: https://badge.fury.io/py/omero-scripts
