@@ -1,38 +1,38 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# -----------------------------------------------------------------------------
+#   Copyright (C) 2006-2021 University of Dundee. All rights reserved.
+#
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along
+#   with this program; if not, write to the Free Software Foundation, Inc.,
+#   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# ------------------------------------------------------------------------------
+
 """
------------------------------------------------------------------------------
-  Copyright (C) 2006-2017 University of Dundee. All rights reserved.
-
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or
-  (at your option) any later version.
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write to the Free Software Foundation, Inc.,
-  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
-------------------------------------------------------------------------------
-
 This script displays a bunch of thumbnails from OMERO as a jpg or png, saved
 back to the server as a FileAnnotation attached to the parent dataset or
 project.
-
-@author  William Moore &nbsp;&nbsp;&nbsp;&nbsp;
-<a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
-@author  Jean-Marie Burel &nbsp;&nbsp;&nbsp;&nbsp;
-<a href="mailto:j.burel@dundee.ac.uk">j.burel@dundee.ac.uk</a>
-@author Donald MacDonald &nbsp;&nbsp;&nbsp;&nbsp;
-<a href="mailto:donald@lifesci.dundee.ac.uk">donald@lifesci.dundee.ac.uk</a>
-@since 3.0
-
 """
+
+# @author  William Moore &nbsp;&nbsp;&nbsp;&nbsp;
+# <a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
+# @author  Jean-Marie Burel &nbsp;&nbsp;&nbsp;&nbsp;
+# <a href="mailto:j.burel@dundee.ac.uk">j.burel@dundee.ac.uk</a>
+# @author Donald MacDonald &nbsp;&nbsp;&nbsp;&nbsp;
+# <a href="mailto:donald@lifesci.dundee.ac.uk">donald@lifesci.dundee.ac.uk</a>
+# @since 3.0
+
 from io import BytesIO
 import omero.scripts as scripts
 from omero.gateway import BlitzGateway
@@ -69,10 +69,10 @@ def paste_image(image, canvas, x, y):
     Pastes the image onto the canvas at the specified coordinates
     Image and canvas are instances of PIL 'Image'
 
-    @param image:       The PIL image to be pasted. Image
-    @param canvas:      The PIL image on which to paste. Image
-    @param x:           X coordinate (left) to paste
-    @param y:           Y coordinate (top) to paste
+    :param image:       The PIL image to be pasted. Image
+    :param canvas:      The PIL image on which to paste. Image
+    :param x:           X coordinate (left) to paste
+    :param y:           Y coordinate (top) to paste
     """
 
     x = int(x)
@@ -89,8 +89,8 @@ def get_font(fontsize):
     Returns a PIL ImageFont Sans-serif true-type font of the specified size
     or a pre-compiled font of fixed size if the ttf font is not found
 
-    @param fontsize:	The size of the font you want
-    @return: 	A PIL Font
+    :param fontsize:	The size of the font you want
+    :return: 	A PIL Font
     """
     fontsize = int(fontsize)
     font_path = os.path.join(GATEWAYPATH, "pilfonts", "FreeSans.ttf")
@@ -110,21 +110,18 @@ def paint_thumbnail_grid(thumbnail_store, length, spacing, pixel_ids,
     Option to add a vertical label to the left of the canvas
     Creates a PIL 'Image' which is returned
 
-    @param thumbnail_store: The omero thumbnail store.
-    @param length:          Length of longest thumbnail side, int
-    @param spacing:         The spacing between thumbnails and around the
-                            edges. int
-    @param pixel_ids:       List of pixel IDs. [long]
-    @param col_count:       The number of columns. int
-    @param bg:              Background colour as (r,g,b).
-                            Default is white (255, 255, 255)
-    @param left_label:      Optional string to display vertically to the left.
-    @param text_color:      The color of the text as (r,g,b).
-                            Default is black (0, 0, 0)
-    @param fontsize:        Size of the font.
-                            Default is calculated based on thumbnail length,
-                            int
-    @return:                The PIL Image canvas.
+    :param thumbnail_store: The omero thumbnail store.
+    :param length: Length of longest thumbnail side, int
+    :param spacing: The spacing between thumbnails and around the edges. int
+    :param pixel_ids: List of pixel IDs. [long]
+    :param col_count: The number of columns. int
+    :param bg: Background colour as (r,g,b). Default is white (255, 255, 255)
+    :param left_label: Optional string to display vertically to the left.
+    :param text_color: The color of the text as (r,g,b).\
+                         Default is black (0, 0, 0)
+    :param fontsize: Size of the font. Default is calculated based on\
+                       thumbnail length, int
+    :return: The PIL Image canvas.
     """
     mode = "RGB"
     # work out how many rows and columns are needed for all the images
@@ -254,17 +251,17 @@ def sort_images_by_tag(tag_ids, img_tags):
 def paint_dataset_canvas(conn, images, title, tag_ids=None,
                          show_untagged=False, col_count=10, length=100):
     """
-        Paints and returns a canvas of thumbnails from images, laid out in a
-        set number of columns.
-        Title and date-range of the images is printed above the thumbnails,
-        to the left and right, respectively.
+    Paints and returns a canvas of thumbnails from images, laid out in a
+    set number of columns.
+    Title and date-range of the images is printed above the thumbnails,
+    to the left and right, respectively.
 
-        @param conn:        Blitz connection
-        @param image:       Image IDs
-        @param title:       title to display at top of figure. String
-        @param tag_ids:     Optional to sort thumbnails by tag. [long]
-        @param col_count:    Max number of columns to lay out thumbnails
-        @param length:      Length of longest side of thumbnails
+    :param conn:        Blitz connection
+    :param image:       Image IDs
+    :param title:       title to display at top of figure. String
+    :param tag_ids:     Optional to sort thumbnails by tag. [long]
+    :param col_count:    Max number of columns to lay out thumbnails
+    :param length:      Length of longest side of thumbnails
     """
 
     mode = "RGB"
@@ -499,7 +496,7 @@ def make_thumbnail_figure(conn, script_params):
     Makes the figure using the parameters in @script_params, attaches the
     figure to the parent Project/Dataset, and returns the file-annotation ID
 
-    @ returns       Returns the id of the originalFileLink child. (ID object,
+    :return:       Returns the id of the originalFileLink child. (ID object,
                     not value)
     """
 

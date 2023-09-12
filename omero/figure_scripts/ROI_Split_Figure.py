@@ -1,37 +1,35 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# -----------------------------------------------------------------------------
+#   Copyright (C) 2006-2021 University of Dundee. All rights reserved.
+#
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along
+#   with this program; if not, write to the Free Software Foundation, Inc.,
+#   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# ------------------------------------------------------------------------------
+
 """
------------------------------------------------------------------------------
-  Copyright (C) 2006-2017 University of Dundee. All rights reserved.
-
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or
-  (at your option) any later version.
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write to the Free Software Foundation, Inc.,
-  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
-------------------------------------------------------------------------------
-
 This script takes a number of images and displays regions defined by their
 ROIs as zoomed panels beside the images.
-
-@author  William Moore &nbsp;&nbsp;&nbsp;&nbsp;
-<a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
-@author  Jean-Marie Burel &nbsp;&nbsp;&nbsp;&nbsp;
-<a href="mailto:j.burel@dundee.ac.uk">j.burel@dundee.ac.uk</a>
-@author Donald MacDonald &nbsp;&nbsp;&nbsp;&nbsp;
-<a href="mailto:donald@lifesci.dundee.ac.uk">donald@lifesci.dundee.ac.uk</a>
-@since 3.0
-
 """
+# @author  William Moore &nbsp;&nbsp;&nbsp;&nbsp;
+# <a href="mailto:will@lifesci.dundee.ac.uk">will@lifesci.dundee.ac.uk</a>
+# @author  Jean-Marie Burel &nbsp;&nbsp;&nbsp;&nbsp;
+# <a href="mailto:j.burel@dundee.ac.uk">j.burel@dundee.ac.uk</a>
+# @author Donald MacDonald &nbsp;&nbsp;&nbsp;&nbsp;
+# <a href="mailto:donald@lifesci.dundee.ac.uk">donald@lifesci.dundee.ac.uk</a>
+# @since 3.0
 
 import omero
 import omero.scripts as scripts
@@ -75,7 +73,7 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
     This takes a ROI rectangle from an image and makes a split view canvas of
     the region in the ROI, zoomed by a defined factor.
 
-    @param    re        The OMERO rendering engine.
+    :param re:        The OMERO rendering engine.
     """
 
     if algorithm is None:    # omero::constants::projection::ProjectionType
@@ -306,7 +304,9 @@ def draw_rectangle(image, roi_x, roi_y, roi_x2, roi_y2, colour, stroke=1):
 def get_rectangle(roi_service, image_id, roi_label):
     """
     Returns (x, y, width, height, zMin, zMax, tMin, tMax) of the first
-    rectange in the image that has @roi_label as text
+    rectange in the image that has roi_label as text.
+
+    :return: First rectangle.
     """
 
     result = roi_service.findByImage(image_id, None)
@@ -382,19 +382,19 @@ def get_split_view(conn, image_ids, pixel_ids, split_indexes, channel_names,
 
     The figure is returned as a PIL 'Image'
 
-    @ session           session for server access
-    @ pixel_ids         a list of the Ids for the pixels we want to display
-    @ split_indexes     a list of the channel indexes to display. Same
-                        channels for each image/row
-    @ channel_names     the Map of index:names for all channels
-    @ colour_channels   the colour to make each column/ channel
-    @ merged_indexes    list or set of channels in the merged image
-    @ merged_colours    index: colour dictionary of channels in the merged
-                        image
-    @ width             the size in pixels to show each panel
-    @ height            the size in pixels to show each panel
-    @ spacer            the gap between images and around the figure. Doubled
-                        between rows.
+    :param session: session for server access
+    :param pixel_ids: a list of the Ids for the pixels we want to display
+    :param split_indexes: a list of the channel indexes to display.\
+                          Same channels for each image/row
+    :param channel_names: the Map of index:names for all channels
+    :param colour_channels: the colour to make each column/ channel
+    :param merged_indexes: list or set of channels in the merged image
+    :param merged_colours: index: colour dictionary of channels in the\
+                            merged image
+    :param width: the size in pixels to show each panel
+    :param height: the size in pixels to show each panel
+    :param spacer: the gap between images and around the figure.\
+                     Doubled between rows.
     """
 
     roi_service = conn.getRoiService()
@@ -557,15 +557,14 @@ def roi_figure(conn, command_args):
     Then calls a method to make the figure, and finally uploads and attaches
     this to the primary image.
 
-    @param: session         The OMERO session
-    @param: command_args    Map of String:Object parameters for the script.
+    :param: session         The OMERO session
+    :param: command_args    Map of String:Object parameters for the script.
                             Objects are not rtypes, since getValue() was
                             called when the map was processed below.
                             But, list and map objects may contain rtypes (need
                             to call getValue())
 
-    @return:                the id of the originalFileLink child. (ID object,
-                            not value)
+    :return: the id of the originalFileLink child. (ID object, not value)
     """
 
     log("ROI figure created by OMERO on %s" % date.today())
