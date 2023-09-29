@@ -34,6 +34,7 @@ from omero.cmd import Delete2
 import sys
 import csv
 import copy
+from math import floor
 
 from omero.util.populate_roi import DownloadingOriginalFileProvider
 
@@ -157,29 +158,34 @@ def keyval_from_csv(conn, script_params):
         temp_file = provider.get_original_file_data(original_file)
         # Needs omero-py 5.9.1 or later
         temp_name = temp_file.name
+        file_length = original_file.size.val
         with open(temp_name, 'rt', encoding='utf-8-sig') as file_handle:
             try:
                 delimiter = csv.Sniffer().sniff(
-                    file_handle.read(500), ",;\t").delimiter
+                    file_handle.read(floor(file_length/4)), ",;\t").delimiter
                 print("Using delimiter: ", delimiter,
-                      " after reading 500 characters")
+                      f" after reading {floor(file_length/4)} characters")
             except Exception:
                 file_handle.seek(0)
                 try:
                     delimiter = csv.Sniffer().sniff(
-                        file_handle.read(1000), ",;\t").delimiter
+                        file_handle.read(floor(file_length/2)),
+                        ",;\t").delimiter
                     print("Using delimiter: ", delimiter,
-                          " after reading 1000 characters")
+                          f"after reading {floor(file_length/2)} characters")
                 except Exception:
                     file_handle.seek(0)
                     try:
                         delimiter = csv.Sniffer().sniff(
-                            file_handle.read(2000), ";,\t").delimiter
+                            file_handle.read(floor(file_length*0.75)),
+                            ",;\t").delimiter
                         print("Using delimiter: ", delimiter,
-                              " after reading 2000 characters")
+                              f" after reading {floor(file_length*0.75)}"
+                              " characters")
                     except Exception:
                         print("Failed to sniff delimiter, using ','")
                         delimiter = ","
+
             # reset to start and read whole file...
             file_handle.seek(0)
             data = list(csv.reader(file_handle, delimiter=delimiter))
