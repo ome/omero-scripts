@@ -86,7 +86,7 @@ copyright = u'2016-%d, %s ' % (now.year, author)
 
 # The full version, including alpha/beta/rc tags
 # The short X.Y version.
-version = '5.7.3.dev0'
+version = '5.7.3'
 release = version
 
 
