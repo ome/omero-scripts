@@ -305,28 +305,41 @@ def annotate_object(conn, obj, header, row, cols_to_ignore):
 
 def run_script():
 
-    data_types = [rstring('Dataset'), rstring('Plate')]
+    source_types = [rstring("Project"), rstring("Dataset"),
+                    rstring("Screen"), rstring("Plate"),
+                    rstring("Run"), rstring("Well")]
+
+    target_types = [rstring("Dataset"), rstring("Plate"),
+                    rstring("Run"), rstring("Well"),
+                    rstring("Image")]
+
     client = scripts.client(
         'Add_Key_Val_from_csv',
         """
-    This script processes a csv file, attached to a Dataset
+    This script reads an attached CSV file to annotate objects with key-value pairs.
         """,
         scripts.String(
-            "Data_Type", optional=False, grouping="1",
-            description="Choose source of images",
-            values=data_types, default="Dataset"),
+            "Source object type", optional=False, grouping="1",
+            description="Choose the object type containing the objects to annotate",
+            values=source_types, default="Dataset"),
 
         scripts.List(
-            "IDs", optional=False, grouping="2",
-            description="Dataset or Plate ID(s).").ofType(rlong(0)),
+            "Source IDs", optional=False, grouping="1.1",
+            description="List of source IDs containing the images to annotate").ofType(rlong(0)),
 
         scripts.String(
-            "File_Annotation", grouping="3",
+            "File_Annotation ID", optional=False, grouping="1.2",
             description="File ID containing metadata to populate."),
 
-        authors=["Christian Evenhuis"],
-        institutions=["MIF UTS"],
-        contact="https://forum.image.sc/tag/omero"
+        scripts.String(
+            "Target object type", optional=False, grouping="2",
+            description="Choose the object type to annotate (must be bellow the chosen source object type)",
+            values=target_types, default="Image"),
+
+        authors=["Christian Evenhuis", "Tom Boissonnet"],
+        institutions=["MIF UTS", "CAi HHU"],
+        contact="https://forum.image.sc/tag/omero",
+        version="2.0.0"
     )
 
     try:
