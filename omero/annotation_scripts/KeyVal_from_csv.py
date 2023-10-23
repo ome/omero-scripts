@@ -40,6 +40,15 @@ from omero.util.populate_roi import DownloadingOriginalFileProvider
 
 from collections import OrderedDict
 
+HIERARCHY_OBJECTS = {
+                        "Project": ["Dataset", "Image"],
+                        "Dataset": ["Image"],
+                        "Screen": ["Plate", "Well", "Image"],
+                        "Plate": ["Well", "Image"],
+                        #"Run": ["Well", "Image"],
+                        "Well": ["Image"]
+                    }
+
 
 def get_existing_map_annotations(obj):
     """Get all Map Annotations linked to the object"""
@@ -103,158 +112,116 @@ def link_file_ann(conn, object_type, object_id, file_ann_id):
     if len(links) == 0:
         omero_object.linkAnnotation(file_ann)
 
-
-def get_children_by_name(omero_obj):
-
-    images_by_name = {}
-    wells_by_name = {}
-
-    if omero_obj.OMERO_CLASS == "Dataset":
-        for img in omero_obj.listChildren():
-            img_name = img.getName()
-            if img_name in images_by_name:
-                sys.stderr.write("File names not unique: {}".format(img_name))
-                sys.exit(1)
-            images_by_name[img_name] = img
-    elif omero_obj.OMERO_CLASS == "Plate":
-        for well in omero_obj.listChildren():
-            label = well.getWellPos()
-            wells_by_name[label] = well
-            for ws in well.listChildren():
-                img = ws.getImage()
-                img_name = img.getName()
-                if img_name in images_by_name:
-                    sys.stderr.write(
-                        "File names not unique: {}".format(img_name))
-                    sys.exit(1)
-                images_by_name[img_name] = img
-    else:
-        sys.stderr.write(f'{omero_obj.OMERO_CLASS} objects not supported')
-
-    return images_by_name, wells_by_name
-
-
-def keyval_from_csv(conn, script_params):
-    data_type = script_params["Data_Type"]
-    ids = script_params["IDs"]
-
-    nimg_processed = 0
-    nimg_updated = 0
-    missing_names = 0
-
-    for target_object in conn.getObjects(data_type, ids):
-
-        # file_ann_id is Optional. If not supplied, use first .csv attached
-        file_ann_id = None
-        if "File_Annotation" in script_params:
-            file_ann_id = int(script_params["File_Annotation"])
-            link_file_ann(conn, data_type, target_object.id, file_ann_id)
-            print("set ann id", file_ann_id)
-
-        original_file = get_original_file(target_object, file_ann_id)
-        print("Original File", original_file.id.val, original_file.name.val)
-        provider = DownloadingOriginalFileProvider(conn)
-
-        # read the csv
-        temp_file = provider.get_original_file_data(original_file)
-        # Needs omero-py 5.9.1 or later
-        temp_name = temp_file.name
-        file_length = original_file.size.val
-        with open(temp_name, 'rt', encoding='utf-8-sig') as file_handle:
+def read_csv(conn, source_object, file_ann_id): #Dedicated function to read the CSV file
+    original_file = get_original_file(source_object, file_ann_id)
+    print("Original File", original_file.id.val, original_file.name.val)
+    provider = DownloadingOriginalFileProvider(conn)
+    # read the csv
+    temp_file = provider.get_original_file_data(original_file)
+    # Needs omero-py 5.9.1 or later
+    temp_name = temp_file.name
+    file_length = original_file.size.val
+    with open(temp_name, 'rt', encoding='utf-8-sig') as file_handle:
+        try:
+            delimiter = csv.Sniffer().sniff(
+                file_handle.read(floor(file_length/4)), ",;\t").delimiter
+            print("Using delimiter: ", delimiter,
+                    f" after reading {floor(file_length/4)} characters")
+        except Exception:
+            file_handle.seek(0)
             try:
                 delimiter = csv.Sniffer().sniff(
-                    file_handle.read(floor(file_length/4)), ",;\t").delimiter
+                    file_handle.read(floor(file_length/2)),
+                    ",;\t").delimiter
                 print("Using delimiter: ", delimiter,
-                      f" after reading {floor(file_length/4)} characters")
+                        f"after reading {floor(file_length/2)} characters")
             except Exception:
                 file_handle.seek(0)
                 try:
                     delimiter = csv.Sniffer().sniff(
-                        file_handle.read(floor(file_length/2)),
+                        file_handle.read(floor(file_length*0.75)),
                         ",;\t").delimiter
                     print("Using delimiter: ", delimiter,
-                          f"after reading {floor(file_length/2)} characters")
+                            f" after reading {floor(file_length*0.75)}"
+                            " characters")
                 except Exception:
-                    file_handle.seek(0)
-                    try:
-                        delimiter = csv.Sniffer().sniff(
-                            file_handle.read(floor(file_length*0.75)),
-                            ",;\t").delimiter
-                        print("Using delimiter: ", delimiter,
-                              f" after reading {floor(file_length*0.75)}"
-                              " characters")
-                    except Exception:
-                        print("Failed to sniff delimiter, using ','")
-                        delimiter = ","
+                    print("Failed to sniff delimiter, using ','")
+                    delimiter = ","
 
-            # reset to start and read whole file...
-            file_handle.seek(0)
-            data = list(csv.reader(file_handle, delimiter=delimiter))
+        # reset to start and read whole file...
+        file_handle.seek(0)
+        data = list(csv.reader(file_handle, delimiter=delimiter))
 
-        # keys are in the header row
-        header = data[0]
-        print("header", header)
+    # keys are in the header row
+    header = data[0]
+    print("header", header)
+    return data, header
 
-        # create dictionaries for well/image name:object
-        images_by_name, wells_by_name = get_children_by_name(target_object)
-        nimg_processed += len(images_by_name)
+def get_children_recursive(source_object, target_type):
+    if HIERARCHY_OBJECTS[source_object.OMERO_CLASS][0] == target_type: # Stop condition, we return the source_obj children
+        return source_object.listChildren()
+    else:
+        result = []
+        for child_obj in source_object.listChildren():
+            # Going down in the Hierarchy list for all childs that aren't yet the target
+            result.extend(get_children_recursive(child_obj, target_type))
+        return result
 
-        image_index = header.index("image") if "image" in header else -1
-        well_index = header.index("well") if "well" in header else -1
-        plate_index = header.index("plate") if "plate" in header else -1
-        if image_index == -1:
-            # first header is the img-name column, if 'image' not found
-            image_index = 0
-        print("image_index:", image_index, "well_index:", well_index,
-              "plate_index:", plate_index)
+def keyval_from_csv(conn, script_params):
+    source_type = script_params["Source_object_type"]
+    target_type = script_params["Target_object_type"]
+    source_ids = script_params["Source_IDs"]
+    file_ids = script_params["File_Annotation_ID"]
+
+    ntarget_processed = 0
+    ntarget_updated = 0
+    missing_names = 0
+
+    for source_object, file_ann_id in zip(conn.getObjects(source_type, source_ids), file_ids):
+        #link_file_ann(conn, source_type, source_object.id, file_ann_id) # Make sure file is attached to the source
+        print("set ann id", file_ann_id)
+        data, header = read_csv(conn, source_object, file_ann_id)
+
+        # Listing all target children to the source object (eg all images (target) in all datasets of the project (source))
+        target_obj_l = get_children_recursive(source_object, target_type)
+
+        # Finds the index of the column used to identify the targets. Try for IDs first
+        idx_id = header.index("target_id") if "target_id" in header else -1
+        idx_name = header.index("target_name") if "target_name" in header else -1
+        use_id = idx_id != -1
+
+        if not use_id: # Identify images by name must fail if two images have identical names
+            idx_id = idx_name
+            target_d = dict()
+            for target_obj in target_obj_l:
+                assert target_obj.getName() not in target_d.keys(), f"Target objects identified by name have duplicate: {target_obj.getName()}"
+                target_d[target_obj.getName()] = target_obj
+        else: # Setting the dictionnary target_id:target_obj   keys as string to match CSV reader output
+            target_d = {str(target_obj.getId()):target_obj for target_obj in target_obj_l}
+        ntarget_processed += len(target_d)
+
         rows = data[1:]
-
-        # loop over csv rows...
-        for row in rows:
-            # try to find 'image', then 'well', then 'plate'
-            image_name = row[image_index]
-            well_name = None
-            plate_name = None
-            obj = None
-            if len(image_name) > 0:
-                if image_name in images_by_name:
-                    obj = images_by_name[image_name]
-                    print("Annotating Image:", obj.id, image_name)
+        for row in rows: # Iterate the CSV rows and search for the matching target
+            target_id = row[idx_id]
+            if target_id in target_d.keys():
+                target_obj = target_d[target_id]
+                if target_type in ["Dataset", "Image", "Plate"]:
+                    print("Annotating Target:", f"{target_obj.getName()+':' if use_id else ''}{target_id}")
                 else:
-                    missing_names += 1
-                    print("Image not found:", image_name)
-            if obj is None and well_index > -1 and len(row[well_index]) > 0:
-                well_name = row[well_index]
-                if well_name in wells_by_name:
-                    obj = wells_by_name[well_name]
-                    print("Annotating Well:", obj.id, well_name)
-                else:
-                    missing_names += 1
-                    print("Well not found:", well_name)
-            # always check that Plate name matches if it is given:
-            if data_type == "Plate" and plate_index > -1 and \
-                    len(row[plate_index]) > 0:
-                if row[plate_index] != target_object.name:
-                    print("plate", row[plate_index],
-                          "doesn't match object", target_object.name)
-                    continue
-                if obj is None:
-                    obj = target_object
-                    print("Annotating Plate:", obj.id, plate_name)
-            if obj is None:
-                msg = "Can't find object by image, well or plate name"
-                print(msg)
+                    print("Annotating Target:", f"{target_id}") # Some object don't have a name
+            else:
+                missing_names += 1
+                print(f"Target not found: {target_id}")
                 continue
 
-            cols_to_ignore = [image_index, well_index, plate_index]
-            updated = annotate_object(conn, obj, header, row, cols_to_ignore)
+            cols_to_ignore = [idx_id, idx_name]
+            updated = annotate_object(conn, target_obj, header, row, cols_to_ignore)
             if updated:
-                nimg_updated += 1
+                ntarget_updated += 1
 
-    message = "Added kv pairs to {}/{} files".format(
-        nimg_updated, nimg_processed)
+    message = f"Added kv pairs to {ntarget_updated}/{ntarget_processed} {target_type}"
     if missing_names > 0:
-        message += f". {missing_names} image names not found."
+        message += f". {missing_names} {target_type} not found (using {'ID' if use_id else 'name'} to identify them)."
     return message
 
 
@@ -308,20 +275,10 @@ def run_script():
 
     source_types = [rstring("Project"), rstring("Dataset"),
                     rstring("Screen"), rstring("Plate"),
-                    rstring("Run"), rstring("Well")]
+                    rstring("Well")]
 
     target_types = [rstring("Dataset"), rstring("Plate"),
-                    rstring("Run"), rstring("Well"),
-                    rstring("Image")]
-
-    allowed_relations = {
-                         "Project": ["Dataset", "Image"],
-                         "Dataset": ["Image"],
-                         "Screen": ["Plate", "Run", "Well", "Image"],
-                         "Plate": ["Run", "Well", "Image"],
-                         "Run": ["Well", "Image"],
-                         "Well": ["Image"]
-                        }
+                    rstring("Well"), rstring("Image")]
 
     client = scripts.client(
         'Add_Key_Val_from_csv',
@@ -355,14 +312,18 @@ def run_script():
 
     try:
         # process the list of args above.
-        script_params = {}
+        script_params = {"File_Annotation_ID": [None]} # Set with defaults for optional parameters
         for key in client.getInputKeys():
             if client.getInput(key):
                 script_params[key] = client.getInput(key, unwrap=True)
 
         # validate that target is bellow source
         source_name, target_name = script_params["Source_object_type"], script_params["Target_object_type"]
-        assert target_name in allowed_relations[source_name], f"Invalid {source_name} => {target_name}. The target type must be a child of the source type"
+        assert target_name in HIERARCHY_OBJECTS[source_name], f"Invalid {source_name} => {target_name}. The target type must be a child of the source type"
+
+        if len(script_params["File_Annotation_ID"]) == 1: # Poulate the parameter with None or same ID for all source
+            script_params["File_Annotation_ID"] = script_params["File_Annotation_ID"] * len(script_params["Source_IDs"])
+        assert len(script_params["File_Annotation_ID"]) ==  len(script_params["Source_IDs"]), "Number of Source IDs and FileAnnotation IDs must match"
 
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
