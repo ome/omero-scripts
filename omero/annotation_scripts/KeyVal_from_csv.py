@@ -81,6 +81,7 @@ def get_original_file(omero_object, file_ann_id=None):
             if (file_ann_id is None and file_name.endswith(".csv")) or (
                     ann.getId() == file_ann_id):
                 file_ann = ann
+                break # Stop on first matching item
     if file_ann is None:
         sys.stderr.write("Error: File does not exist.\n")
         sys.exit(1)
