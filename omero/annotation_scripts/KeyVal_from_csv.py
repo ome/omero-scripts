@@ -98,7 +98,7 @@ def get_original_file(omero_object, file_ann_id=None):
         sys.stderr.write("Error: File does not exist.\n")
         sys.exit(1)
 
-    return file_ann.getFile()._obj
+    return file_ann
 
 
 def link_file_ann(conn, object_type, object_id, file_ann_id):
@@ -115,8 +115,7 @@ def link_file_ann(conn, object_type, object_id, file_ann_id):
     if len(links) == 0:
         omero_object.linkAnnotation(file_ann)
 
-def read_csv(conn, source_object, file_ann_id): #Dedicated function to read the CSV file
-    original_file = get_original_file(source_object, file_ann_id)
+def read_csv(conn, original_file): #Dedicated function to read the CSV file
     print("Original File", original_file.id.val, original_file.name.val)
     provider = DownloadingOriginalFileProvider(conn)
     # read the csv
@@ -181,9 +180,12 @@ def keyval_from_csv(conn, script_params):
     missing_names = 0
 
     for source_object, file_ann_id in zip(conn.getObjects(source_type, source_ids), file_ids):
-        #link_file_ann(conn, source_type, source_object.id, file_ann_id) # Make sure file is attached to the source
-        print("set ann id", file_ann_id)
-        data, header = read_csv(conn, source_object, file_ann_id)
+        if file_ann_id is not None: # If the file ID is not defined, only already linked file will be used
+            link_file_ann(conn, source_type, source_object.id, file_ann_id)
+        file_ann = get_original_file(source_object, file_ann_id)
+        original_file = file_ann.getFile()._obj
+        print("set ann id", file_ann.getId())
+        data, header = read_csv(conn, original_file)
 
         # Listing all target children to the source object (eg all images (target) in all datasets of the project (source))
         target_obj_l = get_children_recursive(source_object, target_type)
