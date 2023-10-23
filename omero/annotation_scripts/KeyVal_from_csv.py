@@ -313,6 +313,15 @@ def run_script():
                     rstring("Run"), rstring("Well"),
                     rstring("Image")]
 
+    allowed_relations = {
+                         "Project": ["Dataset", "Image"],
+                         "Dataset": ["Image"],
+                         "Screen": ["Plate", "Run", "Well", "Image"],
+                         "Plate": ["Run", "Well", "Image"],
+                         "Run": ["Well", "Image"],
+                         "Well": ["Image"]
+                        }
+
     client = scripts.client(
         'Add_Key_Val_from_csv',
         """
@@ -342,12 +351,17 @@ def run_script():
         version="2.0.0"
     )
 
+
     try:
         # process the list of args above.
         script_params = {}
         for key in client.getInputKeys():
             if client.getInput(key):
                 script_params[key] = client.getInput(key, unwrap=True)
+
+        # validate that target is bellow source
+        source_name, target_name = script_params["Source object type"], script_params["Target object type"]
+        assert target_name in allowed_relations[source_name], f"Invalid {source_name} => {target_name}. The target type must be a child of the source type"
 
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
@@ -356,6 +370,10 @@ def run_script():
             print(k, v)
         message = keyval_from_csv(conn, script_params)
         client.setOutput("Message", rstring(message))
+
+    except AssertionError as err: #Display assertion errors in OMERO.web activities
+        client.setOutput("ERROR", rstring(err))
+        raise AssertionError(str(err))
 
     finally:
         client.closeSession()
