@@ -50,10 +50,10 @@ HIERARCHY_OBJECTS = {
                     }
 
 
-def get_existing_map_annotations(obj):
+def get_existing_map_annotations(obj, namespace):
     """Get all Map Annotations linked to the object"""
     ord_dict = OrderedDict()
-    for ann in obj.listAnnotations():
+    for ann in obj.listAnnotations(ns=namespace):
         if isinstance(ann, omero.gateway.MapAnnotationWrapper):
             kvs = ann.getValue()
             for k, v in kvs:
@@ -63,9 +63,9 @@ def get_existing_map_annotations(obj):
     return ord_dict
 
 
-def remove_map_annotations(conn, object):
+def remove_map_annotations(conn, object, namespace):
     """Remove ALL Map Annotations on the object"""
-    anns = list(object.listAnnotations())
+    anns = list(object.listAnnotations(ns=namespace))
     mapann_ids = [ann.id for ann in anns
                   if isinstance(ann, omero.gateway.MapAnnotationWrapper)]
 
@@ -174,6 +174,7 @@ def keyval_from_csv(conn, script_params):
     target_type = script_params["Target_object_type"]
     source_ids = script_params["Source_IDs"]
     file_ids = script_params["File_Annotation_ID"]
+    namespace = script_params["Namespace (optional)"]
 
     ntarget_processed = 0
     ntarget_updated = 0
@@ -220,7 +221,7 @@ def keyval_from_csv(conn, script_params):
                 continue
 
             cols_to_ignore = [idx_id, idx_name]
-            updated = annotate_object(conn, target_obj, header, row, cols_to_ignore)
+            updated = annotate_object(conn, target_obj, header, row, cols_to_ignore, namespace)
             if updated:
                 ntarget_updated += 1
 
@@ -230,10 +231,13 @@ def keyval_from_csv(conn, script_params):
     return message
 
 
-def annotate_object(conn, obj, header, row, cols_to_ignore):
+def annotate_object(conn, obj, header, row, cols_to_ignore, namespace):
+
+    if namespace is None:
+        namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
 
     obj_updated = False
-    existing_kv = get_existing_map_annotations(obj)
+    existing_kv = get_existing_map_annotations(obj, namespace)
     updated_kv = copy.deepcopy(existing_kv)
     print("Existing kv:")
     for k, vset in existing_kv.items():
@@ -257,9 +261,8 @@ def annotate_object(conn, obj, header, row, cols_to_ignore):
     if existing_kv != updated_kv:
         obj_updated = True
         print("The key-values pairs are different")
-        remove_map_annotations(conn, obj)
+        remove_map_annotations(conn, obj, namespace)
         map_ann = omero.gateway.MapAnnotationWrapper(conn)
-        namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
         map_ann.setNs(namespace)
         # convert the ordered dict to a list of lists
         kv_list = []
@@ -308,6 +311,10 @@ def run_script():
             description="Choose the object type to annotate (must be bellow the chosen source object type)",
             values=target_types, default="Image"),
 
+        scripts.String(
+            "Namespace (optional)", optional=True, grouping="3",
+            description="Choose a namespace for the annotations"),
+
         authors=["Christian Evenhuis", "Tom Boissonnet"],
         institutions=["MIF UTS", "CAi HHU"],
         contact="https://forum.image.sc/tag/omero",
@@ -317,7 +324,10 @@ def run_script():
 
     try:
         # process the list of args above.
-        script_params = {"File_Annotation_ID": [None]} # Set with defaults for optional parameters
+        script_params = { # Param dict with defaults for optional parameters
+            "File_Annotation_ID": [None],
+            "Namespace (optional)": None
+            }
         for key in client.getInputKeys():
             if client.getInput(key):
                 script_params[key] = client.getInput(key, unwrap=True)
