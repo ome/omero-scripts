@@ -328,20 +328,20 @@ def run_script():
     This script reads an attached CSV file to annotate objects with key-value pairs.
         """,
         scripts.String(
-            "Source object type", optional=False, grouping="1",
+            "Source_object_type", optional=False, grouping="1",
             description="Choose the object type containing the objects to annotate",
             values=source_types, default="Dataset"),
 
         scripts.List(
-            "Source IDs", optional=False, grouping="1.1",
-            description="List of source IDs containing the images to annotate").ofType(rlong(0)),
+            "Source_IDs", optional=False, grouping="1.1",
+            description="List of source IDs containing the images to annotate.").ofType(rlong(0)),
+
+        scripts.List(
+            "File_Annotation_ID", optional=True, grouping="1.2",
+            description="File IDs containing metadata to populate. If given, must match 'Source IDs'. Otherwise, uses the first CSV found on the source.").ofType(rlong(0)),
 
         scripts.String(
-            "File_Annotation ID", optional=False, grouping="1.2",
-            description="File ID containing metadata to populate."),
-
-        scripts.String(
-            "Target object type", optional=False, grouping="2",
+            "Target_object_type", optional=False, grouping="2",
             description="Choose the object type to annotate (must be bellow the chosen source object type)",
             values=target_types, default="Image"),
 
@@ -360,7 +360,7 @@ def run_script():
                 script_params[key] = client.getInput(key, unwrap=True)
 
         # validate that target is bellow source
-        source_name, target_name = script_params["Source object type"], script_params["Target object type"]
+        source_name, target_name = script_params["Source_object_type"], script_params["Target_object_type"]
         assert target_name in allowed_relations[source_name], f"Invalid {source_name} => {target_name}. The target type must be a child of the source type"
 
         # wrap client to use the Blitz Gateway
