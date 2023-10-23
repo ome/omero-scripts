@@ -87,10 +87,13 @@ def get_original_file(omero_object, file_ann_id=None):
         if isinstance(ann, omero.gateway.FileAnnotationWrapper):
             file_name = ann.getFile().getName()
             # Pick file by Ann ID (or name if ID is None)
-            if (file_ann_id is None and file_name.endswith(".csv")) or (
-                    ann.getId() == file_ann_id):
-                file_ann = ann
-                break # Stop on first matching item
+            if ann.getId() == file_ann_id:
+                file_ann = ann # Found it
+                break
+            elif file_ann_id is None and file_name.endswith(".csv"):
+                if (file_ann is None) or (ann.getId() > file_ann.getId()):
+                    # Get the file with the biggest ID, that should be the most recent
+                    file_ann = ann
     if file_ann is None:
         sys.stderr.write("Error: File does not exist.\n")
         sys.exit(1)
@@ -296,7 +299,7 @@ def run_script():
 
         scripts.List(
             "File_Annotation_ID", optional=True, grouping="1.2",
-            description="File IDs containing metadata to populate. If given, must match 'Source IDs'. Otherwise, uses the first CSV found on the source.").ofType(rlong(0)),
+            description="List of file IDs containing metadata to populate. If given, must match length of 'Source IDs'. Otherwise, uses the CSV file with the highest ID.").ofType(rlong(0)),
 
         scripts.String(
             "Target_object_type", optional=False, grouping="2",
