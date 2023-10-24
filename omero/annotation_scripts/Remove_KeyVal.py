@@ -45,15 +45,15 @@ def remove_map_annotations(conn, obj, namespace):
     mapann_ids = [ann.id for ann in anns
                   if isinstance(ann, omero.gateway.MapAnnotationWrapper)]
     if len(mapann_ids) == 0:
-        return 0
+        return 1
 
     print("Map Annotation IDs to delete:", mapann_ids)
     try:
         conn.deleteObjects("Annotation", mapann_ids)
-        return 0
+        return 1
     except Exception:
         print("Failed to delete links")
-        return 1
+        return 0
 
 
 def get_children_recursive(source_object, target_type):
@@ -77,13 +77,13 @@ def remove_keyvalue(conn, script_params):
     source_ids = script_params["Source_IDs"]
     namespace = script_params["Namespace (leave blank for default)"]
 
-    nfailed = 0
+    nsuccess = 0
     ntotal = 0
     if source_type == target_type: # We remove annotation to the given object ID
         for source_object in conn.getObjects(source_type, source_ids):
             print("Processing object:", source_object)
             ret = remove_map_annotations(conn, source_object, namespace)
-            nfailed = nfailed + ret
+            nsuccess += ret
             ntotal += 1
     else:
         for source_object in conn.getObjects(source_type, source_ids):
@@ -92,10 +92,10 @@ def remove_keyvalue(conn, script_params):
             for target_obj in target_obj_l:
                 print("Processing object:", target_obj)
                 ret = remove_map_annotations(conn, target_obj, namespace)
-                nfailed = nfailed + ret
+                nsuccess += ret
                 ntotal += 1
 
-    message = f"Key value data deleted from {ntotal-nfailed} of {ntotal} objects"
+    message = f"Key value data deleted from {ntotal-nsuccess} of {ntotal} objects"
 
     return message
 
