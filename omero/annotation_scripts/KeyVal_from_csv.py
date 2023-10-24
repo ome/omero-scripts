@@ -1,11 +1,16 @@
 # coding=utf-8
 """
- MIF/Add_Key_Val_from_csv.py
+ KeyVal_from_csv.py
 
- Adds key-value (kv) metadata to images in a dataset from a csv file
- The first column contains the filenames
- The first  row of the file contains the keys
- The rest is the values for each file/key
+ Adds key-value pairs to TARGETS on OMERO from a CSV file attached to a SOURCE container.
+ SOURCES can be: [Project, Dataset, Screen, Plate, Well]
+ TARGETS can be: [Dataset, Plate, Well, Image]
+ The targets are referenced in the CSV file either from their name (must then be unique,
+ and be called "target_name") or from their ID (must be called "target_id").
+ In the case both are given, the ID will be used.
+
+ Every row corresponds to a set of value to attach to the given TARGET with the key of the
+ correponding column.
 
 -----------------------------------------------------------------------------
   Copyright (C) 2018
@@ -235,7 +240,30 @@ def run_script():
     client = scripts.client(
         'Add_Key_Val_from_csv',
         """
-    This script reads an attached CSV file to annotate objects with key-value pairs.
+    This script reads an attached .csv file to annotate objects with key-value pairs.
+
+    Only the child objects of the SOURCE will be searched and if they match an entry in
+    the .csv file, then a set of key-value pair will be added to the TARGET.
+
+    In the .csv file, the TARGETs can be identified by their name (with a column named
+    "target_name"), in which case their names must be unique among all children objects
+    of the SOURCE. The TARGETs can also be identified by their IDs (with a column named
+    "target_id"). In case both are given, "target_name" will be ignored in favor of
+    "target_id".
+
+    The .csv file must be imported in OMERO as a file annotation, and is passed as a
+    parameter to the script via the AnnotationID.
+
+    Multiple SOURCE and AnnotationID can be passed to the script, and each will be
+    processed independantly. When using a single AnnotationID, the same .csv will be
+    used for each SOURCE. When no AnnotationID is given, each SOURCE will use the
+    most recently attached .csv on itself.
+
+    The annotation can also be associated to a namespace (defaults to user namespace).
+
+    Complementary scripts:
+     - "Export Key Value to csv": Export key value pairs of a given namespace
+     - "Delete Key Value": Delete the key value pairs associated to a namespace
         """,
         scripts.String(
             "Source_object_type", optional=False, grouping="1",
