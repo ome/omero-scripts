@@ -110,6 +110,8 @@ if __name__ == "__main__":
                   rstring("Screen"), rstring("Plate"),
                   rstring("Well"), rstring("Image")]
 
+    agreement = "I understand what I am doing and that this will result in a batch deletion of key-value pairs from the server"
+
     # Here we define the script name and description.
     # Good practice to put url here to give users more guidance on how to run
     # your script.
@@ -130,13 +132,17 @@ if __name__ == "__main__":
             description="List of source IDs").ofType(rlong(0)),
 
         scripts.String(
-            "Target_object_type", optional=False, grouping="2",
-            description="Choose the object type to delete annotation from",
-            values=data_types, default="Image"),
+            "Target_object_type", optional=True, grouping="1.2",
+            description="Choose the object type to delete annotation from (if empty, same as source)",
+            values=[rstring("")]+data_types, default=""),
 
         scripts.String(
-            "Namespace (leave blank for default)", optional=True, grouping="3",
+            "Namespace (leave blank for default)", optional=True, grouping="2",
             description="Choose a namespace for the annotations"),
+
+        scripts.Bool(
+            agreement, optional=False, grouping="3",
+            description="Make sure that you understood what this script does"),
 
         authors=["Christian Evenhuis", "MIF", "Tom Boissonnet"],
         institutions=["University of Technology Sydney", "CAi HHU"],
@@ -152,6 +158,10 @@ if __name__ == "__main__":
             if client.getInput(key):
                 # unwrap rtypes to String, Integer etc
                 script_params[key] = client.getInput(key, unwrap=True)
+        if script_params["Target_object_type"] == "":
+            script_params["Target_object_type"] = script_params["Source_object_type"]
+
+        assert script_params[agreement], "Please confirm that you understood the risks."
 
         print(script_params)   # handy to have inputs in the std-out log
 
@@ -161,6 +171,8 @@ if __name__ == "__main__":
         # do the editing...
         message = remove_keyvalue(conn, script_params)
         client.setOutput("Message", rstring(message))
-
+    except AssertionError as err: #Display assertion errors in OMERO.web activities
+        client.setOutput("ERROR", rstring(err))
+        raise AssertionError(str(err))
     finally:
         client.closeSession()
