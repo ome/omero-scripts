@@ -49,37 +49,6 @@ HIERARCHY_OBJECTS = {
                         "Well": ["Image"]
                     }
 
-
-def get_existing_map_annotations(obj, namespace):
-    """Get all Map Annotations linked to the object"""
-    ord_dict = OrderedDict()
-    for ann in obj.listAnnotations(ns=namespace):
-        if isinstance(ann, omero.gateway.MapAnnotationWrapper):
-            kvs = ann.getValue()
-            for k, v in kvs:
-                if k not in ord_dict:
-                    ord_dict[k] = set()
-                ord_dict[k].add(v)
-    return ord_dict
-
-
-def remove_map_annotations(conn, object, namespace):
-    """Remove ALL Map Annotations on the object"""
-    anns = list(object.listAnnotations(ns=namespace))
-    mapann_ids = [ann.id for ann in anns
-                  if isinstance(ann, omero.gateway.MapAnnotationWrapper)]
-
-    try:
-        delete = Delete2(targetObjects={'MapAnnotation': mapann_ids})
-        handle = conn.c.sf.submit(delete)
-        conn.c.waitOnCmd(handle, loops=10, ms=500, failonerror=True,
-                         failontimeout=False, closehandle=False)
-
-    except Exception as ex:
-        print("Failed to delete links: {}".format(ex.message))
-    return
-
-
 def get_original_file(omero_object, file_ann_id=None):
     """Find file linked to object. Option to filter by ID."""
     file_ann = None
@@ -174,7 +143,7 @@ def keyval_from_csv(conn, script_params):
     target_type = script_params["Target_object_type"]
     source_ids = script_params["Source_IDs"]
     file_ids = script_params["File_Annotation_ID"]
-    namespace = script_params["Namespace (optional)"]
+    namespace = script_params["Namespace (leave blank for default)"]
 
     ntarget_processed = 0
     ntarget_updated = 0
@@ -233,50 +202,25 @@ def keyval_from_csv(conn, script_params):
 
 def annotate_object(conn, obj, header, row, cols_to_ignore, namespace):
 
-    if namespace is None:
-        namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
-
-    obj_updated = False
-    existing_kv = get_existing_map_annotations(obj, namespace)
-    updated_kv = copy.deepcopy(existing_kv)
-    print("Existing kv:")
-    for k, vset in existing_kv.items():
-        for v in vset:
-            print("   ", k, v)
-
     print("Adding kv:")
+    kv_list = []
+
     for i in range(len(row)):
         if i in cols_to_ignore or i >= len(header):
             continue
         key = header[i].strip()
-        vals = row[i].strip().split(';')
-        if len(vals) > 0:
-            for val in vals:
-                if len(val) > 0:
-                    if key not in updated_kv:
-                        updated_kv[key] = set()
-                    print("   ", key, val)
-                    updated_kv[key].add(val)
+        value = row[i].strip()
+        kv_list.append([key, value])
 
-    if existing_kv != updated_kv:
-        obj_updated = True
-        print("The key-values pairs are different")
-        remove_map_annotations(conn, obj, namespace)
-        map_ann = omero.gateway.MapAnnotationWrapper(conn)
-        map_ann.setNs(namespace)
-        # convert the ordered dict to a list of lists
-        kv_list = []
-        for k, vset in updated_kv.items():
-            for v in vset:
-                kv_list.append([k, v])
-        map_ann.setValue(kv_list)
-        map_ann.save()
-        print("Map Annotation created", map_ann.id)
-        obj.linkAnnotation(map_ann)
-    else:
-        print("No change change in kv")
+    map_ann = omero.gateway.MapAnnotationWrapper(conn)
+    map_ann.setNs(namespace)
+    map_ann.setValue(kv_list)
+    map_ann.save()
 
-    return obj_updated
+    print("Map Annotation created", map_ann.id)
+    obj.linkAnnotation(map_ann)
+
+    return True
 
 
 def run_script():
@@ -312,7 +256,7 @@ def run_script():
             values=target_types, default="Image"),
 
         scripts.String(
-            "Namespace (optional)", optional=True, grouping="3",
+            "Namespace (leave blank for default)", optional=True, grouping="3",
             description="Choose a namespace for the annotations"),
 
         authors=["Christian Evenhuis", "Tom Boissonnet"],
@@ -326,7 +270,7 @@ def run_script():
         # process the list of args above.
         script_params = { # Param dict with defaults for optional parameters
             "File_Annotation_ID": [None],
-            "Namespace (optional)": None
+            "Namespace (leave blank for default)": omero.constants.metadata.NSCLIENTMAPANNOTATION
             }
         for key in client.getInputKeys():
             if client.getInput(key):
