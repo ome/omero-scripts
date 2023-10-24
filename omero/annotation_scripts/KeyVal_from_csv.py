@@ -272,7 +272,7 @@ def run_script():
 
         scripts.List(
             "Source_IDs", optional=False, grouping="1.1",
-            description="List of source IDs containing the images to annotate.").ofType(rlong(0)),
+            description="List of source IDs containing the objects to annotate.").ofType(rlong(0)),
 
         scripts.List(
             "File_Annotation_ID", optional=True, grouping="1.2",
