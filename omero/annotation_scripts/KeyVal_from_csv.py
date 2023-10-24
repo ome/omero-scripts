@@ -174,8 +174,12 @@ def keyval_from_csv(conn, script_params):
             idx_id = idx_name
             target_d = dict()
             for target_obj in target_obj_l:
-                assert target_obj.getName() not in target_d.keys(), f"Target objects identified by name have duplicate: {target_obj.getName()}"
-                target_d[target_obj.getName()] = target_obj
+                if target_type == "Well":
+                    assert target_obj.getWellPos() not in target_d.keys(), f"Target objects identified by name have duplicate: {target_obj.getWellPos()}"
+                    target_d[target_obj.getWellPos()] = target_obj
+                else:
+                    assert target_obj.getName() not in target_d.keys(), f"Target objects identified by name have duplicate: {target_obj.getName()}"
+                    target_d[target_obj.getName()] = target_obj
         else: # Setting the dictionnary target_id:target_obj   keys as string to match CSV reader output
             target_d = {str(target_obj.getId()):target_obj for target_obj in target_obj_l}
         ntarget_processed += len(target_d)
