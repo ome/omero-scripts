@@ -79,7 +79,7 @@ def remove_keyvalue(conn, script_params):
 
     nsuccess = 0
     ntotal = 0
-    if source_type == target_type: # We remove annotation to the given object ID
+    if source_type == target_type: # We remove annotation to the given objects ID
         for source_object in conn.getObjects(source_type, source_ids):
             print("Processing object:", source_object)
             ret = remove_map_annotations(conn, source_object, namespace)
