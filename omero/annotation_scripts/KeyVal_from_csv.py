@@ -129,7 +129,7 @@ def read_csv(conn, original_file): #Dedicated function to read the CSV file
         data = list(csv.reader(file_handle, delimiter=delimiter))
 
     # keys are in the header row
-    header = data[0]
+    header = [el.strip() for el in data[0]]
     print("header", header)
     return data, header
 

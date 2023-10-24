@@ -108,7 +108,8 @@ def attach_csv_file(conn, source_object, obj_id_l, obj_name_l, annotation_dicts,
         tfile.write(to_csv(whole_values))
     tfile.close()
 
-    name = "{}_metadata_out.csv".format(source_object.getName())
+    source_name = source_object.getWellPos() if source_object.OMERO_CLASS is "Well" else source_object.getName()
+    name = "{}_metadata_out.csv".format(source_name)
     # link it to the object
     ann = conn.createFileAnnfromLocalFile(
         tmp_file, origFilePathAndName=name,
@@ -134,17 +135,22 @@ def main_loop(conn, script_params):
 
     # One file output per given ID
     for source_object in conn.getObjects(source_type, source_ids):
-        print("Processing object:", source_object)
         if source_type == target_type:
+            print("Processing object:", source_object)
             annotation_dicts = [get_existing_map_annotions(source_object, namespace, ZERO_PADDING)]
             obj_id_l = [source_object.getId()]
             obj_name_l = [source_object.getWellPos() if source_object.OMERO_CLASS is "Well" else source_object.getName()]
-
         else:
             annotation_dicts = []
             obj_id_l, obj_name_l = [], []
+            if source_type == "TagAnnotation":
+                target_obj_l = conn.getObjectsByAnnotations(target_type, [source_object.getId()])
+                target_obj_l = list(conn.getObjects(target_type, [o.getId() for o in target_obj_l])) # Need that to load annotations later
+                source_object = target_obj_l[0] # Putting the csv file on the first child
+            else:
+                target_obj_l = get_children_recursive(source_object, target_type)
             # Listing all target children to the source object (eg all images (target) in all datasets of the project (source))
-            for target_obj in get_children_recursive(source_object, target_type):
+            for target_obj in target_obj_l:
                 print("Processing object:", target_obj)
                 annotation_dicts.append(get_existing_map_annotions(target_obj, namespace, ZERO_PADDING))
                 obj_id_l.append(target_obj.getId())
@@ -206,7 +212,7 @@ def run_script():
         scripts.String(
             "Source_object_type", optional=False, grouping="1",
             description="Choose the object type containing the objects to delete annotation from",
-            values=data_types, default="Image"),
+            values=data_types+[rstring("Tag")], default="Image"),
 
         scripts.List(
             "Source_IDs", optional=False, grouping="1.1",
@@ -240,6 +246,11 @@ def run_script():
             if client.getInput(key):
                 # unwrap rtypes to String, Integer etc
                 script_params[key] = client.getInput(key, unwrap=True)
+
+        if script_params["Source_object_type"] == "Tag":
+            script_params["Source_object_type"] = "TagAnnotation"
+            assert script_params["Target_object_type"] != "<on source>", "Tag as source is not compatible with target '<on source>'"
+
         if script_params["Target_object_type"] == "<on source>":
             script_params["Target_object_type"] = script_params["Source_object_type"]
 

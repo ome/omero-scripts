@@ -44,9 +44,9 @@ def remove_map_annotations(conn, obj, namespace):
     anns = list(obj.listAnnotations(ns=namespace))
     mapann_ids = [ann.id for ann in anns
                   if isinstance(ann, omero.gateway.MapAnnotationWrapper)]
-    if len(mapann_ids) == 0:
-        return 1
 
+    if len(mapann_ids) == 0:
+        return 0
     print("Map Annotation IDs to delete:", mapann_ids)
     try:
         conn.deleteObjects("Annotation", mapann_ids)
@@ -79,23 +79,26 @@ def remove_keyvalue(conn, script_params):
 
     nsuccess = 0
     ntotal = 0
-    if source_type == target_type: # We remove annotation to the given objects ID
-        for source_object in conn.getObjects(source_type, source_ids):
+    for source_object in conn.getObjects(source_type, source_ids):
+        if source_type == target_type:
             print("Processing object:", source_object)
             ret = remove_map_annotations(conn, source_object, namespace)
             nsuccess += ret
             ntotal += 1
-    else:
-        for source_object in conn.getObjects(source_type, source_ids):
+        else:
             # Listing all target children to the source object (eg all images (target) in all datasets of the project (source))
-            target_obj_l = get_children_recursive(source_object, target_type)
+            if source_type == "TagAnnotation":
+                target_obj_l = conn.getObjectsByAnnotations(target_type, [source_object.getId()])
+                target_obj_l = list(conn.getObjects(target_type, [o.getId() for o in target_obj_l])) # Need that to load annotations later
+            else:
+                target_obj_l = get_children_recursive(source_object, target_type)
             for target_obj in target_obj_l:
                 print("Processing object:", target_obj)
                 ret = remove_map_annotations(conn, target_obj, namespace)
                 nsuccess += ret
                 ntotal += 1
 
-    message = f"Key value data deleted from {ntotal-nsuccess} of {ntotal} objects"
+    message = f"Key value data deleted from {nsuccess} of {ntotal} objects"
 
     return message
 
@@ -125,7 +128,7 @@ if __name__ == "__main__":
         scripts.String(
             "Source_object_type", optional=False, grouping="1",
             description="Choose the object type containing the objects to delete annotation from",
-            values=data_types, default="Image"),
+            values=data_types+[rstring("Tag")], default="Image"),
 
         scripts.List(
             "Source_IDs", optional=False, grouping="1.1",
@@ -158,6 +161,10 @@ if __name__ == "__main__":
             if client.getInput(key):
                 # unwrap rtypes to String, Integer etc
                 script_params[key] = client.getInput(key, unwrap=True)
+        if script_params["Source_object_type"] == "Tag":
+            script_params["Source_object_type"] = "TagAnnotation"
+            assert script_params["Target_object_type"] != "<on source>", "Tag as source is not compatible with target '<on source>'"
+
         if script_params["Target_object_type"] == "<on source>":
             script_params["Target_object_type"] = script_params["Source_object_type"]
 
