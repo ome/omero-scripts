@@ -214,8 +214,8 @@ def run_script():
 
         scripts.String(
             "Target_object_type", optional=True, grouping="1.2",
-            description="Choose the object type to delete annotation from (if empty, same as source)",
-            values=[rstring("")]+data_types, default=""),
+            description="Choose the object type to delete annotation from",
+            values=[rstring("<on source>")]+data_types, default="<on source>"),
 
         scripts.String(
             "Namespace (leave blank for default)", optional=True, grouping="2",
@@ -240,7 +240,7 @@ def run_script():
             if client.getInput(key):
                 # unwrap rtypes to String, Integer etc
                 script_params[key] = client.getInput(key, unwrap=True)
-        if script_params["Target_object_type"] == "":
+        if script_params["Target_object_type"] == "<on source>":
             script_params["Target_object_type"] = script_params["Source_object_type"]
 
         print(script_params)   # handy to have inputs in the std-out log

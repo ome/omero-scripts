@@ -133,8 +133,8 @@ if __name__ == "__main__":
 
         scripts.String(
             "Target_object_type", optional=True, grouping="1.2",
-            description="Choose the object type to delete annotation from (if empty, same as source)",
-            values=[rstring("")]+data_types, default=""),
+            description="Choose the object type to delete annotation from.",
+            values=[rstring("<on source>")]+data_types, default="<on source>"),
 
         scripts.String(
             "Namespace (leave blank for default)", optional=True, grouping="2",
@@ -158,7 +158,7 @@ if __name__ == "__main__":
             if client.getInput(key):
                 # unwrap rtypes to String, Integer etc
                 script_params[key] = client.getInput(key, unwrap=True)
-        if script_params["Target_object_type"] == "":
+        if script_params["Target_object_type"] == "<on source>":
             script_params["Target_object_type"] = script_params["Source_object_type"]
 
         assert script_params[agreement], "Please confirm that you understood the risks."
