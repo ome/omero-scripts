@@ -65,8 +65,8 @@ def get_original_file(omero_object, file_ann_id=None):
                 file_ann = ann # Found it
                 break
             elif file_ann_id is None and file_name.endswith(".csv"):
-                if (file_ann is None) or (ann.getId() > file_ann.getId()):
-                    # Get the file with the biggest ID, that should be the most recent
+                if (file_ann is None) or (ann.getDate() > file_ann.getDate()):
+                    # Get the most recent file
                     file_ann = ann
     if file_ann is None:
         sys.stderr.write("Error: File does not exist.\n")
