@@ -175,8 +175,8 @@ def keyval_from_csv(conn, script_params):
             target_d = dict()
             for target_obj in target_obj_l:
                 if target_type == "Well":
-                    assert target_obj.getWellPos() not in target_d.keys(), f"Target objects identified by name have duplicate: {target_obj.getWellPos()}"
-                    target_d[target_obj.getWellPos()] = target_obj
+                    assert target_obj.getWellPos().upper() not in target_d.keys(), f"Target objects identified by name have duplicate: {target_obj.getWellPos()}"
+                    target_d[target_obj.getWellPos().upper()] = target_obj
                 else:
                     assert target_obj.getName() not in target_d.keys(), f"Target objects identified by name have duplicate: {target_obj.getName()}"
                     target_d[target_obj.getName()] = target_obj
