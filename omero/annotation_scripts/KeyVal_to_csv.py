@@ -34,14 +34,14 @@ import os
 from collections import OrderedDict
 
 CHILD_OBJECTS = {
-                        "Project": "Dataset",
-                        "Dataset": "Image",
-                        "Screen": "Plate",
-                        "Plate": "Well",
-                        #"Run": ["Well", "Image"],
-                        "Well": "WellSample",
-                        "WellSample": "Image"
-                    }
+                    "Project": "Dataset",
+                    "Dataset": "Image",
+                    "Screen": "Plate",
+                    "Plate": "Well",
+                    #"Run": ["Well", "Image"],
+                    "Well": "WellSample",
+                    "WellSample": "Image"
+                }
 
 ZERO_PADDING = 3 # To allow duplicated keys (3 means up to 1000 duplicate key on a single object)
 

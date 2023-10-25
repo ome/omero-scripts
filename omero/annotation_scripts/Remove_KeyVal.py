@@ -32,14 +32,14 @@ from omero.rtypes import rlong, rstring, wrap
 import omero.scripts as scripts
 
 CHILD_OBJECTS = {
-                        "Project": "Dataset",
-                        "Dataset": "Image",
-                        "Screen": "Plate",
-                        "Plate": "Well",
-                        #"Run": ["Well", "Image"],
-                        "Well": "WellSample",
-                        "WellSample": "Image"
-                    }
+                    "Project": "Dataset",
+                    "Dataset": "Image",
+                    "Screen": "Plate",
+                    "Plate": "Well",
+                    #"Run": ["Well", "Image"],
+                    "Well": "WellSample",
+                    "WellSample": "Image"
+                }
 
 def remove_map_annotations(conn, obj, namespace):
     anns = list(obj.listAnnotations(ns=namespace))

@@ -45,14 +45,15 @@ from omero.util.populate_roi import DownloadingOriginalFileProvider
 
 from collections import OrderedDict
 
-HIERARCHY_OBJECTS = {
-                        "Project": ["Dataset", "Image"],
-                        "Dataset": ["Image"],
-                        "Screen": ["Plate", "Well", "Image"],
-                        "Plate": ["Well", "Image"],
-                        #"Run": ["Well", "Image"],
-                        "Well": ["Image"]
-                    }
+CHILD_OBJECTS = {
+                    "Project": "Dataset",
+                    "Dataset": "Image",
+                    "Screen": "Plate",
+                    "Plate": "Well",
+                    #"Run": ["Well", "Image"],
+                    "Well": "WellSample",
+                    "WellSample": "Image"
+                }
 
 def get_original_file(omero_object):
     """Find last AnnotationFile linked to object"""
@@ -66,7 +67,7 @@ def get_original_file(omero_object):
                     # Get the most recent file
                     file_ann = ann
 
-    obj_name = omero_object.getWellPos() if omero_object.OMERO_CLASS is "Well" else omero_object.getName()
+    obj_name = omero_object.getWellPos() if omero_object.OMERO_CLASS == "Well" else omero_object.getName()
     assert file_ann is not None, f"No .csv FileAnnotation was found on {omero_object.OMERO_CLASS}:{obj_name}:{omero_object.getId()}"
 
     return file_ann
@@ -86,7 +87,7 @@ def link_file_ann(conn, object_type, object_id, file_ann_id):
     if len(links) == 0:
         omero_object.linkAnnotation(file_ann)
 
-def read_csv(conn, original_file): #Dedicated function to read the CSV file
+def read_csv(conn, original_file, delimiter): #Dedicated function to read the CSV file
     print("Original File", original_file.id.val, original_file.name.val)
     provider = DownloadingOriginalFileProvider(conn)
     # read the csv
@@ -95,31 +96,32 @@ def read_csv(conn, original_file): #Dedicated function to read the CSV file
     temp_name = temp_file.name
     file_length = original_file.size.val
     with open(temp_name, 'rt', encoding='utf-8-sig') as file_handle:
-        try:
-            delimiter = csv.Sniffer().sniff(
-                file_handle.read(floor(file_length/4)), ",;\t").delimiter
-            print("Using delimiter: ", delimiter,
-                    f" after reading {floor(file_length/4)} characters")
-        except Exception:
-            file_handle.seek(0)
+        if delimiter is None:
             try:
                 delimiter = csv.Sniffer().sniff(
-                    file_handle.read(floor(file_length/2)),
-                    ",;\t").delimiter
+                    file_handle.read(floor(file_length/4)), ",;\t").delimiter
                 print("Using delimiter: ", delimiter,
-                        f"after reading {floor(file_length/2)} characters")
+                        f" after reading {floor(file_length/4)} characters")
             except Exception:
                 file_handle.seek(0)
                 try:
                     delimiter = csv.Sniffer().sniff(
-                        file_handle.read(floor(file_length*0.75)),
+                        file_handle.read(floor(file_length/2)),
                         ",;\t").delimiter
                     print("Using delimiter: ", delimiter,
-                            f" after reading {floor(file_length*0.75)}"
-                            " characters")
+                            f"after reading {floor(file_length/2)} characters")
                 except Exception:
-                    print("Failed to sniff delimiter, using ','")
-                    delimiter = ","
+                    file_handle.seek(0)
+                    try:
+                        delimiter = csv.Sniffer().sniff(
+                            file_handle.read(floor(file_length*0.75)),
+                            ",;\t").delimiter
+                        print("Using delimiter: ", delimiter,
+                                f" after reading {floor(file_length*0.75)}"
+                                " characters")
+                    except Exception:
+                        print("Failed to sniff delimiter, using ','")
+                        delimiter = ","
 
         # reset to start and read whole file...
         file_handle.seek(0)
@@ -131,8 +133,12 @@ def read_csv(conn, original_file): #Dedicated function to read the CSV file
     return data, header
 
 def get_children_recursive(source_object, target_type):
-    if HIERARCHY_OBJECTS[source_object.OMERO_CLASS][0] == target_type: # Stop condition, we return the source_obj children
-        return source_object.listChildren()
+    print(source_object, target_type)
+    if CHILD_OBJECTS[source_object.OMERO_CLASS] == target_type: # Stop condition, we return the source_obj children
+        if source_object.OMERO_CLASS != "WellSample":
+            return source_object.listChildren()
+        else:
+            return [source_object.getImage()]
     else:
         result = []
         for child_obj in source_object.listChildren():
@@ -146,6 +152,10 @@ def keyval_from_csv(conn, script_params):
     source_ids = script_params["Source_IDs"]
     file_ids = script_params["File_Annotation_ID"]
     namespace = script_params["Namespace (leave blank for default)"]
+    to_exclude = script_params["Columns to exclude"]
+    target_id_colname = script_params["Column name of the 'target ID'"]
+    target_name_colname = script_params["Namespace (leave blank for default)"]
+    separator = script_params["Separator"]
 
     ntarget_processed = 0
     ntarget_updated = 0
@@ -159,10 +169,10 @@ def keyval_from_csv(conn, script_params):
             file_ann = conn.getObject("Annotation", oid=file_ann_id)
             assert file_ann.OMERO_TYPE == omero.model.FileAnnotationI, "The provided annotation ID must reference a FileAnnotation, not a {file_ann.OMERO_TYPE}"
         else:
-            file_ann = get_original_file(source_object, file_ann_id)
+            file_ann = get_original_file(source_object)
         original_file = file_ann.getFile()._obj
         print("set ann id", file_ann.getId())
-        data, header = read_csv(conn, original_file)
+        data, header = read_csv(conn, original_file, separator)
 
         if source_type == target_type:
             print("Processing object:", source_object)
@@ -176,10 +186,13 @@ def keyval_from_csv(conn, script_params):
             # Listing all target children to the source object (eg all images (target) in all datasets of the project (source))
 
         # Finds the index of the column used to identify the targets. Try for IDs first
-        idx_id = header.index("target_id") if "target_id" in header else -1
-        idx_name = header.index("target_name") if "target_name" in header else -1
-        use_id = idx_id != -1
+        idx_id = header.index(target_id_colname) if target_id_colname in header else -1
+        idx_name = header.index(target_name_colname) if target_name_colname in header else -1
+        cols_to_ignore = [header.index(el) for el in to_exclude if el in header]
 
+        assert (idx_id != -1) or (idx_name != -1), "Neither the column for the objects name or the objects index were found"
+
+        use_id = idx_id != -1 # If the column for the object index exist, use it
         if not use_id: # Identify images by name must fail if two images have identical names
             idx_id = idx_name
             target_d = dict()
@@ -199,14 +212,13 @@ def keyval_from_csv(conn, script_params):
             target_id = row[idx_id]
             if target_id in target_d.keys():
                 target_obj = target_d[target_id]
-                obj_name = target_obj.getWellPos() if target_obj.OMERO_CLASS is "Well" else target_obj.getName()
+                obj_name = target_obj.getWellPos() if target_obj.OMERO_CLASS == "Well" else target_obj.getName()
                 print("Annotating Target:", f"{obj_name+':' if use_id else ''}{target_id}")
             else:
                 missing_names += 1
                 print(f"Target not found: {target_id}")
                 continue
 
-            cols_to_ignore = [idx_id, idx_name]
             updated = annotate_object(conn, target_obj, header, row, cols_to_ignore, namespace)
             if updated:
                 ntarget_updated += 1
@@ -251,6 +263,8 @@ def run_script():
                     rstring("- Dataset"), rstring("-- Image"),
                     rstring("Screen"), rstring("- Plate"),
                     rstring("-- Well"), rstring("--- Image")]
+
+    separators = ["guess", ";", ",", "<TAB>"]
 
     client = scripts.client(
         'Add_Key_Val_from_csv',
@@ -302,6 +316,23 @@ def run_script():
             "Namespace (leave blank for default)", optional=True, grouping="1.4",
             description="Choose a namespace for the annotations"),
 
+        scripts.List(
+            "Columns to exclude", optional=False, grouping="2",
+            description="List of columns to exclude from the key-value pair import", default="<ID>,<NAME>").ofType(rstring("")),
+
+        scripts.String(
+            "Column name of the 'target ID'", optional=True, grouping="2.1",
+            description="Set the column name containing the id of the target", default="target_id"),
+
+        scripts.String(
+            "Column name of the 'target name'", optional=True, grouping="2.2",
+            description="Set the column name containing the id of the target", default="target_name"),
+
+        scripts.String(
+            "Separator", optional=False, grouping="3",
+            description="Choose the .csv separator",
+            values=separators, default="guess"),
+
         authors=["Christian Evenhuis", "Tom Boissonnet"],
         institutions=["MIF UTS", "CAi HHU"],
         contact="https://forum.image.sc/tag/omero",
@@ -323,7 +354,7 @@ def run_script():
         tmp_src = script_params["Source_object_type"]
         script_params["Source_object_type"] = tmp_src.split(" ")[1] if " " in tmp_src else tmp_src
         tmp_trg = script_params["Target_object_type"]
-        script_params["Source_object_type"] = tmp_trg.split(" ")[1] if " " in tmp_trg else tmp_trg
+        script_params["Target_object_type"] = tmp_trg.split(" ")[1] if " " in tmp_trg else tmp_trg
 
         if script_params["Source_object_type"] == "Tag":
             script_params["Source_object_type"] = "TagAnnotation"
@@ -332,6 +363,18 @@ def run_script():
         if len(script_params["File_Annotation_ID"]) == 1: # Poulate the parameter with None or same ID for all source
             script_params["File_Annotation_ID"] = script_params["File_Annotation_ID"] * len(script_params["Source_IDs"])
         assert len(script_params["File_Annotation_ID"]) ==  len(script_params["Source_IDs"]), "Number of Source IDs and FileAnnotation IDs must match"
+
+        to_exclude = list(map(lambda x: x.replace('<ID>', script_params["Column name of the 'target ID'"]),
+                              script_params["Columns to exclude"]))
+        script_params["Columns to exclude"] = list(map(lambda x: x.replace('<NAME>', script_params["Column name of the 'target name'"]),
+                                                       to_exclude))
+
+        if script_params["Separator"] == "guess":
+            script_params["Separator"] = None
+        elif script_params["Separator"] == "<TAB>":
+            script_params["Separator"] = "\t"
+
+
 
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
