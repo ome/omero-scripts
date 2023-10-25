@@ -147,14 +147,14 @@ def get_children_recursive(source_object, target_type):
         return result
 
 def keyval_from_csv(conn, script_params):
-    source_type = script_params["Source_object_type"]
-    target_type = script_params["Target_object_type"]
-    source_ids = script_params["Source_IDs"]
-    file_ids = script_params["File_Annotation_ID"]
+    source_type = script_params["Data_Type"]
+    target_type = script_params["Target Data_Type"]
+    source_ids = script_params["IDs"]
+    file_ids = script_params["File_Annotation"]
     namespace = script_params["Namespace (leave blank for default)"]
     to_exclude = script_params["Columns to exclude"]
-    target_id_colname = script_params["Column name of the 'target ID'"]
-    target_name_colname = script_params["Namespace (leave blank for default)"]
+    target_id_colname = script_params["Target ID colname"]
+    target_name_colname = script_params["Target name colname"]
     separator = script_params["Separator"]
 
     ntarget_processed = 0
@@ -254,127 +254,126 @@ def annotate_object(conn, obj, header, row, cols_to_ignore, namespace):
 
 def run_script():
 
-    source_types = [rstring("Project"), rstring("- Dataset"), rstring("-- Image"),
-                    rstring("Screen"), rstring("- Plate"),
-                    rstring("-- Well"), rstring("--- Image"), #Duplicate Image for UI, but not a problem for script
-                    rstring("Tag")]
+    source_types = [rstring("Project"), rstring("Dataset"), rstring("Image"),
+                    rstring("Screen"), rstring("Plate"),
+                    rstring("Well"), rstring("Tag"),
+                    rstring("Image"), # Cannot add fancy layout if we want auto fill and selct of object ID
+                    ]
 
-    target_types = [rstring("Project"),
+    target_types = [rstring("Project"), # Duplicate Image for UI, but not a problem for script
                     rstring("- Dataset"), rstring("-- Image"),
                     rstring("Screen"), rstring("- Plate"),
                     rstring("-- Well"), rstring("--- Image")]
 
-    separators = ["guess", ";", ",", "<TAB>"]
+    separators = ["guess", ";", ",", "TAB"]
 
     client = scripts.client(
         'Add_Key_Val_from_csv',
         """
-    This script reads an attached .csv file to annotate objects with key-value pairs.
-
-    Only the child objects of the SOURCE will be searched and if they match an entry in
-    the .csv file, then a set of key-value pair will be added to the TARGET.
-
-    In the .csv file, the TARGETs can be identified by their name (with a column named
-    "target_name"), in which case their names must be unique among all children objects
-    of the SOURCE. The TARGETs can also be identified by their IDs (with a column named
-    "target_id"). In case both are given, "target_name" will be ignored in favor of
-    "target_id".
-
-    The .csv file must be imported in OMERO as a file annotation, and is passed as a
-    parameter to the script via the AnnotationID.
-
-    Multiple SOURCE and AnnotationID can be passed to the script, and each will be
-    processed independantly. When using a single AnnotationID, the same .csv will be
-    used for each SOURCE. When no AnnotationID is given, each SOURCE will use the
-    most recently attached .csv on itself.
-
-    The annotation can also be associated to a namespace (defaults to user namespace).
-
-    Complementary scripts:
-     - "Export Key Value to csv": Export key value pairs of a given namespace
-     - "Delete Key Value": Delete the key value pairs associated to a namespace
-        """,
-        scripts.String(
-            "Source_object_type", optional=False, grouping="1",
-            description="Choose the object type containing the objects to annotate",
-            values=source_types, default="- Dataset"),
-
-        scripts.List(
-            "Source_IDs", optional=False, grouping="1.1",
-            description="List of source IDs containing the objects to annotate.").ofType(rlong(0)),
-
-        scripts.List(
-            "File_Annotation_ID", optional=True, grouping="1.2",
-            description="List of file IDs containing metadata to populate. If given, must match length of 'Source IDs'. Otherwise, uses the CSV file with the highest ID.").ofType(rlong(0)),
+    This script reads a .csv file to annotate target objects with key-value pairs.
+    TODO: add hyperlink to readthedocs
+    \t
+    \t
+    Parameters:
+    \t
+    - Data Type: Type of the "parent objects" in which "target objects" are searched.
+    - IDs: IDs of the "parent objects".
+    - Target Data Type: Type of the "target objects" that will be annotated.
+    - File_Annotation: IDs of .csv FileAnnotation or input file.
+    - Namespace: Namespace that will be given to the annotations.
+    \t
+    - Columns to exclude: Columns name of the .csv file to exclude.
+    - Target ID colname: Column name in the .csv of the target IDs.
+    - Target name colname: Column name in the .csv of the target names.
+    - Separator: Separator used in the .csv file.
+    \t
+        """, # Tabs are needed to add line breaks in the HTML
 
         scripts.String(
-            "Target_object_type", optional=False, grouping="1.3",
-            description="Choose the object type to annotate (must be bellow the chosen source object type)",
+            "Data_Type", optional=False, grouping="1",
+            description="Parent data type of the objects to annotate.",
+            values=source_types, default="Dataset"),
+
+        scripts.List(
+            "IDs", optional=False, grouping="1.1",
+            description="List of parent data IDs containing the objects to annotate.").ofType(rlong(0)),
+
+        scripts.String(
+            "Target Data_Type", optional=False, grouping="1.2",
+            description="The data type on which will be annotated. Entries in the .csv correspond to these objects.",
             values=target_types, default="-- Image"),
 
         scripts.String(
+            "File_Annotation", optional=True, grouping="1.3",
+            description="If no file is provided, list of file IDs containing metadata to populate (must match length of 'IDs'). If neither, searches the most recently attached CSV file on each parent object."),
+
+        scripts.String(
             "Namespace (leave blank for default)", optional=True, grouping="1.4",
-            description="Choose a namespace for the annotations"),
+            description="Namespace given to the created key-value pairs annotations."),
 
         scripts.List(
             "Columns to exclude", optional=False, grouping="2",
-            description="List of columns to exclude from the key-value pair import", default="<ID>,<NAME>").ofType(rstring("")),
+            description="List of columns in the .csv file to exclude from the key-value pair import. <ID> and <NAME> correspond to the two following parameters.", default="<ID>,<NAME>").ofType(rstring("")),
 
         scripts.String(
-            "Column name of the 'target ID'", optional=True, grouping="2.1",
-            description="Set the column name containing the id of the target", default="target_id"),
+            "Target ID colname", optional=False, grouping="2.1",
+            description="The column name in the .csv containing the id of the objects to annotate. Correspond to <ID> in exclude parameter.", default="target_id"),
 
         scripts.String(
-            "Column name of the 'target name'", optional=True, grouping="2.2",
-            description="Set the column name containing the id of the target", default="target_name"),
+            "Target name colname", optional=False, grouping="2.2",
+            description="The column name in the .csv containing the name of the objects to annotate (used if no column ID is provided or found in the .csv). Correspond to <NAME> in exclude parameter.", default="target_name"),
 
         scripts.String(
-            "Separator", optional=False, grouping="3",
-            description="Choose the .csv separator",
+            "Separator", optional=False, grouping="2.3",
+            description="The separator used in the .csv file. 'guess' will attempt to detetect automatically which of ,;\\t is used.",
             values=separators, default="guess"),
 
         authors=["Christian Evenhuis", "Tom Boissonnet"],
         institutions=["MIF UTS", "CAi HHU"],
-        contact="https://forum.image.sc/tag/omero",
-        version="2.0.0"
+        contact="https://forum.image.sc/tag/omero"
     )
 
 
     try:
         # process the list of args above.
         script_params = { # Param dict with defaults for optional parameters
-            "File_Annotation_ID": [None],
+            "File_Annotation": None,
             "Namespace (leave blank for default)": omero.constants.metadata.NSCLIENTMAPANNOTATION
             }
         for key in client.getInputKeys():
             if client.getInput(key):
                 script_params[key] = client.getInput(key, unwrap=True)
+        print(script_params["File_Annotation"])
+
 
         # Getting rid of the trailing '---' added for the UI
-        tmp_src = script_params["Source_object_type"]
-        script_params["Source_object_type"] = tmp_src.split(" ")[1] if " " in tmp_src else tmp_src
-        tmp_trg = script_params["Target_object_type"]
-        script_params["Target_object_type"] = tmp_trg.split(" ")[1] if " " in tmp_trg else tmp_trg
+        tmp_src = script_params["Data_Type"]
+        script_params["Data_Type"] = tmp_src.split(" ")[1] if " " in tmp_src else tmp_src
+        tmp_trg = script_params["Target Data_Type"]
+        script_params["Target Data_Type"] = tmp_trg.split(" ")[1] if " " in tmp_trg else tmp_trg
 
-        if script_params["Source_object_type"] == "Tag":
-            script_params["Source_object_type"] = "TagAnnotation"
-            assert None not in script_params["File_Annotation_ID"], "File annotation ID must be given when using Tag as source"
+        if script_params["Data_Type"] == "Tag":
+            script_params["Data_Type"] = "TagAnnotation"
+            assert None not in script_params["File_Annotation"], "File annotation ID must be given when using Tag as source"
 
-        if len(script_params["File_Annotation_ID"]) == 1: # Poulate the parameter with None or same ID for all source
-            script_params["File_Annotation_ID"] = script_params["File_Annotation_ID"] * len(script_params["Source_IDs"])
-        assert len(script_params["File_Annotation_ID"]) ==  len(script_params["Source_IDs"]), "Number of Source IDs and FileAnnotation IDs must match"
+        if (script_params["File_Annotation"]) is not None and ("," in script_params["File_Annotation"]): # List of ID provided
+            script_params["File_Annotation"] = script_params["File_Annotation"].split(",")
+        else:
+            script_params["File_Annotation"] = [script_params["File_Annotation"]]
+        if len(script_params["File_Annotation"]) == 1: # Poulate the parameter with None or same ID for all source
+            script_params["File_Annotation"] = script_params["File_Annotation"] * len(script_params["IDs"])
+        assert len(script_params["File_Annotation"]) ==  len(script_params["IDs"]), "Number of Source IDs and FileAnnotation IDs must match"
 
-        to_exclude = list(map(lambda x: x.replace('<ID>', script_params["Column name of the 'target ID'"]),
+        # Replacing the placeholders <ID> and <NAME> with the actual values from the parameters
+        to_exclude = list(map(lambda x: x.replace('<ID>', script_params["Target ID colname"]),
                               script_params["Columns to exclude"]))
-        script_params["Columns to exclude"] = list(map(lambda x: x.replace('<NAME>', script_params["Column name of the 'target name'"]),
+        script_params["Columns to exclude"] = list(map(lambda x: x.replace('<NAME>', script_params["Target name colname"]),
                                                        to_exclude))
 
         if script_params["Separator"] == "guess":
             script_params["Separator"] = None
-        elif script_params["Separator"] == "<TAB>":
+        elif script_params["Separator"] == "TAB":
             script_params["Separator"] = "\t"
-
-
 
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
