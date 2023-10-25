@@ -34,11 +34,9 @@ import omero
 from omero.gateway import BlitzGateway
 from omero.rtypes import rstring, rlong
 import omero.scripts as scripts
-from omero.cmd import Delete2
 
 import sys
 import csv
-import copy
 from math import floor
 
 from omero.util.populate_roi import DownloadingOriginalFileProvider
@@ -299,7 +297,7 @@ def run_script():
 
         scripts.String(
             "Target Data_Type", optional=False, grouping="1.2",
-            description="The data type on which will be annotated. Entries in the .csv correspond to these objects.",
+            description="The data type which will be annotated. Entries in the .csv correspond to these objects.",
             values=target_types, default="-- Image"),
 
         scripts.String(
@@ -342,12 +340,8 @@ def run_script():
         for key in client.getInputKeys():
             if client.getInput(key):
                 script_params[key] = client.getInput(key, unwrap=True)
-        print(script_params["File_Annotation"])
-
 
         # Getting rid of the trailing '---' added for the UI
-        tmp_src = script_params["Data_Type"]
-        script_params["Data_Type"] = tmp_src.split(" ")[1] if " " in tmp_src else tmp_src
         tmp_trg = script_params["Target Data_Type"]
         script_params["Target Data_Type"] = tmp_trg.split(" ")[1] if " " in tmp_trg else tmp_trg
 

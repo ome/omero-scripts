@@ -332,8 +332,6 @@ def run_script():
                 script_params[key] = client.getInput(key, unwrap=True)
 
         # Getting rid of the trailing '---' added for the UI
-        tmp_src = script_params["Data_Type"]
-        script_params["Data_Type"] = tmp_src.split(" ")[1] if " " in tmp_src else tmp_src
         tmp_trg = script_params["Target Data_Type"]
         script_params["Target Data_Type"] = tmp_trg.split(" ")[1] if " " in tmp_trg else tmp_trg
 
