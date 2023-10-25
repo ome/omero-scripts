@@ -261,21 +261,21 @@ def run_script():
 
         scripts.String(
             "Target Data_Type", optional=True, grouping="1.2",
-            description="Choose the object type to delete annotation from",
+            description="Choose the object type to delete annotation from.",
             values=target_types, default="-- Image"),
 
         scripts.String(
             "Namespace (leave blank for default)", optional=True, grouping="1.3",
-            description="Choose a namespace for the annotations"),
+            description="Choose a namespace for the annotations."),
 
         scripts.String(
             "Separator", optional=False, grouping="3",
-            description="Choose the .csv separator",
+            description="Choose the .csv separator.",
             values=separators, default=";"),
 
         scripts.Bool(
             "Include column(s) of parents name", optional=False, grouping="3",
-            description="Weather to include or not the name of the parent(s) objects as columns in the .csv", default=False),
+            description="Weather to include or not the name of the parent(s) objects as columns in the .csv.", default=False),
 
         authors=["Christian Evenhuis", "MIF", "Tom Boissonnet"],
         institutions=["University of Technology Sydney", "CAi HHU"],

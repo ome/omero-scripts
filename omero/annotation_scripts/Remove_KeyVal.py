@@ -76,9 +76,9 @@ def remove_keyvalue(conn, script_params):
     @param conn:             Blitz Gateway connection wrapper
     @param script_params:     A map of the input parameters
     """
-    source_type = script_params["Source_object_type"]
-    target_type = script_params["Target_object_type"]
-    source_ids = script_params["Source_IDs"]
+    source_type = script_params["Data_Type"]
+    target_type = script_params["Target Data_Type"]
+    source_ids = script_params["IDs"]
     namespace = script_params["Namespace (leave blank for default)"]
 
     nsuccess = 0
@@ -113,12 +113,13 @@ if __name__ == "__main__":
     scripting service, passing the required parameters.
     """
 
-    source_types = [rstring("Project"), rstring("- Dataset"), rstring("-- Image"),
-                    rstring("Screen"), rstring("- Plate"),
-                    rstring("-- Well"), rstring("--- Image"), #Duplicate Image for UI, but not a problem for script
-                    rstring("Tag")]
+    source_types = [rstring("Project"), rstring("Dataset"), rstring("Image"),
+                    rstring("Screen"), rstring("Plate"),
+                    rstring("Well"), rstring("Tag"),
+                    rstring("Image"), # Cannot add fancy layout if we want auto fill and selct of object ID
+                    ]
 
-    target_types = [rstring("Project"),
+    target_types = [rstring("Project"), # Duplicate Image for UI, but not a problem for script
                     rstring("- Dataset"), rstring("-- Image"),
                     rstring("Screen"), rstring("- Plate"),
                     rstring("-- Well"), rstring("--- Image")]
@@ -130,37 +131,47 @@ if __name__ == "__main__":
     # your script.
     client = scripts.client(
         'Remove_Key_Value.py',
-        ("Remove key-value pairs from"
-         " Image IDs or by the Dataset IDs.\nSee"
-         " http://www.openmicroscopy.org/site/support/omero5.2/developers/"
-         "scripts/user-guide.html for the tutorial that uses this script."),
+        """
+    This script deletes key-value pairs of all child objects founds.
+    Only key-value pairs of the namespace are deleted.
+    (default namespace correspond to editable KV pairs in web)
+    TODO: add hyperlink to readthedocs
+    \t
+    Parameters:
+    \t
+    - Data Type: Type of the "parent objects" in which "target objects" are searched.
+    - IDs: IDs of the "parent objects".
+    - Target Data Type: Type of the "target objects" of which KV-pairs are deleted.
+    - Namespace: Only annotations with this namespace will be deleted.
+    \t
+        """,
 
         scripts.String(
-            "Source_object_type", optional=False, grouping="1",
-            description="Choose the object type containing the objects to delete annotation from",
-            values=source_types, default="- Dataset"),
+            "Data_Type", optional=False, grouping="1",
+            description="Parent data type of the objects to annotate.",
+            values=source_types, default="Dataset"),
 
         scripts.List(
-            "Source_IDs", optional=False, grouping="1.1",
-            description="List of source IDs").ofType(rlong(0)),
+            "IDs", optional=False, grouping="1.1",
+            description="List of parent data IDs containing the objects to delete annotation from.").ofType(rlong(0)),
 
         scripts.String(
-            "Target_object_type", optional=True, grouping="1.2",
+            "Target Data_Type", optional=True, grouping="1.2",
             description="Choose the object type to delete annotation from.",
             values=target_types, default="-- Image"),
 
         scripts.String(
             "Namespace (leave blank for default)", optional=True, grouping="1.3",
+            default="NAMESPACE TO DELETE",
             description="Choose a namespace for the annotations"),
 
         scripts.Bool(
             agreement, optional=False, grouping="3",
-            description="Make sure that you understood what this script does"),
+            description="Make sure that you understood the scope of what will be deleted."),
 
         authors=["Christian Evenhuis", "MIF", "Tom Boissonnet"],
         institutions=["University of Technology Sydney", "CAi HHU"],
         contact="https://forum.image.sc/tag/omero",
-        version="2.0.0"
     )
 
     try:
@@ -175,10 +186,10 @@ if __name__ == "__main__":
         assert script_params[agreement], "Please confirm that you understood the risks."
 
         # Getting rid of the trailing '---' added for the UI
-        tmp_src = script_params["Source_object_type"]
-        script_params["Source_object_type"] = tmp_src.split(" ")[1] if " " in tmp_src else tmp_src
-        tmp_trg = script_params["Target_object_type"]
-        script_params["Target_object_type"] = tmp_trg.split(" ")[1] if " " in tmp_trg else tmp_trg
+        tmp_src = script_params["Data_Type"]
+        script_params["Data_Type"] = tmp_src.split(" ")[1] if " " in tmp_src else tmp_src
+        tmp_trg = script_params["Target Data_Type"]
+        script_params["Target Data_Type"] = tmp_trg.split(" ")[1] if " " in tmp_trg else tmp_trg
 
         print(script_params)   # handy to have inputs in the std-out log
 
