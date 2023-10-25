@@ -31,13 +31,14 @@ import omero
 from omero.rtypes import rlong, rstring, wrap
 import omero.scripts as scripts
 
-HIERARCHY_OBJECTS = {
-                        "Project": ["Dataset", "Image"],
-                        "Dataset": ["Image"],
-                        "Screen": ["Plate", "Well", "Image"],
-                        "Plate": ["Well", "Image"],
+CHILD_OBJECTS = {
+                        "Project": "Dataset",
+                        "Dataset": "Image",
+                        "Screen": "Plate",
+                        "Plate": "Well",
                         #"Run": ["Well", "Image"],
-                        "Well": ["Image"]
+                        "Well": "WellSample",
+                        "WellSample": "Image"
                     }
 
 def remove_map_annotations(conn, obj, namespace):
@@ -57,8 +58,11 @@ def remove_map_annotations(conn, obj, namespace):
 
 
 def get_children_recursive(source_object, target_type):
-    if HIERARCHY_OBJECTS[source_object.OMERO_CLASS][0] == target_type: # Stop condition, we return the source_obj children
-        return source_object.listChildren()
+    if CHILD_OBJECTS[source_object.OMERO_CLASS] == target_type: # Stop condition, we return the source_obj children
+        if source_object.OMERO_CLASS != "WellSample":
+            return source_object.listChildren()
+        else:
+            return [source_object.getImage()]
     else:
         result = []
         for child_obj in source_object.listChildren():
@@ -169,6 +173,12 @@ if __name__ == "__main__":
                 script_params[key] = client.getInput(key, unwrap=True)
 
         assert script_params[agreement], "Please confirm that you understood the risks."
+
+        # Getting rid of the trailing '---' added for the UI
+        tmp_src = script_params["Source_object_type"]
+        script_params["Source_object_type"] = tmp_src.split(" ")[1] if " " in tmp_src else tmp_src
+        tmp_trg = script_params["Target_object_type"]
+        script_params["Target_object_type"] = tmp_trg.split(" ")[1] if " " in tmp_trg else tmp_trg
 
         print(script_params)   # handy to have inputs in the std-out log
 
