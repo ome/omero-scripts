@@ -33,13 +33,14 @@ import tempfile
 import os
 from collections import OrderedDict
 
-HIERARCHY_OBJECTS = {
-                        "Project": ["Dataset", "Image"],
-                        "Dataset": ["Image"],
-                        "Screen": ["Plate", "Well", "Image"],
-                        "Plate": ["Well", "Image"],
+CHILD_OBJECTS = {
+                        "Project": "Dataset",
+                        "Dataset": "Image",
+                        "Screen": "Plate",
+                        "Plate": "Well",
                         #"Run": ["Well", "Image"],
-                        "Well": ["Image"]
+                        "Well": "WellSample",
+                        "WellSample": "Image"
                     }
 
 ZERO_PADDING = 3 # To allow duplicated keys (3 means up to 1000 duplicate key on a single object)
@@ -75,8 +76,11 @@ def group_keyvalue_dictionaries(annotation_dicts, zero_padding):
     return all_key, result
 
 def get_children_recursive(source_object, target_type):
-    if HIERARCHY_OBJECTS[source_object.OMERO_CLASS][0] == target_type: # Stop condition, we return the source_obj children
-        return source_object.listChildren()
+    if CHILD_OBJECTS[source_object.OMERO_CLASS] == target_type: # Stop condition, we return the source_obj children
+        if source_object.OMERO_CLASS != "WellSample":
+            return source_object.listChildren()
+        else:
+            return [source_object.getImage()]
     else:
         result = []
         for child_obj in source_object.listChildren():
@@ -84,7 +88,7 @@ def get_children_recursive(source_object, target_type):
             result.extend(get_children_recursive(child_obj, target_type))
         return result
 
-def attach_csv_file(conn, source_object, obj_id_l, obj_name_l, annotation_dicts, separator):
+def attach_csv_file(conn, source_object, obj_id_l, obj_name_l, obj_ancestry_l, annotation_dicts, separator):
     def to_csv(ll):
         """convience function to write a csv line"""
         nl = len(ll)
@@ -92,11 +96,20 @@ def attach_csv_file(conn, source_object, obj_id_l, obj_name_l, annotation_dicts,
         return fmstr.format(*ll)
 
     all_key, whole_values_l = group_keyvalue_dictionaries(annotation_dicts, ZERO_PADDING)
-    all_key.insert(0, "target_id")
-    all_key.insert(1, "target_name")
-    for (obj_id, obj_name, whole_values) in zip(obj_id_l, obj_name_l, whole_values_l):
-        whole_values.insert(0, obj_id)
-        whole_values.insert(1, obj_name)
+
+    counter = 0
+    if len(obj_ancestry_l)>0: # If there's anything to add at all
+        for (parent_type, _) in obj_ancestry_l[0]:
+            all_key.insert(counter, parent_type); counter += 1
+    all_key.insert(counter, "target_id")
+    all_key.insert(counter + 1, "target_name")
+    for k, (obj_id, obj_name, whole_values) in enumerate(zip(obj_id_l, obj_name_l, whole_values_l)):
+        counter = 0
+        if len(obj_ancestry_l)>0: # If there's anything to add at all
+            for (_, parent_name) in obj_ancestry_l[k]:
+                whole_values.insert(counter, parent_name); counter += 1
+        whole_values.insert(counter, obj_id)
+        whole_values.insert(counter + 1, obj_name)
 
     # create the tmp directory
     tmp_dir = tempfile.mkdtemp(prefix='MIF_meta')
@@ -108,7 +121,7 @@ def attach_csv_file(conn, source_object, obj_id_l, obj_name_l, annotation_dicts,
         tfile.write(to_csv(whole_values))
     tfile.close()
 
-    source_name = source_object.getWellPos() if source_object.OMERO_CLASS is "Well" else source_object.getName()
+    source_name = source_object.getWellPos() if source_object.OMERO_CLASS == "Well" else source_object.getName()
     name = "{}_metadata_out.csv".format(source_name)
     # link it to the object
     ann = conn.createFileAnnfromLocalFile(
@@ -132,31 +145,40 @@ def main_loop(conn, script_params):
     source_ids = script_params["Source_IDs"]
     namespace = script_params["Namespace (leave blank for default)"]
     separator = script_params["Separator"]
+    include_parent = script_params["Include column(s) for parent objects name"]
 
     # One file output per given ID
     for source_object in conn.getObjects(source_type, source_ids):
+        obj_ancestry_l = []
         if source_type == target_type:
             print("Processing object:", source_object)
             annotation_dicts = [get_existing_map_annotions(source_object, namespace, ZERO_PADDING)]
             obj_id_l = [source_object.getId()]
-            obj_name_l = [source_object.getWellPos() if source_object.OMERO_CLASS is "Well" else source_object.getName()]
+            obj_name_l = [source_object.getWellPos() if source_object.OMERO_CLASS == "Well" else source_object.getName()]
         else:
             annotation_dicts = []
             obj_id_l, obj_name_l = [], []
+
             if source_type == "TagAnnotation":
                 target_obj_l = conn.getObjectsByAnnotations(target_type, [source_object.getId()])
                 target_obj_l = list(conn.getObjects(target_type, [o.getId() for o in target_obj_l])) # Need that to load annotations later
                 source_object = target_obj_l[0] # Putting the csv file on the first child
             else:
+                print(source_object, target_type)
                 target_obj_l = get_children_recursive(source_object, target_type)
             # Listing all target children to the source object (eg all images (target) in all datasets of the project (source))
             for target_obj in target_obj_l:
                 print("Processing object:", target_obj)
                 annotation_dicts.append(get_existing_map_annotions(target_obj, namespace, ZERO_PADDING))
                 obj_id_l.append(target_obj.getId())
-                obj_name_l.append(target_obj.getWellPos() if target_obj.OMERO_CLASS is "Well" else target_obj.getName())
+                obj_name_l.append(target_obj.getWellPos() if target_obj.OMERO_CLASS == "Well" else target_obj.getName())
+                if include_parent:
+                    ancestry = [(o.OMERO_CLASS, o.getWellPos() if o.OMERO_CLASS == "Well" else o.getName())
+                                for o in target_obj.getAncestry() if o.OMERO_CLASS != "WellSample"][::-1]
+                    obj_ancestry_l.append(ancestry)
 
-        mess = attach_csv_file(conn, source_object, obj_id_l, obj_name_l, annotation_dicts, separator)
+
+        mess = attach_csv_file(conn, source_object, obj_id_l, obj_name_l, obj_ancestry_l, annotation_dicts, separator)
         print(mess)
 
         # for ds in datasets:
@@ -238,6 +260,10 @@ def run_script():
             description="Choose the .csv separator",
             values=separators, default=";"),
 
+        scripts.Bool(
+            "Include column(s) for parent objects name", optional=False, grouping="3",
+            description="Weather to include or not the name of the parent(s) objects as columns in the .csv", default=False),
+
         authors=["Christian Evenhuis", "MIF", "Tom Boissonnet"],
         institutions=["University of Technology Sydney", "CAi HHU"],
         contact="https://forum.image.sc/tag/omero",
@@ -252,6 +278,12 @@ def run_script():
             if client.getInput(key):
                 # unwrap rtypes to String, Integer etc
                 script_params[key] = client.getInput(key, unwrap=True)
+
+        # Getting rid of the trailing '---' added for the UI
+        tmp_src = script_params["Source_object_type"]
+        script_params["Source_object_type"] = tmp_src.split(" ")[1] if " " in tmp_src else tmp_src
+        tmp_trg = script_params["Target_object_type"]
+        script_params["Target_object_type"] = tmp_trg.split(" ")[1] if " " in tmp_trg else tmp_trg
 
         print(script_params)   # handy to have inputs in the std-out log
 
