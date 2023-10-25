@@ -54,23 +54,20 @@ HIERARCHY_OBJECTS = {
                         "Well": ["Image"]
                     }
 
-def get_original_file(omero_object, file_ann_id=None):
-    """Find file linked to object. Option to filter by ID."""
+def get_original_file(omero_object):
+    """Find last AnnotationFile linked to object"""
     file_ann = None
     for ann in omero_object.listAnnotations():
-        if isinstance(ann, omero.gateway.FileAnnotationWrapper):
+        if ann.OMERO_TYPE == omero.model.FileAnnotationI:
             file_name = ann.getFile().getName()
             # Pick file by Ann ID (or name if ID is None)
-            if ann.getId() == file_ann_id:
-                file_ann = ann # Found it
-                break
-            elif file_ann_id is None and file_name.endswith(".csv"):
+            if file_name.endswith(".csv"):
                 if (file_ann is None) or (ann.getDate() > file_ann.getDate()):
                     # Get the most recent file
                     file_ann = ann
-    if file_ann is None:
-        sys.stderr.write("Error: File does not exist.\n")
-        sys.exit(1)
+
+    obj_name = omero_object.getWellPos() if omero_object.OMERO_CLASS is "Well" else omero_object.getName()
+    assert file_ann is not None, f"No .csv FileAnnotation was found on {omero_object.OMERO_CLASS}:{obj_name}:{omero_object.getId()}"
 
     return file_ann
 
@@ -154,16 +151,29 @@ def keyval_from_csv(conn, script_params):
     ntarget_updated = 0
     missing_names = 0
 
+    # One file output per given ID
     for source_object, file_ann_id in zip(conn.getObjects(source_type, source_ids), file_ids):
-        if file_ann_id is not None: # If the file ID is not defined, only already linked file will be used
-            link_file_ann(conn, source_type, source_object.id, file_ann_id)
-        file_ann = get_original_file(source_object, file_ann_id)
+        #if file_ann_id is not None: # If the file ID is not defined, only already linked file will be used
+        #    link_file_ann(conn, source_type, source_object.id, file_ann_id) # TODO do we want to keep that linking?
+        if file_ann_id is not None:
+            file_ann = conn.getObject("Annotation", oid=file_ann_id)
+            assert file_ann.OMERO_TYPE == omero.model.FileAnnotationI, "The provided annotation ID must reference a FileAnnotation, not a {file_ann.OMERO_TYPE}"
+        else:
+            file_ann = get_original_file(source_object, file_ann_id)
         original_file = file_ann.getFile()._obj
         print("set ann id", file_ann.getId())
         data, header = read_csv(conn, original_file)
 
-        # Listing all target children to the source object (eg all images (target) in all datasets of the project (source))
-        target_obj_l = get_children_recursive(source_object, target_type)
+        if source_type == target_type:
+            print("Processing object:", source_object)
+            target_obj_l = [source_object]
+        else:
+            if source_type == "TagAnnotation":
+                target_obj_l = conn.getObjectsByAnnotations(target_type, [source_object.getId()])
+                target_obj_l = list(conn.getObjects(target_type, [o.getId() for o in target_obj_l])) # Need that to load annotations later
+            else:
+                target_obj_l = get_children_recursive(source_object, target_type)
+            # Listing all target children to the source object (eg all images (target) in all datasets of the project (source))
 
         # Finds the index of the column used to identify the targets. Try for IDs first
         idx_id = header.index("target_id") if "target_id" in header else -1
@@ -189,10 +199,8 @@ def keyval_from_csv(conn, script_params):
             target_id = row[idx_id]
             if target_id in target_d.keys():
                 target_obj = target_d[target_id]
-                if target_type in ["Dataset", "Image", "Plate"]:
-                    print("Annotating Target:", f"{target_obj.getName()+':' if use_id else ''}{target_id}")
-                else:
-                    print("Annotating Target:", f"{target_id}") # Some object don't have a name
+                obj_name = target_obj.getWellPos() if target_obj.OMERO_CLASS is "Well" else target_obj.getName()
+                print("Annotating Target:", f"{obj_name+':' if use_id else ''}{target_id}")
             else:
                 missing_names += 1
                 print(f"Target not found: {target_id}")
@@ -236,10 +244,12 @@ def run_script():
 
     source_types = [rstring("Project"), rstring("Dataset"),
                     rstring("Screen"), rstring("Plate"),
-                    rstring("Well")]
+                    rstring("Well"), rstring("Image"),
+                    rstring("Tag")]
 
-    target_types = [rstring("Dataset"), rstring("Plate"),
-                    rstring("Well"), rstring("Image")]
+    target_types = [rstring("<on source>"), rstring("Dataset"),
+                    rstring("Plate"), rstring("Well"),
+                    rstring("Image")]
 
     client = scripts.client(
         'Add_Key_Val_from_csv',
@@ -308,9 +318,13 @@ def run_script():
             if client.getInput(key):
                 script_params[key] = client.getInput(key, unwrap=True)
 
-        # validate that target is bellow source
-        source_name, target_name = script_params["Source_object_type"], script_params["Target_object_type"]
-        assert target_name in HIERARCHY_OBJECTS[source_name], f"Invalid {source_name} => {target_name}. The target type must be a child of the source type"
+        if script_params["Source_object_type"] == "Tag":
+            script_params["Source_object_type"] = "TagAnnotation"
+            assert script_params["Target_object_type"] != "<on source>", "Tag as source is not compatible with target '<on source>'"
+            assert None not in script_params["File_Annotation_ID"], "File annotation ID must be given when using Tag as source"
+
+        if script_params["Target_object_type"] == "<on source>":
+            script_params["Target_object_type"] = script_params["Source_object_type"]
 
         if len(script_params["File_Annotation_ID"]) == 1: # Poulate the parameter with None or same ID for all source
             script_params["File_Annotation_ID"] = script_params["File_Annotation_ID"] * len(script_params["Source_IDs"])
