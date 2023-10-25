@@ -193,9 +193,14 @@ def run_script():
     scripting service, passing the required parameters.
     """
 
-    data_types = [rstring("Project"), rstring("Dataset"),
-                  rstring("Screen"), rstring("Plate"),
-                  rstring("Well"), rstring("Image")]
+    source_types = [rstring("Project"), rstring("Dataset"),
+                    rstring("Screen"), rstring("Plate"),
+                    rstring("Well"), rstring("Image"),
+                    rstring("Tag")]
+
+    target_types = [rstring("<on source>"), rstring("Dataset"),
+                    rstring("Plate"), rstring("Well"),
+                    rstring("Image")]
 
     agreement = "I understand what I am doing and that this will result in a batch deletion of key-value pairs from the server"
     separators = [";", ","]
@@ -212,7 +217,7 @@ def run_script():
         scripts.String(
             "Source_object_type", optional=False, grouping="1",
             description="Choose the object type containing the objects to delete annotation from",
-            values=data_types+[rstring("Tag")], default="Image"),
+            values=source_types, default="Image"),
 
         scripts.List(
             "Source_IDs", optional=False, grouping="1.1",
@@ -221,7 +226,7 @@ def run_script():
         scripts.String(
             "Target_object_type", optional=True, grouping="1.2",
             description="Choose the object type to delete annotation from",
-            values=[rstring("<on source>")]+data_types, default="<on source>"),
+            values=target_types, default="<on source>"),
 
         scripts.String(
             "Namespace (leave blank for default)", optional=True, grouping="2",
