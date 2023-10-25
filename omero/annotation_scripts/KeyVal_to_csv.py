@@ -140,12 +140,12 @@ def main_loop(conn, script_params):
     @param conn:             Blitz Gateway connection wrapper
     @param script_params:     A map of the input parameters
     '''
-    source_type = script_params["Source_object_type"]
-    target_type = script_params["Target_object_type"]
-    source_ids = script_params["Source_IDs"]
+    source_type = script_params["Data_Type"]
+    target_type = script_params["Target Data_Type"]
+    source_ids = script_params["IDs"]
     namespace = script_params["Namespace (leave blank for default)"]
     separator = script_params["Separator"]
-    include_parent = script_params["Include column(s) for parent objects name"]
+    include_parent = script_params["Include column(s) of parents name"]
 
     # One file output per given ID
     for source_object in conn.getObjects(source_type, source_ids):
@@ -215,39 +215,52 @@ def run_script():
     scripting service, passing the required parameters.
     """
 
-    source_types = [rstring("Project"), rstring("- Dataset"), rstring("-- Image"),
-                    rstring("Screen"), rstring("- Plate"),
-                    rstring("-- Well"), rstring("--- Image"), #Duplicate Image for UI, but not a problem for script
-                    rstring("Tag")]
+    source_types = [rstring("Project"), rstring("Dataset"), rstring("Image"),
+                    rstring("Screen"), rstring("Plate"),
+                    rstring("Well"), rstring("Tag"),
+                    rstring("Image"), # Cannot add fancy layout if we want auto fill and selct of object ID
+                    ]
 
-    target_types = [rstring("Project"),
+    target_types = [rstring("Project"), # Duplicate Image for UI, but not a problem for script
                     rstring("- Dataset"), rstring("-- Image"),
                     rstring("Screen"), rstring("- Plate"),
                     rstring("-- Well"), rstring("--- Image")]
 
-    agreement = "I understand what I am doing and that this will result in a batch deletion of key-value pairs from the server"
-    separators = [";", ","]
+    separators = [";", ",", "TAB"]
     # Here we define the script name and description.
     # Good practice to put url here to give users more guidance on how to run
     # your script.
     client = scripts.client(
         'KeyVal_to_csv.py',
-        ("Export key-value pairs of targets to .csv file"
-         " \nSee"
-         " http://www.openmicroscopy.org/site/support/omero5.2/developers/"
-         "scripts/user-guide.html for the tutorial that uses this script."),
+        """
+    This script exports key-value pairs of objects to a .csv file.
+    Can also export a blank .csv with only of target objects' name and IDs.
+    (for example by providing a non-existing namespace)
+    TODO: add hyperlink to readthedocs
+    \t
+    Parameters:
+    \t
+    - Data Type: Type of the "parent objects" in which "target objects" are searched.
+    - IDs: IDs of the "parent objects".
+    - Target Data Type: Type of the "target objects" of which KV-pairs are exported.
+    - Namespace: Only annotations with this namespace will be exported.
+    \t
+    - Separator: Separator to be used in the .csv file.
+    - Include column(s) of parents name: If checked, add columns for each object in the hierarchy of the target data.
+    \t
+        """,
 
         scripts.String(
-            "Source_object_type", optional=False, grouping="1",
-            description="Choose the object type containing the objects to delete annotation from",
-            values=source_types, default="- Dataset"),
+            "Data_Type", optional=False, grouping="1",
+            description="Parent data type of the objects to annotate.",
+            values=source_types, default="Dataset"),
 
         scripts.List(
-            "Source_IDs", optional=False, grouping="1.1",
-            description="List of source IDs").ofType(rlong(0)),
+            "IDs", optional=False, grouping="1.1",
+            description="List of parent data IDs containing the objects to delete annotation from.").ofType(rlong(0)),
 
         scripts.String(
-            "Target_object_type", optional=True, grouping="1.2",
+            "Target Data_Type", optional=True, grouping="1.2",
             description="Choose the object type to delete annotation from",
             values=target_types, default="-- Image"),
 
@@ -261,13 +274,12 @@ def run_script():
             values=separators, default=";"),
 
         scripts.Bool(
-            "Include column(s) for parent objects name", optional=False, grouping="3",
+            "Include column(s) of parents name", optional=False, grouping="3",
             description="Weather to include or not the name of the parent(s) objects as columns in the .csv", default=False),
 
         authors=["Christian Evenhuis", "MIF", "Tom Boissonnet"],
         institutions=["University of Technology Sydney", "CAi HHU"],
         contact="https://forum.image.sc/tag/omero",
-        version="2.0.0"
     )
 
     try:
@@ -280,10 +292,13 @@ def run_script():
                 script_params[key] = client.getInput(key, unwrap=True)
 
         # Getting rid of the trailing '---' added for the UI
-        tmp_src = script_params["Source_object_type"]
-        script_params["Source_object_type"] = tmp_src.split(" ")[1] if " " in tmp_src else tmp_src
-        tmp_trg = script_params["Target_object_type"]
-        script_params["Target_object_type"] = tmp_trg.split(" ")[1] if " " in tmp_trg else tmp_trg
+        tmp_src = script_params["Data_Type"]
+        script_params["Data_Type"] = tmp_src.split(" ")[1] if " " in tmp_src else tmp_src
+        tmp_trg = script_params["Target Data_Type"]
+        script_params["Target Data_Type"] = tmp_trg.split(" ")[1] if " " in tmp_trg else tmp_trg
+
+        if script_params["Separator"] == "TAB":
+            script_params["Separator"] = "\t"
 
         print(script_params)   # handy to have inputs in the std-out log
 

@@ -273,7 +273,6 @@ def run_script():
     This script reads a .csv file to annotate target objects with key-value pairs.
     TODO: add hyperlink to readthedocs
     \t
-    \t
     Parameters:
     \t
     - Data Type: Type of the "parent objects" in which "target objects" are searched.
