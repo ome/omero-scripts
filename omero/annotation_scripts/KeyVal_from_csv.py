@@ -242,14 +242,15 @@ def annotate_object(conn, obj, header, row, cols_to_ignore, namespace):
 
 def run_script():
 
-    source_types = [rstring("Project"), rstring("Dataset"),
-                    rstring("Screen"), rstring("Plate"),
-                    rstring("Well"), rstring("Image"),
+    source_types = [rstring("Project"), rstring("- Dataset"), rstring("-- Image"),
+                    rstring("Screen"), rstring("- Plate"),
+                    rstring("-- Well"), rstring("--- Image"), #Duplicate Image for UI, but not a problem for script
                     rstring("Tag")]
 
-    target_types = [rstring("<on source>"), rstring("Dataset"),
-                    rstring("Plate"), rstring("Well"),
-                    rstring("Image")]
+    target_types = [rstring("Project"),
+                    rstring("- Dataset"), rstring("-- Image"),
+                    rstring("Screen"), rstring("- Plate"),
+                    rstring("-- Well"), rstring("--- Image")]
 
     client = scripts.client(
         'Add_Key_Val_from_csv',
@@ -282,7 +283,7 @@ def run_script():
         scripts.String(
             "Source_object_type", optional=False, grouping="1",
             description="Choose the object type containing the objects to annotate",
-            values=source_types, default="Dataset"),
+            values=source_types, default="- Dataset"),
 
         scripts.List(
             "Source_IDs", optional=False, grouping="1.1",
@@ -293,12 +294,12 @@ def run_script():
             description="List of file IDs containing metadata to populate. If given, must match length of 'Source IDs'. Otherwise, uses the CSV file with the highest ID.").ofType(rlong(0)),
 
         scripts.String(
-            "Target_object_type", optional=False, grouping="2",
+            "Target_object_type", optional=False, grouping="1.3",
             description="Choose the object type to annotate (must be bellow the chosen source object type)",
-            values=target_types, default="Image"),
+            values=target_types, default="-- Image"),
 
         scripts.String(
-            "Namespace (leave blank for default)", optional=True, grouping="3",
+            "Namespace (leave blank for default)", optional=True, grouping="1.4",
             description="Choose a namespace for the annotations"),
 
         authors=["Christian Evenhuis", "Tom Boissonnet"],
@@ -318,13 +319,15 @@ def run_script():
             if client.getInput(key):
                 script_params[key] = client.getInput(key, unwrap=True)
 
+        # Getting rid of the trailing '---' added for the UI
+        tmp_src = script_params["Source_object_type"]
+        script_params["Source_object_type"] = tmp_src.split(" ")[1] if " " in tmp_src else tmp_src
+        tmp_trg = script_params["Target_object_type"]
+        script_params["Source_object_type"] = tmp_trg.split(" ")[1] if " " in tmp_trg else tmp_trg
+
         if script_params["Source_object_type"] == "Tag":
             script_params["Source_object_type"] = "TagAnnotation"
-            assert script_params["Target_object_type"] != "<on source>", "Tag as source is not compatible with target '<on source>'"
             assert None not in script_params["File_Annotation_ID"], "File annotation ID must be given when using Tag as source"
-
-        if script_params["Target_object_type"] == "<on source>":
-            script_params["Target_object_type"] = script_params["Source_object_type"]
 
         if len(script_params["File_Annotation_ID"]) == 1: # Poulate the parameter with None or same ID for all source
             script_params["File_Annotation_ID"] = script_params["File_Annotation_ID"] * len(script_params["Source_IDs"])

@@ -109,14 +109,15 @@ if __name__ == "__main__":
     scripting service, passing the required parameters.
     """
 
-    source_types = [rstring("Project"), rstring("Dataset"),
-                    rstring("Screen"), rstring("Plate"),
-                    rstring("Well"), rstring("Image"),
+    source_types = [rstring("Project"), rstring("- Dataset"), rstring("-- Image"),
+                    rstring("Screen"), rstring("- Plate"),
+                    rstring("-- Well"), rstring("--- Image"), #Duplicate Image for UI, but not a problem for script
                     rstring("Tag")]
 
-    target_types = [rstring("<on source>"), rstring("Dataset"),
-                    rstring("Plate"), rstring("Well"),
-                    rstring("Image")]
+    target_types = [rstring("Project"),
+                    rstring("- Dataset"), rstring("-- Image"),
+                    rstring("Screen"), rstring("- Plate"),
+                    rstring("-- Well"), rstring("--- Image")]
 
     agreement = "I understand what I am doing and that this will result in a batch deletion of key-value pairs from the server"
 
@@ -133,7 +134,7 @@ if __name__ == "__main__":
         scripts.String(
             "Source_object_type", optional=False, grouping="1",
             description="Choose the object type containing the objects to delete annotation from",
-            values=source_types, default="Image"),
+            values=source_types, default="- Dataset"),
 
         scripts.List(
             "Source_IDs", optional=False, grouping="1.1",
@@ -142,10 +143,10 @@ if __name__ == "__main__":
         scripts.String(
             "Target_object_type", optional=True, grouping="1.2",
             description="Choose the object type to delete annotation from.",
-            values=target_types, default="<on source>"),
+            values=target_types, default="-- Image"),
 
         scripts.String(
-            "Namespace (leave blank for default)", optional=True, grouping="2",
+            "Namespace (leave blank for default)", optional=True, grouping="1.3",
             description="Choose a namespace for the annotations"),
 
         scripts.Bool(
@@ -166,12 +167,6 @@ if __name__ == "__main__":
             if client.getInput(key):
                 # unwrap rtypes to String, Integer etc
                 script_params[key] = client.getInput(key, unwrap=True)
-        if script_params["Source_object_type"] == "Tag":
-            script_params["Source_object_type"] = "TagAnnotation"
-            assert script_params["Target_object_type"] != "<on source>", "Tag as source is not compatible with target '<on source>'"
-
-        if script_params["Target_object_type"] == "<on source>":
-            script_params["Target_object_type"] = script_params["Source_object_type"]
 
         assert script_params[agreement], "Please confirm that you understood the risks."
 
