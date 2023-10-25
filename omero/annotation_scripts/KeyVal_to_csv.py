@@ -88,14 +88,50 @@ def get_children_recursive(source_object, target_type):
             result.extend(get_children_recursive(child_obj, target_type))
         return result
 
-def attach_csv_file(conn, source_object, obj_id_l, obj_name_l, obj_ancestry_l, annotation_dicts, separator):
+def attach_csv_file(conn, source_object, obj_id_l, obj_name_l, obj_ancestry_l, annotation_dicts, separator, is_well):
     def to_csv(ll):
         """convience function to write a csv line"""
         nl = len(ll)
-        fmstr = ("{}"+separator+" ")*(nl-1)+"{}\n"
+        fmstr = ("{}"+separator)*(nl-1)+"{}\n"
         return fmstr.format(*ll)
 
+    def sort_items(obj_name_l, obj_ancestry_l, whole_values_l, is_well):
+        result_name = []
+        result_ancestry = []
+        result_value = []
+
+        tmp_ancestry_l = [] # That's an imbricated list of list of tuples, making it simplier first
+        for ancestries in obj_ancestry_l:
+            tmp_ancestry_l.append(["".join(list(obj_name)) for obj_name in ancestries])
+
+        start_idx = 0
+        stop_idx = 1
+        while start_idx<len(tmp_ancestry_l):
+            while (stop_idx<len(tmp_ancestry_l) and
+                ("".join(tmp_ancestry_l[stop_idx]) == "".join(tmp_ancestry_l[start_idx]))):
+                stop_idx += 1
+
+            subseq = obj_name_l[start_idx:stop_idx]
+            if not is_well:
+                # Get the sort index from the range object (same as numpy argsort)
+                sort_order = sorted(range(len(subseq)), key=subseq.__getitem__)
+            else:
+                # Same thing, but pad the 'well-name keys number' with zeros first
+                sort_order = sorted(range(len(subseq)), key=lambda x: f"{subseq[x][0]}{int(subseq[x][1:]):03}")
+        #     sorted(range(len(subseq)), key=lambda x: int("".join([i for i in subseq[x] if i.isdigit()])))
+            for idx in sort_order: #
+                result_name.append(obj_name_l[start_idx:stop_idx][idx])
+                result_ancestry.append(obj_ancestry_l[start_idx:stop_idx][idx])
+                result_value.append(whole_values_l[start_idx:stop_idx][idx])
+
+            start_idx = stop_idx
+            stop_idx += 1
+
+        return result_name, result_ancestry, result_value
+
     all_key, whole_values_l = group_keyvalue_dictionaries(annotation_dicts, ZERO_PADDING)
+
+    obj_name_l, obj_ancestry_l, whole_values_l = sort_items(obj_name_l, obj_ancestry_l, whole_values_l, is_well)
 
     counter = 0
     if len(obj_ancestry_l)>0: # If there's anything to add at all
@@ -135,6 +171,8 @@ def attach_csv_file(conn, source_object, obj_id_l, obj_name_l, obj_ancestry_l, a
     return "done"
 
 
+
+
 def main_loop(conn, script_params):
     ''' writes the data (list of dicts) to a file
     @param conn:             Blitz Gateway connection wrapper
@@ -146,6 +184,8 @@ def main_loop(conn, script_params):
     namespace = script_params["Namespace (leave blank for default)"]
     separator = script_params["Separator"]
     include_parent = script_params["Include column(s) of parents name"]
+
+    is_well = False
 
     # One file output per given ID
     for source_object in conn.getObjects(source_type, source_ids):
@@ -168,17 +208,17 @@ def main_loop(conn, script_params):
                 target_obj_l = get_children_recursive(source_object, target_type)
             # Listing all target children to the source object (eg all images (target) in all datasets of the project (source))
             for target_obj in target_obj_l:
+                is_well = target_obj.OMERO_CLASS == "Well"
                 print("Processing object:", target_obj)
                 annotation_dicts.append(get_existing_map_annotions(target_obj, namespace, ZERO_PADDING))
                 obj_id_l.append(target_obj.getId())
-                obj_name_l.append(target_obj.getWellPos() if target_obj.OMERO_CLASS == "Well" else target_obj.getName())
+                obj_name_l.append(target_obj.getWellPos() if is_well else target_obj.getName())
                 if include_parent:
                     ancestry = [(o.OMERO_CLASS, o.getWellPos() if o.OMERO_CLASS == "Well" else o.getName())
-                                for o in target_obj.getAncestry() if o.OMERO_CLASS != "WellSample"][::-1]
-                    obj_ancestry_l.append(ancestry)
+                                for o in target_obj.getAncestry() if o.OMERO_CLASS != "WellSample"]
+                    obj_ancestry_l.append(ancestry[::-1]) # Reverse the order to go from highest to lowest
 
-
-        mess = attach_csv_file(conn, source_object, obj_id_l, obj_name_l, obj_ancestry_l, annotation_dicts, separator)
+        mess = attach_csv_file(conn, source_object, obj_id_l, obj_name_l, obj_ancestry_l, annotation_dicts, separator, is_well)
         print(mess)
 
         # for ds in datasets:
