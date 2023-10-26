@@ -308,13 +308,17 @@ def run_script():
             "Namespace (leave blank for default)", optional=True, grouping="1.3",
             description="Choose a namespace for the annotations."),
 
+        scripts.Bool(
+            "Advanced parameters", optional=True, grouping="2",
+            description="Ticking or unticking this has no effect", default=False),
+
         scripts.String(
-            "Separator", optional=False, grouping="3",
+            "Separator", optional=False, grouping="2.1",
             description="Choose the .csv separator.",
             values=separators, default=";"),
 
         scripts.Bool(
-            "Include column(s) of parents name", optional=False, grouping="3",
+            "Include column(s) of parents name", optional=False, grouping="2.2",
             description="Weather to include or not the name of the parent(s) objects as columns in the .csv.", default=False),
 
         authors=["Christian Evenhuis", "MIF", "Tom Boissonnet"],

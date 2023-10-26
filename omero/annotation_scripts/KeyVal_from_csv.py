@@ -279,10 +279,10 @@ def run_script():
     - File_Annotation: IDs of .csv FileAnnotation or input file.
     - Namespace: Namespace that will be given to the annotations.
     \t
+    - Separator: Separator used in the .csv file.
     - Columns to exclude: Columns name of the .csv file to exclude.
     - Target ID colname: Column name in the .csv of the target IDs.
     - Target name colname: Column name in the .csv of the target names.
-    - Separator: Separator used in the .csv file.
     \t
         """, # Tabs are needed to add line breaks in the HTML
 
@@ -308,22 +308,26 @@ def run_script():
             "Namespace (leave blank for default)", optional=True, grouping="1.4",
             description="Namespace given to the created key-value pairs annotations."),
 
+        scripts.Bool(
+            "Advanced parameters", optional=True, grouping="2",
+            description="Ticking or unticking this has no effect", default=False),
+
+        scripts.String(
+            "Separator", optional=False, grouping="2.1",
+            description="The separator used in the .csv file. 'guess' will attempt to detetect automatically which of ,;\\t is used.",
+            values=separators, default="guess"),
+
         scripts.List(
-            "Columns to exclude", optional=False, grouping="2",
+            "Columns to exclude", optional=False, grouping="2.2",
             description="List of columns in the .csv file to exclude from the key-value pair import. <ID> and <NAME> correspond to the two following parameters.", default="<ID>,<NAME>").ofType(rstring("")),
 
         scripts.String(
-            "Target ID colname", optional=False, grouping="2.1",
+            "Target ID colname", optional=False, grouping="2.3",
             description="The column name in the .csv containing the id of the objects to annotate. Correspond to <ID> in exclude parameter.", default="target_id"),
 
         scripts.String(
-            "Target name colname", optional=False, grouping="2.2",
+            "Target name colname", optional=False, grouping="2.4",
             description="The column name in the .csv containing the name of the objects to annotate (used if no column ID is provided or found in the .csv). Correspond to <NAME> in exclude parameter.", default="target_name"),
-
-        scripts.String(
-            "Separator", optional=False, grouping="2.3",
-            description="The separator used in the .csv file. 'guess' will attempt to detetect automatically which of ,;\\t is used.",
-            values=separators, default="guess"),
 
         authors=["Christian Evenhuis", "Tom Boissonnet"],
         institutions=["MIF UTS", "CAi HHU"],
