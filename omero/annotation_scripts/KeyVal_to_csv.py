@@ -198,10 +198,11 @@ def attach_csv_file(conn, source_object, obj_id_l, obj_name_l,
         ns='KeyVal_export')
     ann = source_object.linkAnnotation(ann)
 
+    print(f"{ann} linked to {source_object}")
+
     # remove the tmp file
     os.remove(tmp_file)
     os.rmdir(tmp_dir)
-    return "done"
 
 
 def target_iterator(conn, source_object, target_type):
@@ -257,12 +258,11 @@ def main_loop(conn, script_params):
                             if o.OMERO_CLASS != "WellSample"]
                 obj_ancestry_l.append(ancestry[::-1])
 
-        message = attach_csv_file(conn, source_object, obj_id_l, obj_name_l,
-                                  obj_ancestry_l, annotation_dicts, separator,
-                                  is_well)
+        attach_csv_file(conn, source_object, obj_id_l, obj_name_l,
+                        obj_ancestry_l, annotation_dicts, separator, is_well)
         print("\n------------------------------------\n")
 
-    return message, source_object
+    return "Done", source_object
 
 
 def run_script():
