@@ -26,8 +26,8 @@ Created by Christian Evenhuis
 import omero
 from omero.gateway import BlitzGateway
 from omero.rtypes import rstring, rlong, robject
+from omero.constants.metadata import NSCLIENTMAPANNOTATION
 import omero.scripts as scripts
-from omero.cmd import Delete2
 
 import tempfile
 import os
@@ -38,12 +38,22 @@ CHILD_OBJECTS = {
                     "Dataset": "Image",
                     "Screen": "Plate",
                     "Plate": "Well",
-                    #"Run": ["Well", "Image"],
+                    # "Run": ["Well", "Image"],
                     "Well": "WellSample",
                     "WellSample": "Image"
                 }
 
-ZERO_PADDING = 3 # To allow duplicated keys (3 means up to 1000 duplicate key on a single object)
+# To allow duplicated keys
+# (3 means up to 1000 same key on a single object)
+ZERO_PADDING = 3
+
+
+def get_obj_name(omero_obj):
+    if omero_obj.OMERO_CLASS == "Well":
+        return omero_obj.getWellPos()
+    else:
+        return omero_obj.getName()
+
 
 def get_existing_map_annotions(obj, namespace_l, zero_padding):
     key_l = []
@@ -51,45 +61,52 @@ def get_existing_map_annotions(obj, namespace_l, zero_padding):
     for namespace in namespace_l:
         for ann in obj.listAnnotations(ns=namespace):
             if isinstance(ann, omero.gateway.MapAnnotationWrapper):
-                for (k,v) in ann.getValue():
+                for (k, v) in ann.getValue():
                     n_occurence = key_l.count(k)
-                    result[f"{str(n_occurence).rjust(zero_padding, '0')}{k}"] = v
-                    key_l.append(k) # To count the multiple occurence of keys
+                    pad_key = f"{str(n_occurence).rjust(zero_padding, '0')}{k}"
+                    result[pad_key] = v
+                    key_l.append(k)  # To count the multiple occurence of keys
     return result
+
 
 def group_keyvalue_dictionaries(annotation_dicts, zero_padding):
     """ Groups the keys and values of each object into a single dictionary """
-    all_key = OrderedDict() # To keep the keys in order, for what it's worth
+    all_key = OrderedDict()  # To keep the keys in order, for what it's worth
     for annotation_dict in annotation_dicts:
-        all_key.update({k:None for k in annotation_dict.keys()})
+        all_key.update({k: None for k in annotation_dict.keys()})
     all_key = list(all_key.keys())
 
     result = []
     for annotation_dict in annotation_dicts:
         obj_dict = OrderedDict((k, "") for k in all_key)
         obj_dict.update(annotation_dict)
-        for k,v in obj_dict.items():
+        for k, v in obj_dict.items():
             if v is None:
                 obj_dict[k]
         result.append(list(obj_dict.values()))
 
-    all_key = [key[zero_padding:] for key in all_key] # Removing temporary padding
+    # Removing temporary padding
+    all_key = [key[zero_padding:] for key in all_key]
     return all_key, result
 
+
 def get_children_recursive(source_object, target_type):
-    if CHILD_OBJECTS[source_object.OMERO_CLASS] == target_type: # Stop condition, we return the source_obj children
+    if CHILD_OBJECTS[source_object.OMERO_CLASS] == target_type:
+        # Stop condition, we return the source_obj children
         if source_object.OMERO_CLASS != "WellSample":
             return source_object.listChildren()
         else:
             return [source_object.getImage()]
-    else:
+    else:  # Not yet the target
         result = []
         for child_obj in source_object.listChildren():
-            # Going down in the Hierarchy list for all childs that aren't yet the target
+            # Going down in the Hierarchy list
             result.extend(get_children_recursive(child_obj, target_type))
         return result
 
-def attach_csv_file(conn, source_object, obj_id_l, obj_name_l, obj_ancestry_l, annotation_dicts, separator, is_well):
+
+def attach_csv_file(conn, source_object, obj_id_l, obj_name_l,
+                    obj_ancestry_l, annotation_dicts, separator, is_well):
     def to_csv(ll):
         """convience function to write a csv line"""
         nl = len(ll)
@@ -101,26 +118,31 @@ def attach_csv_file(conn, source_object, obj_id_l, obj_name_l, obj_ancestry_l, a
         result_ancestry = []
         result_value = []
 
-        tmp_ancestry_l = [] # That's an imbricated list of list of tuples, making it simplier first
+        # That's an imbricated list of list of tuples, making it simplier first
+        tmp_ancestry_l = []
         for ancestries in obj_ancestry_l:
-            tmp_ancestry_l.append(["".join(list(obj_name)) for obj_name in ancestries])
+            tmp_ancestry_l.append(["".join(list(obj_name))
+                                   for obj_name in ancestries])
 
         start_idx = 0
         stop_idx = 1
-        while start_idx<len(tmp_ancestry_l):
-            while (stop_idx<len(tmp_ancestry_l) and
-                ("".join(tmp_ancestry_l[stop_idx]) == "".join(tmp_ancestry_l[start_idx]))):
+        while start_idx < len(tmp_ancestry_l):
+            while (stop_idx < len(tmp_ancestry_l)
+                    and ("".join(tmp_ancestry_l[stop_idx])
+                         == "".join(tmp_ancestry_l[start_idx]))):
                 stop_idx += 1
 
             subseq = obj_name_l[start_idx:stop_idx]
             if not is_well:
-                # Get the sort index from the range object (same as numpy argsort)
+                # Get the sort index from the range object (argsort)
                 sort_order = sorted(range(len(subseq)), key=subseq.__getitem__)
             else:
-                # Same thing, but pad the 'well-name keys number' with zeros first
-                sort_order = sorted(range(len(subseq)), key=lambda x: f"{subseq[x][0]}{int(subseq[x][1:]):03}")
+                # Same but pad the 'well-name keys number' with zeros first
+                sort_order = sorted(range(len(subseq)),
+                                    key=lambda x: f"{subseq[x][0]}\
+                                        {int(subseq[x][1:]):03}")
 
-            for idx in sort_order: #
+            for idx in sort_order:
                 result_name.append(obj_name_l[start_idx:stop_idx][idx])
                 result_ancestry.append(obj_ancestry_l[start_idx:stop_idx][idx])
                 result_value.append(whole_values_l[start_idx:stop_idx][idx])
@@ -130,22 +152,32 @@ def attach_csv_file(conn, source_object, obj_id_l, obj_name_l, obj_ancestry_l, a
 
         return result_name, result_ancestry, result_value
 
-    all_key, whole_values_l = group_keyvalue_dictionaries(annotation_dicts, ZERO_PADDING)
+    all_key, whole_values_l = group_keyvalue_dictionaries(annotation_dicts,
+                                                          ZERO_PADDING)
 
     counter = 0
 
-    if len(obj_ancestry_l)>0: # If there's anything to add at all
-        obj_name_l, obj_ancestry_l, whole_values_l = sort_items(obj_name_l, obj_ancestry_l, whole_values_l, is_well) #Sorting relies on parents
+    if len(obj_ancestry_l) > 0:  # If there's anything to add at all
+        # Only sort when there are parents to group childs
+        obj_name_l, obj_ancestry_l, whole_values_l = sort_items(obj_name_l,
+                                                                obj_ancestry_l,
+                                                                whole_values_l,
+                                                                is_well)
         for (parent_type, _) in obj_ancestry_l[0]:
-            all_key.insert(counter, parent_type); counter += 1
-
+            all_key.insert(counter, parent_type)
+            counter += 1
     all_key.insert(counter, "target_id")
     all_key.insert(counter + 1, "target_name")
-    for k, (obj_id, obj_name, whole_values) in enumerate(zip(obj_id_l, obj_name_l, whole_values_l)):
+    print(f"\tColumn names: {all_key}", "\n")
+
+    for k, (obj_id, obj_name, whole_values) in enumerate(zip(obj_id_l,
+                                                             obj_name_l,
+                                                             whole_values_l)):
         counter = 0
-        if len(obj_ancestry_l)>0: # If there's anything to add at all
+        if len(obj_ancestry_l) > 0:  # If there's anything to add at all
             for (_, parent_name) in obj_ancestry_l[k]:
-                whole_values.insert(counter, parent_name); counter += 1
+                whole_values.insert(counter, parent_name)
+                counter += 1
         whole_values.insert(counter, obj_id)
         whole_values.insert(counter + 1, obj_name)
 
@@ -159,12 +191,11 @@ def attach_csv_file(conn, source_object, obj_id_l, obj_name_l, obj_ancestry_l, a
         tfile.write(to_csv(whole_values))
     tfile.close()
 
-    source_name = source_object.getWellPos() if source_object.OMERO_CLASS == "Well" else source_object.getName()
-    name = "{}_metadata_out.csv".format(source_name)
+    name = "{}_metadata_out.csv".format(get_obj_name(source_object))
     # link it to the object
     ann = conn.createFileAnnfromLocalFile(
         tmp_file, origFilePathAndName=name,
-        ns='MIF_test')
+        ns='KeyVal_export')
     ann = source_object.linkAnnotation(ann)
 
     # remove the tmp file
@@ -173,6 +204,24 @@ def attach_csv_file(conn, source_object, obj_id_l, obj_name_l, obj_ancestry_l, a
     return "done"
 
 
+def target_iterator(conn, source_object, target_type):
+    source_type = source_object.OMERO_CLASS
+    if source_type == target_type:
+        target_obj_l = [source_object]
+    elif source_type == "TagAnnotation":
+        target_obj_l = conn.getObjectsByAnnotations(target_type,
+                                                    [source_object.getId()])
+        # Need that to load objects
+        obj_ids = [o.getId() for o in target_obj_l]
+        target_obj_l = list(conn.getObjects(target_type, obj_ids))
+    else:
+        target_obj_l = get_children_recursive(source_object,
+                                              target_type)
+
+    print(f"Iterating objects from {source_object}:")
+    for target_obj in target_obj_l:
+        print(f"\t- {target_obj}")
+        yield target_obj
 
 
 def main_loop(conn, script_params):
@@ -194,58 +243,27 @@ def main_loop(conn, script_params):
         obj_ancestry_l = []
         annotation_dicts = []
         obj_id_l, obj_name_l = [], []
-        if source_type == target_type:
-            target_obj_l = [source_object]
-        else:
-            if source_type == "TagAnnotation":
-                target_obj_l = conn.getObjectsByAnnotations(target_type, [source_object.getId()])
-                target_obj_l = list(conn.getObjects(target_type, [o.getId() for o in target_obj_l])) # Need that to load annotations later
-                source_object = target_obj_l[0] # Putting the csv file on the first child
-            else:
-                target_obj_l = get_children_recursive(source_object, target_type)
-        # Listing all target children to the source object (eg all images (target) in all datasets of the project (source))
-        for target_obj in target_obj_l:
+
+        for target_obj in target_iterator(conn, source_object, target_type):
             is_well = target_obj.OMERO_CLASS == "Well"
-            print("Processing object:", target_obj)
-            annotation_dicts.append(get_existing_map_annotions(target_obj, namespace_l, ZERO_PADDING))
+            annotation_dicts.append(get_existing_map_annotions(target_obj,
+                                                               namespace_l,
+                                                               ZERO_PADDING))
             obj_id_l.append(target_obj.getId())
-            obj_name_l.append(target_obj.getWellPos() if is_well else target_obj.getName())
+            obj_name_l.append(get_obj_name(target_obj))
             if include_parent:
-                ancestry = [(o.OMERO_CLASS, o.getWellPos() if o.OMERO_CLASS == "Well" else o.getName())
-                            for o in target_obj.getAncestry() if o.OMERO_CLASS != "WellSample"]
-                obj_ancestry_l.append(ancestry[::-1]) # Reverse the order to go from highest to lowest
+                ancestry = [(o.OMERO_CLASS, get_obj_name(o))
+                            for o in target_obj.getAncestry()
+                            if o.OMERO_CLASS != "WellSample"]
+                obj_ancestry_l.append(ancestry[::-1])
 
-        message = attach_csv_file(conn, source_object, obj_id_l, obj_name_l, obj_ancestry_l, annotation_dicts, separator, is_well)
+        message = attach_csv_file(conn, source_object, obj_id_l, obj_name_l,
+                                  obj_ancestry_l, annotation_dicts, separator,
+                                  is_well)
+        print("\n------------------------------------\n")
 
-        return message, source_object
+    return message, source_object
 
-        # for ds in datasets:
-        #     # name of the file
-        #     csv_name = "{}_metadata_out.csv".format(ds.getName())
-        #     print(csv_name)
-
-            # # remove the csv if it exists
-            # for ann in ds.listAnnotations():
-            #     if(isinstance(ann, omero.gateway.FileAnnotationWrapper)):
-            #         if(ann.getFileName() == csv_name):
-            #             # if the name matches delete it
-            #             try:
-            #                 delete = Delete2(
-            #                     targetObjects={'FileAnnotation':
-            #                                    [ann.getId()]})
-            #                 handle = conn.c.sf.submit(delete)
-            #                 conn.c.waitOnCmd(
-            #                     handle, loops=10,
-            #                     ms=500, failonerror=True,
-            #                     failontimeout=False, closehandle=False)
-            #                 print("Deleted existing csv")
-            #             except Exception as ex:
-            #                 print("Failed to delete existing csv: {}".format(
-            #                     ex.message))
-            #     else:
-            #         print("No exisiting file")
-
-            # assemble the metadata into an OrderedDict
 
 def run_script():
     """
@@ -253,13 +271,15 @@ def run_script():
     scripting service, passing the required parameters.
     """
 
+    # Cannot add fancy layout if we want auto fill and selct of object ID
     source_types = [rstring("Project"), rstring("Dataset"), rstring("Image"),
                     rstring("Screen"), rstring("Plate"),
                     rstring("Well"), rstring("Tag"),
-                    rstring("Image"), # Cannot add fancy layout if we want auto fill and selct of object ID
+                    rstring("Image"),
                     ]
 
-    target_types = [rstring("Project"), # Duplicate Image for UI, but not a problem for script
+    # Duplicate Image for UI, but not a problem for script
+    target_types = [rstring("Project"),
                     rstring("- Dataset"), rstring("-- Image"),
                     rstring("Screen"), rstring("- Plate"),
                     rstring("-- Well"), rstring("--- Image")]
@@ -278,15 +298,15 @@ def run_script():
     \t
     Parameters:
     \t
-    - Data Type: Type of the "parent objects" in which "target objects" are searched.
-    - IDs: IDs of the "parent objects".
-    - Target Data Type: Type of the "target objects" of which KV-pairs are exported.
-    - Namespace: Only annotations having one of these namespace(s) will be exported.
+    - Data Type: parent-objects type in which target-objects are searched.
+    - IDs: IDs of the parent-objects.
+    - Target Data Type: target-objects type from which KV-pairs are exported.
+    - Namespace: Annotations having one of these namespace(s) will be exported.
     \t
     - Separator: Separator to be used in the .csv file.
-    - Include column(s) of parents name: If checked, add columns for each object in the hierarchy of the target data.
+    - Include column(s) of parents name: Add columns for target-data parents.
     \t
-        """,
+        """,  # Tabs are needed to add line breaks in the HTML
 
         scripts.String(
             "Data_Type", optional=False, grouping="1",
@@ -295,7 +315,8 @@ def run_script():
 
         scripts.List(
             "IDs", optional=False, grouping="1.1",
-            description="List of parent data IDs containing the objects to delete annotation from.").ofType(rlong(0)),
+            description="List of parent data IDs containing the objects \
+                to delete annotation from.").ofType(rlong(0)),
 
         scripts.String(
             "Target Data_Type", optional=True, grouping="1.2",
@@ -303,12 +324,14 @@ def run_script():
             values=target_types, default="-- Image"),
 
         scripts.List(
-            "Namespace (leave blank for default)", optional=True, grouping="1.3",
-            description="Namespace(s) to include for the export of key-value pairs annotations.").ofType(rstring("")),
+            "Namespace (leave blank for default)", optional=True,
+            grouping="1.3",
+            description="Namespace(s) to include for the export of key-value \
+                pairs annotations.").ofType(rstring("")),
 
         scripts.Bool(
-            "Advanced parameters", optional=True, grouping="2",
-            description="Ticking or unticking this has no effect", default=False),
+            "Advanced parameters", optional=True, grouping="2", default=False,
+            description="Ticking or unticking this has no effect"),
 
         scripts.String(
             "Separator", optional=False, grouping="2.1",
@@ -316,46 +339,58 @@ def run_script():
             values=separators, default=";"),
 
         scripts.Bool(
-            "Include column(s) of parents name", optional=False, grouping="2.2",
-            description="Weather to include or not the name of the parent(s) objects as columns in the .csv.", default=False),
+            "Include column(s) of parents name", optional=False,
+            grouping="2.2",
+            description="Weather to include or not the name of the parent(s) \
+                objects as columns in the .csv.", default=False),
 
         authors=["Christian Evenhuis", "MIF", "Tom Boissonnet"],
         institutions=["University of Technology Sydney", "CAi HHU"],
         contact="https://forum.image.sc/tag/omero",
     )
 
+    params = parameters_parsing(client)
+    print("Input parameters:")
+    keys = ["Data_Type", "IDs", "Target Data_Type",
+            "Namespace (leave blank for default)",
+            "Separator", "Include column(s) of parents name"]
+    for k in keys:
+        print(f"\t- {k}: {params[k]}")
+    print("\n####################################\n")
     try:
-        script_params = {
-            "Namespace (leave blank for default)": [omero.constants.metadata.NSCLIENTMAPANNOTATION]
-        }
-        for key in client.getInputKeys():
-            if client.getInput(key):
-                # unwrap rtypes to String, Integer etc
-                script_params[key] = client.getInput(key, unwrap=True)
-
-        # Getting rid of the trailing '---' added for the UI
-        tmp_trg = script_params["Target Data_Type"]
-        script_params["Target Data_Type"] = tmp_trg.split(" ")[1] if " " in tmp_trg else tmp_trg
-
-        if script_params["Separator"] == "TAB":
-            script_params["Separator"] = "\t"
-
-        print(script_params)   # handy to have inputs in the std-out log
-
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
-
-        # do the editing...
-        message, robj = main_loop(conn, script_params)
+        message, robj = main_loop(conn, params)
         client.setOutput("Message", rstring(message))
         if robj is not None:
             client.setOutput("Result", robject(robj._obj))
 
-    except AssertionError as err: #Display assertion errors in OMERO.web activities
+    except AssertionError as err:
+        # Display assertion errors in OMERO.web activities
         client.setOutput("ERROR", rstring(err))
         raise AssertionError(str(err))
     finally:
         client.closeSession()
+
+
+def parameters_parsing(client):
+    params = OrderedDict()
+    # Param dict with defaults for optional parameters
+    params["Namespace (leave blank for default)"] = [NSCLIENTMAPANNOTATION]
+
+    for key in client.getInputKeys():
+        if client.getInput(key):
+            # unwrap rtypes to String, Integer etc
+            params[key] = client.getInput(key, unwrap=True)
+
+    # Getting rid of the trailing '---' added for the UI
+    if " " in params["Target Data_Type"]:
+        params["Target Data_Type"] = params["Target Data_Type"].split(" ")[1]
+
+    if params["Separator"] == "TAB":
+        params["Separator"] = "\t"
+    return params
+
 
 if __name__ == "__main__":
     run_script()
