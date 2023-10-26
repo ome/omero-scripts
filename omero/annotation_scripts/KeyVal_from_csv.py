@@ -32,7 +32,7 @@ Created by Christian Evenhuis
 
 import omero
 from omero.gateway import BlitzGateway
-from omero.rtypes import rstring, rlong
+from omero.rtypes import rstring, rlong, robject
 import omero.scripts as scripts
 
 import sys
@@ -159,6 +159,8 @@ def keyval_from_csv(conn, script_params):
     ntarget_updated = 0
     missing_names = 0
 
+    result_obj = None
+
     # One file output per given ID
     for source_object, file_ann_id in zip(conn.getObjects(source_type, source_ids), file_ids):
         #if file_ann_id is not None: # If the file ID is not defined, only already linked file will be used
@@ -219,12 +221,15 @@ def keyval_from_csv(conn, script_params):
 
             updated = annotate_object(conn, target_obj, header, row, cols_to_ignore, namespace)
             if updated:
+                if result_obj is None:
+                    result_obj = target_obj
                 ntarget_updated += 1
 
     message = f"Added kv pairs to {ntarget_updated}/{ntarget_processed} {target_type}"
     if missing_names > 0:
         message += f". {missing_names} {target_type} not found (using {'ID' if use_id else 'name'} to identify them)."
-    return message
+
+    return message, result_obj
 
 
 def annotate_object(conn, obj, header, row, cols_to_ignore, namespace):
@@ -377,8 +382,10 @@ def run_script():
         print("script params")
         for k, v in script_params.items():
             print(k, v)
-        message = keyval_from_csv(conn, script_params)
+        message, robj = keyval_from_csv(conn, script_params)
         client.setOutput("Message", rstring(message))
+        if robj is not None:
+            client.setOutput("Result", robject(robj._obj))
 
     except AssertionError as err: #Display assertion errors in OMERO.web activities
         client.setOutput("ERROR", rstring(err))

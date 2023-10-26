@@ -25,7 +25,7 @@ Created by Christian Evenhuis
 
 import omero
 from omero.gateway import BlitzGateway
-from omero.rtypes import rstring, rlong
+from omero.rtypes import rstring, rlong, robject
 import omero.scripts as scripts
 from omero.cmd import Delete2
 
@@ -216,8 +216,8 @@ def main_loop(conn, script_params):
                 obj_ancestry_l.append(ancestry[::-1]) # Reverse the order to go from highest to lowest
 
         message = attach_csv_file(conn, source_object, obj_id_l, obj_name_l, obj_ancestry_l, annotation_dicts, separator, is_well)
-        print(message)
-        return message
+
+        return message, source_object
 
         # for ds in datasets:
         #     # name of the file
@@ -346,8 +346,10 @@ def run_script():
         conn = BlitzGateway(client_obj=client)
 
         # do the editing...
-        message = main_loop(conn, script_params)
+        message, robj = main_loop(conn, script_params)
         client.setOutput("Message", rstring(message))
+        if robj is not None:
+            client.setOutput("Result", robject(robj._obj))
 
     except AssertionError as err: #Display assertion errors in OMERO.web activities
         client.setOutput("ERROR", rstring(err))

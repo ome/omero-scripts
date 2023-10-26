@@ -28,7 +28,7 @@ Created by Christian Evenhuis
 
 from omero.gateway import BlitzGateway
 import omero
-from omero.rtypes import rlong, rstring, wrap
+from omero.rtypes import rlong, rstring, robject, wrap
 import omero.scripts as scripts
 
 CHILD_OBJECTS = {
@@ -85,6 +85,8 @@ def remove_keyvalue(conn, script_params):
 
     nsuccess = 0
     ntotal = 0
+    result_obj = None
+
     for source_object in conn.getObjects(source_type, source_ids):
         if source_type == target_type:
             target_obj_l = [source_object]
@@ -97,13 +99,17 @@ def remove_keyvalue(conn, script_params):
                 target_obj_l = get_children_recursive(source_object, target_type)
         for target_obj in target_obj_l:
             print("Processing object:", target_obj)
-            ret = remove_map_annotations(conn, target_obj, namespace_l)
-            nsuccess += ret
+            success = remove_map_annotations(conn, target_obj, namespace_l)
+            if success:
+                nsuccess += 1
+                if result_obj is None:
+                    result_obj = target_obj
+
             ntotal += 1
 
     message = f"Key value data deleted from {nsuccess} of {ntotal} objects"
 
-    return message
+    return message, result_obj
 
 
 if __name__ == "__main__":
@@ -194,8 +200,10 @@ if __name__ == "__main__":
         conn = BlitzGateway(client_obj=client)
 
         # do the editing...
-        message = remove_keyvalue(conn, script_params)
+        message, robj = remove_keyvalue(conn, script_params)
         client.setOutput("Message", rstring(message))
+        if robj is not None:
+            client.setOutput("Result", robject(robj._obj))
     except AssertionError as err: #Display assertion errors in OMERO.web activities
         client.setOutput("ERROR", rstring(err))
         raise AssertionError(str(err))

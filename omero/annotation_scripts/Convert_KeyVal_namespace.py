@@ -23,7 +23,7 @@ Created by Tom Boissonnet
 
 import omero
 from omero.gateway import BlitzGateway
-from omero.rtypes import rstring, rlong
+from omero.rtypes import rstring, rlong, robject
 import omero.scripts as scripts
 
 CHILD_OBJECTS = {
@@ -93,6 +93,7 @@ def replace_namespace(conn, script_params):
 
     ntarget_processed = 0
     ntarget_updated = 0
+    result_obj = None
 
     # One file output per given ID
     for source_object in conn.getObjects(source_type, source_ids):
@@ -115,9 +116,12 @@ def replace_namespace(conn, script_params):
                 annotate_object(conn, target_obj, keyval_l, new_namespace)
                 remove_map_annotations(conn, target_obj, ann_l)
                 ntarget_updated += 1
+                if result_obj is None:
+                    result_obj = target_obj
 
     message = f"Updated kv pairs to {ntarget_updated}/{ntarget_processed} {target_type}"
-    return message
+
+    return message, result_obj
 
 def run_script():
 
@@ -200,8 +204,10 @@ def run_script():
         print("script params")
         for k, v in script_params.items():
             print(k, v)
-        message = replace_namespace(conn, script_params)
+        message, robj = replace_namespace(conn, script_params)
         client.setOutput("Message", rstring(message))
+        if robj is not None:
+            client.setOutput("Result", robject(robj._obj))
 
     except AssertionError as err: #Display assertion errors in OMERO.web activities
         client.setOutput("ERROR", rstring(err))
