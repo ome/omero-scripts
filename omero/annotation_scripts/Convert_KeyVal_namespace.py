@@ -86,7 +86,7 @@ def annotate_object(conn, obj, kv_list, namespace):
     map_ann.setValue(kv_list)
     map_ann.save()
 
-    print("Map Annotation created", map_ann.id)
+    print("\tMap Annotation created", map_ann.id)
     obj.linkAnnotation(map_ann)
 
 
@@ -108,7 +108,6 @@ def target_iterator(conn, source_object, target_type):
     for target_obj in target_obj_l:
         print(f"\t- {target_obj}")
         yield target_obj
-    print()
 
 
 def replace_namespace(conn, script_params):

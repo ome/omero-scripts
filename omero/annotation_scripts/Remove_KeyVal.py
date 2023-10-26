@@ -100,7 +100,6 @@ def target_iterator(conn, source_object, target_type):
     for target_obj in target_obj_l:
         print(f"\t- {target_obj}")
         yield target_obj
-    print()
 
 
 def remove_keyvalue(conn, script_params):
