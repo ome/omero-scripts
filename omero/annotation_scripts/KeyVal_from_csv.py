@@ -2,17 +2,7 @@
 """
  KeyVal_from_csv.py
 
- Adds key-value pairs to TARGETS on OMERO from a CSV file attached
- to a SOURCE container.
- SOURCES can be: [Project, Dataset, Screen, Plate, Well]
- TARGETS can be: [Dataset, Plate, Well, Image]
- The targets are referenced in the CSV file either from their name
- (must then be unique, and be called "target_name") or from their
- ID (must be called "target_id").
- In the case both are given, the ID will be used.
-
- Every row corresponds to a set of value to attach to the given
- TARGET with the key of the correponding column.
+ Adds key-value pairs to a target object on OMERO from a CSV file.
 
 -----------------------------------------------------------------------------
   Copyright (C) 2018
@@ -382,13 +372,13 @@ def run_script():
 
         scripts.String(
             "Target ID colname", optional=False, grouping="2.3",
-            default="target_id",
+            default="OBJECT_ID",
             description="The column name in the .csv containing the id of the \
                 objects to annotate. Matches <ID> in exclude parameter."),
 
         scripts.String(
             "Target name colname", optional=False, grouping="2.4",
-            default="target_name",
+            default="OBJECT_NAME",
             description="The column name in the .csv containing the name of \
                 the objects to annotate (used if no column ID is provided or \
                     found in the .csv). Matches <NAME> in exclude parameter."),

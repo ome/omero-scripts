@@ -3,7 +3,7 @@
  MIF/Key_Val_to_csv.py
 
  Reads the metadata associated with the images in a dataset
- a creates a csv file attached to dataset
+ and creates a csv file attached to dataset
 
 -----------------------------------------------------------------------------
   Copyright (C) 2018
@@ -166,8 +166,8 @@ def attach_csv_file(conn, source_object, obj_id_l, obj_name_l,
         for (parent_type, _) in obj_ancestry_l[0]:
             all_key.insert(counter, parent_type)
             counter += 1
-    all_key.insert(counter, "target_id")
-    all_key.insert(counter + 1, "target_name")
+    all_key.insert(counter, "OBJECT_ID")
+    all_key.insert(counter + 1, "OBJECT_NAME")
     print(f"\tColumn names: {all_key}", "\n")
 
     for k, (obj_id, obj_name, whole_values) in enumerate(zip(obj_id_l,

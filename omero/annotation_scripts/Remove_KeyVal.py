@@ -3,10 +3,8 @@
 """
  MIF/Key_Value_remove.py"
 
- Remove all key-value  pairs from:
-   * selected image(s)
-   * selected dataset(s) and the images contained in them
-   * selected screens(s) and the wells & images contained in them
+ Remove all key-value pairs associated with a namespace from
+ objects on OMERO.
 
 -----------------------------------------------------------------------------
   Copyright (C) 2018 - 2022
