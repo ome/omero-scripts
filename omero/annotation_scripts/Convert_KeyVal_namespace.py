@@ -57,11 +57,17 @@ def get_children_recursive(source_object, target_type):
 
 def get_existing_map_annotions(obj, namespace_l):
     keyval_l, ann_l = [], []
+    forbidden_deletion = []
     for namespace in namespace_l:
         for ann in obj.listAnnotations(ns=namespace):
             if isinstance(ann, omero.gateway.MapAnnotationWrapper):
-                keyval_l.extend([(k, v) for (k, v) in ann.getValue()])
-                ann_l.append(ann)
+                if ann.canEdit():  # If not, skipping it
+                    keyval_l.extend([(k, v) for (k, v) in ann.getValue()])
+                    ann_l.append(ann)
+                else:
+                    forbidden_deletion.append(ann.id)
+    print("\tMap Annotation IDs skipped (not permitted):",
+          f"{forbidden_deletion}")
     return keyval_l, ann_l
 
 

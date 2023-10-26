@@ -48,15 +48,21 @@ AGREEMENT = "I understand what I am doing and that this will result \
 
 def remove_map_annotations(conn, obj, namespace_l):
     mapann_ids = []
+    forbidden_deletion = []
     for namespace in namespace_l:
         anns = list(obj.listAnnotations(ns=namespace))
-        mapann_ids.extend([ann.id for ann in anns
-                           if isinstance(ann,
-                                         omero.gateway.MapAnnotationWrapper)])
+        for ann in anns:
+            if isinstance(ann, omero.gateway.MapAnnotationWrapper):
+                if ann.canEdit():  # If not, skipping it
+                    mapann_ids.append(ann.id)
+                else:
+                    forbidden_deletion.append(ann.id)
 
     if len(mapann_ids) == 0:
         return 0
-    print(f"\tMap Annotation IDs to delete: {mapann_ids}\n")
+    print(f"\tMap Annotation IDs to delete: {mapann_ids}")
+    print("\tMap Annotation IDs skipped (not permitted):",
+          f"{forbidden_deletion}\n")
     try:
         conn.deleteObjects("Annotation", mapann_ids)
         return 1
