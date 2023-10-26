@@ -50,17 +50,17 @@ def get_children_recursive(source_object, target_type):
             result.extend(get_children_recursive(child_obj, target_type))
         return result
 
-def get_existing_map_annotions(obj, namespace):
-    result = []
-    for ann in obj.listAnnotations(ns=namespace):
-        if isinstance(ann, omero.gateway.MapAnnotationWrapper):
-            result.extend([(k,v) for (k,v) in ann.getValue()])
-    return result
+def get_existing_map_annotions(obj, namespace_l):
+    keyval_l, ann_l = [], []
+    for namespace in namespace_l:
+        for ann in obj.listAnnotations(ns=namespace):
+            if isinstance(ann, omero.gateway.MapAnnotationWrapper):
+                keyval_l.extend([(k,v) for (k,v) in ann.getValue()])
+                ann_l.append(ann)
+    return keyval_l, ann_l
 
-def remove_map_annotations(conn, obj, namespace):
-    anns = list(obj.listAnnotations(ns=namespace))
-    mapann_ids = [ann.id for ann in anns
-                  if isinstance(ann, omero.gateway.MapAnnotationWrapper)]
+def remove_map_annotations(conn, obj, ann_l):
+    mapann_ids = [ann.id for ann in ann_l]
 
     if len(mapann_ids) == 0:
         return 0
@@ -110,10 +110,11 @@ def replace_namespace(conn, script_params):
         for target_obj in target_obj_l:
             ntarget_processed += 1
             print("Processing object:", target_obj)
-            kv_list = get_existing_map_annotions(target_obj, old_namespace)
-            if len(kv_list) > 1:
-                remove_map_annotations(conn, target_obj, old_namespace)
-                annotate_object(conn, target_obj, kv_list, new_namespace)
+            keyval_l, ann_l = get_existing_map_annotions(target_obj, old_namespace)
+
+            if len(keyval_l) > 1:
+                annotate_object(conn, target_obj, keyval_l, new_namespace)
+                remove_map_annotations(conn, target_obj, ann_l)
                 ntarget_updated += 1
 
     message = f"Updated kv pairs to {ntarget_updated}/{ntarget_processed} {target_type}"
@@ -136,6 +137,7 @@ def run_script():
         'Convert_KeyVal_namespace',
         """
     This script converts the namespace of key-value pair annotations.
+
     TODO: add hyperlink to readthedocs
     \t
     Parameters:
@@ -143,7 +145,7 @@ def run_script():
     - Data Type: Type of the "parent objects" in which "target objects" are searched.
     - IDs: IDs of the "parent objects".
     - Target Data Type: Type of the "target objects" that will be changed.
-    - Old Namespace: Namespace of the annotations to change.
+    - Old Namespace: Namespace(s) of the annotations to group and change.
     - New Namespace: New namespace for the annotations.
     \t
         """, # Tabs are needed to add line breaks in the HTML
@@ -162,9 +164,9 @@ def run_script():
             description="The data type for which key-value pair annotations will be converted.",
             values=target_types, default="-- Image"),
 
-        scripts.String(
+        scripts.List(
             "Old Namespace (leave blank for default)", optional=True, grouping="1.4",
-            description="The namespace of the annotations to change"),
+            description="The namespace(s) of the annotations to group and change.").ofType(rstring("")),
 
         scripts.String(
             "New Namespace (leave blank for default)", optional=True, grouping="1.5",
@@ -180,7 +182,7 @@ def run_script():
         # process the list of args above.
         script_params = { # Param dict with defaults for optional parameters
             "File_Annotation": None,
-            "Old Namespace (leave blank for default)": omero.constants.metadata.NSCLIENTMAPANNOTATION,
+            "Old Namespace (leave blank for default)": [omero.constants.metadata.NSCLIENTMAPANNOTATION],
             "New Namespace (leave blank for default)": omero.constants.metadata.NSCLIENTMAPANNOTATION
             }
         for key in client.getInputKeys():
