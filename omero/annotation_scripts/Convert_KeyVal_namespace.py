@@ -111,8 +111,7 @@ def replace_namespace(conn, script_params):
             ntarget_processed += 1
             print("Processing object:", target_obj)
             keyval_l, ann_l = get_existing_map_annotions(target_obj, old_namespace)
-
-            if len(keyval_l) > 1:
+            if len(keyval_l) > 0:
                 annotate_object(conn, target_obj, keyval_l, new_namespace)
                 remove_map_annotations(conn, target_obj, ann_l)
                 ntarget_updated += 1

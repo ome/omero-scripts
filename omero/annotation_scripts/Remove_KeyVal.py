@@ -41,10 +41,12 @@ CHILD_OBJECTS = {
                     "WellSample": "Image"
                 }
 
-def remove_map_annotations(conn, obj, namespace):
-    anns = list(obj.listAnnotations(ns=namespace))
-    mapann_ids = [ann.id for ann in anns
-                  if isinstance(ann, omero.gateway.MapAnnotationWrapper)]
+def remove_map_annotations(conn, obj, namespace_l):
+    mapann_ids = []
+    for namespace in namespace_l:
+        anns = list(obj.listAnnotations(ns=namespace))
+        mapann_ids.extend([ann.id for ann in anns
+                           if isinstance(ann, omero.gateway.MapAnnotationWrapper)])
 
     if len(mapann_ids) == 0:
         return 0
@@ -79,16 +81,13 @@ def remove_keyvalue(conn, script_params):
     source_type = script_params["Data_Type"]
     target_type = script_params["Target Data_Type"]
     source_ids = script_params["IDs"]
-    namespace = script_params["Namespace (leave blank for default)"]
+    namespace_l = script_params["Namespace (leave blank for default)"]
 
     nsuccess = 0
     ntotal = 0
     for source_object in conn.getObjects(source_type, source_ids):
         if source_type == target_type:
-            print("Processing object:", source_object)
-            ret = remove_map_annotations(conn, source_object, namespace)
-            nsuccess += ret
-            ntotal += 1
+            target_obj_l = [source_object]
         else:
             # Listing all target children to the source object (eg all images (target) in all datasets of the project (source))
             if source_type == "TagAnnotation":
@@ -96,11 +95,11 @@ def remove_keyvalue(conn, script_params):
                 target_obj_l = list(conn.getObjects(target_type, [o.getId() for o in target_obj_l])) # Need that to load annotations later
             else:
                 target_obj_l = get_children_recursive(source_object, target_type)
-            for target_obj in target_obj_l:
-                print("Processing object:", target_obj)
-                ret = remove_map_annotations(conn, target_obj, namespace)
-                nsuccess += ret
-                ntotal += 1
+        for target_obj in target_obj_l:
+            print("Processing object:", target_obj)
+            ret = remove_map_annotations(conn, target_obj, namespace_l)
+            nsuccess += ret
+            ntotal += 1
 
     message = f"Key value data deleted from {nsuccess} of {ntotal} objects"
 
@@ -142,7 +141,7 @@ if __name__ == "__main__":
     - Data Type: Type of the "parent objects" in which "target objects" are searched.
     - IDs: IDs of the "parent objects".
     - Target Data Type: Type of the "target objects" of which KV-pairs are deleted.
-    - Namespace: Only annotations with this namespace will be deleted.
+    - Namespace: Only annotations having one of these namespace(s) will be deleted.
     \t
         """,
 
@@ -160,13 +159,13 @@ if __name__ == "__main__":
             description="Choose the object type to delete annotation from.",
             values=target_types, default="-- Image"),
 
-        scripts.String(
+        scripts.List(
             "Namespace (leave blank for default)", optional=True, grouping="1.3",
             default="NAMESPACE TO DELETE",
-            description="Choose a namespace for the annotations"),
+            description="Annotation with these namespace will be deleted.").ofType(rstring("")),
 
         scripts.Bool(
-            agreement, optional=False, grouping="3",
+            agreement, optional=False, grouping="2",
             description="Make sure that you understood the scope of what will be deleted."),
 
         authors=["Christian Evenhuis", "MIF", "Tom Boissonnet"],
@@ -176,7 +175,7 @@ if __name__ == "__main__":
 
     try:
         script_params = {
-            "Namespace (leave blank for default)": omero.constants.metadata.NSCLIENTMAPANNOTATION
+            "Namespace (leave blank for default)": [omero.constants.metadata.NSCLIENTMAPANNOTATION]
         }
         for key in client.getInputKeys():
             if client.getInput(key):
