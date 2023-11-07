@@ -1,6 +1,6 @@
 # coding=utf-8
 """
- MIF/Key_Val_to_csv.py
+ Export_to_csv.py
 
  Reads the metadata associated with the images in a dataset
  and creates a csv file attached to dataset
@@ -38,7 +38,6 @@ CHILD_OBJECTS = {
                     "Dataset": "Image",
                     "Screen": "Plate",
                     "Plate": "Well",
-                    # "Run": ["Well", "Image"],
                     "Well": "WellSample",
                     "WellSample": "Image"
                 }
@@ -46,6 +45,7 @@ CHILD_OBJECTS = {
 # To allow duplicated keys
 # (3 means up to 1000 same key on a single object)
 ZERO_PADDING = 3
+WEBCLIENT_URL = "https://omero-cai-test.hhu.de/webclient"
 
 
 def get_obj_name(omero_obj):
@@ -55,7 +55,7 @@ def get_obj_name(omero_obj):
         return omero_obj.getName()
 
 
-def get_existing_map_annotions(obj, namespace_l, zero_padding):
+def get_existing_map_annotions(obj, namespace_l):
     key_l = []
     result = OrderedDict()
     for namespace in namespace_l:
@@ -63,13 +63,13 @@ def get_existing_map_annotions(obj, namespace_l, zero_padding):
             if isinstance(ann, omero.gateway.MapAnnotationWrapper):
                 for (k, v) in ann.getValue():
                     n_occurence = key_l.count(k)
-                    pad_key = f"{str(n_occurence).rjust(zero_padding, '0')}{k}"
+                    pad_key = f"{str(n_occurence).rjust(ZERO_PADDING, '0')}{k}"
                     result[pad_key] = v
                     key_l.append(k)  # To count the multiple occurence of keys
     return result
 
 
-def group_keyvalue_dictionaries(annotation_dicts, zero_padding):
+def group_keyvalue_dictionaries(annotation_dicts):
     """ Groups the keys and values of each object into a single dictionary """
     all_key = OrderedDict()  # To keep the keys in order, for what it's worth
     for annotation_dict in annotation_dicts:
@@ -86,7 +86,7 @@ def group_keyvalue_dictionaries(annotation_dicts, zero_padding):
         result.append(list(obj_dict.values()))
 
     # Removing temporary padding
-    all_key = [key[zero_padding:] for key in all_key]
+    all_key = [key[ZERO_PADDING:] for key in all_key]
     return all_key, result
 
 
@@ -105,7 +105,7 @@ def get_children_recursive(source_object, target_type):
         return result
 
 
-def attach_csv_file(conn, source_object, obj_id_l, obj_name_l,
+def attach_csv_file(conn, obj_, csv_name, obj_id_l, obj_name_l,
                     obj_ancestry_l, annotation_dicts, separator, is_well):
     def to_csv(ll):
         """convience function to write a csv line"""
@@ -152,8 +152,7 @@ def attach_csv_file(conn, source_object, obj_id_l, obj_name_l,
 
         return result_name, result_ancestry, result_value
 
-    all_key, whole_values_l = group_keyvalue_dictionaries(annotation_dicts,
-                                                          ZERO_PADDING)
+    all_key, whole_values_l = group_keyvalue_dictionaries(annotation_dicts)
 
     counter = 0
 
@@ -191,25 +190,25 @@ def attach_csv_file(conn, source_object, obj_id_l, obj_name_l,
         tfile.write(to_csv(whole_values))
     tfile.close()
 
-    name = "{}_metadata_out.csv".format(get_obj_name(source_object))
     # link it to the object
-    ann = conn.createFileAnnfromLocalFile(
-        tmp_file, origFilePathAndName=name,
+    file_ann = conn.createFileAnnfromLocalFile(
+        tmp_file, origFilePathAndName=csv_name,
         ns='KeyVal_export')
-    ann = source_object.linkAnnotation(ann)
+    obj_.linkAnnotation(file_ann)
 
-    print(f"{ann} linked to {source_object}")
+    print(f"{file_ann} linked to {obj_}")
 
     # remove the tmp file
     os.remove(tmp_file)
     os.rmdir(tmp_dir)
 
+    return file_ann.getFile()
 
-def target_iterator(conn, source_object, target_type):
-    source_type = source_object.OMERO_CLASS
-    if source_type == target_type:
+
+def target_iterator(conn, source_object, target_type, is_tag):
+    if target_type == source_object.OMERO_CLASS:
         target_obj_l = [source_object]
-    elif source_type == "TagAnnotation":
+    elif is_tag:
         target_obj_l = conn.getObjectsByAnnotations(target_type,
                                                     [source_object.getId()])
         # Need that to load objects
@@ -244,12 +243,16 @@ def main_loop(conn, script_params):
         obj_ancestry_l = []
         annotation_dicts = []
         obj_id_l, obj_name_l = [], []
+        result_obj = source_object
+        if source_type == "TagAnnotation":
+            result_obj = None  # Attach result csv on the first object
+        is_tag = source_type == "TagAnnotation"
 
-        for target_obj in target_iterator(conn, source_object, target_type):
+        for target_obj in target_iterator(conn, source_object,
+                                          target_type, is_tag):
             is_well = target_obj.OMERO_CLASS == "Well"
             annotation_dicts.append(get_existing_map_annotions(target_obj,
-                                                               namespace_l,
-                                                               ZERO_PADDING))
+                                                               namespace_l))
             obj_id_l.append(target_obj.getId())
             obj_name_l.append(get_obj_name(target_obj))
             if include_parent:
@@ -257,12 +260,21 @@ def main_loop(conn, script_params):
                             for o in target_obj.getAncestry()
                             if o.OMERO_CLASS != "WellSample"]
                 obj_ancestry_l.append(ancestry[::-1])
+            if result_obj is None:
+                result_obj = target_obj
 
-        attach_csv_file(conn, source_object, obj_id_l, obj_name_l,
-                        obj_ancestry_l, annotation_dicts, separator, is_well)
+        csv_name = "{}_keyval.csv".format(get_obj_name(source_object))
+        file_ann = attach_csv_file(conn, result_obj, csv_name, obj_id_l,
+                                   obj_name_l, obj_ancestry_l,
+                                   annotation_dicts, separator, is_well)
         print("\n------------------------------------\n")
 
-    return "Done", source_object
+    if len(res_obj_l) == 1:
+        message = f"The csv is attached to {res_obj_l[0].OMERO_CLASS}:{res_obj_l[0].getId()}"
+    else:
+        message = ("The csv are attached to " +
+                   ", ".join(map(lambda x: f"{x.OMERO_CLASS}:{x.getId()}", res_obj_l)))
+    return message, file_ann, res_obj_l[0]
 
 
 def run_script():
@@ -274,12 +286,11 @@ def run_script():
     # Cannot add fancy layout if we want auto fill and selct of object ID
     source_types = [rstring("Project"), rstring("Dataset"), rstring("Image"),
                     rstring("Screen"), rstring("Plate"),
-                    rstring("Well"), rstring("Tag"),
-                    rstring("Image"),
+                    rstring("Well"), rstring("Image"), rstring("Tag"),
                     ]
 
     # Duplicate Image for UI, but not a problem for script
-    target_types = [rstring("Project"),
+    target_types = [rstring("<on current>"), rstring("Project"),
                     rstring("- Dataset"), rstring("-- Image"),
                     rstring("Screen"), rstring("- Plate"),
                     rstring("-- Well"), rstring("--- Image")]
@@ -289,7 +300,7 @@ def run_script():
     # Good practice to put url here to give users more guidance on how to run
     # your script.
     client = scripts.client(
-        'KeyVal_to_csv.py',
+        'Export_KV_to_csv.py',
         """
     This script exports key-value pairs of objects to a .csv file.
     Can also export a blank .csv with only of target objects' name and IDs.
@@ -321,13 +332,15 @@ def run_script():
         scripts.String(
             "Target Data_Type", optional=True, grouping="1.2",
             description="Choose the object type to delete annotation from.",
-            values=target_types, default="-- Image"),
+            values=target_types, default="<on current>"),
 
         scripts.List(
             "Namespace (leave blank for default)", optional=True,
             grouping="1.3",
-            description="Namespace(s) to include for the export of key-value \
-                pairs annotations.").ofType(rstring("")),
+            description="Namespace(s) to include for the export of key-" +
+                        "value pairs annotations. Default is the client" +
+                        "namespace, meaning editable in " +
+                        "OMERO.web").ofType(rstring("")),
 
         scripts.Bool(
             "Advanced parameters", optional=True, grouping="2", default=False,
@@ -360,10 +373,18 @@ def run_script():
     try:
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
-        message, robj = main_loop(conn, params)
+        message, fileann, res_obj = main_loop(conn, params)
         client.setOutput("Message", rstring(message))
-        if robj is not None:
-            client.setOutput("Result", robject(robj._obj))
+
+        if WEBCLIENT_URL != "":
+            url = omero.rtypes.wrap({
+                "type": "URL",
+                "href": f"{WEBCLIENT_URL}/download_original_file/{fileann.getId()}",
+                "title": "CSV file of Key-Value pairs",
+            })
+            client.setOutput("URL", url)
+        elif res_obj is not None:
+            client.setOutput("Result", robject(res_obj))
 
     except AssertionError as err:
         # Display assertion errors in OMERO.web activities
@@ -374,7 +395,7 @@ def run_script():
 
 
 def parameters_parsing(client):
-    params = OrderedDict()
+    params = {}
     # Param dict with defaults for optional parameters
     params["Namespace (leave blank for default)"] = [NSCLIENTMAPANNOTATION]
 
@@ -384,11 +405,18 @@ def parameters_parsing(client):
             params[key] = client.getInput(key, unwrap=True)
 
     # Getting rid of the trailing '---' added for the UI
-    if " " in params["Target Data_Type"]:
+    if params["Target Data_Type"] == "<on current>":
+        assert params["Data_Type"] != "Tag", ("Choose a Target type " +
+                                              "with 'Tag' as Data Type ")
+        params["Target Data_Type"] = params["Data_Type"]
+    elif " " in params["Target Data_Type"]:
         params["Target Data_Type"] = params["Target Data_Type"].split(" ")[1]
 
     if params["Separator"] == "TAB":
         params["Separator"] = "\t"
+
+    if params["Data_Type"] == "Tag":
+        params["Data_Type"] = "TagAnnotation"
     return params
 
 

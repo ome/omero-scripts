@@ -29,6 +29,7 @@ import omero
 from omero.rtypes import rlong, rstring, robject
 from omero.constants.metadata import NSCLIENTMAPANNOTATION
 import omero.scripts as scripts
+from omero.model import TagAnnotationI
 
 from collections import OrderedDict
 
@@ -37,7 +38,6 @@ CHILD_OBJECTS = {
                     "Dataset": "Image",
                     "Screen": "Plate",
                     "Plate": "Well",
-                    # "Run": ["Well", "Image"],
                     "Well": "WellSample",
                     "WellSample": "Image"
                 }
@@ -61,8 +61,9 @@ def remove_map_annotations(conn, obj, namespace_l):
     if len(mapann_ids) == 0:
         return 0
     print(f"\tMap Annotation IDs to delete: {mapann_ids}")
-    print("\tMap Annotation IDs skipped (not permitted):",
-          f"{forbidden_deletion}\n")
+    if len(forbidden_deletion) > 0:
+        print("\tMap Annotation IDs skipped (not permitted):",
+              f"{forbidden_deletion}\n")
     try:
         conn.deleteObjects("Annotation", mapann_ids)
         return 1
@@ -86,11 +87,10 @@ def get_children_recursive(source_object, target_type):
         return result
 
 
-def target_iterator(conn, source_object, target_type):
-    source_type = source_object.OMERO_CLASS
-    if source_type == target_type:
+def target_iterator(conn, source_object, target_type, is_tag):
+    if target_type == source_object.OMERO_CLASS:
         target_obj_l = [source_object]
-    elif source_type == "TagAnnotation":
+    elif is_tag:
         target_obj_l = conn.getObjectsByAnnotations(target_type,
                                                     [source_object.getId()])
         # Need that to load objects
@@ -122,7 +122,9 @@ def remove_keyvalue(conn, script_params):
     result_obj = None
 
     for source_object in conn.getObjects(source_type, source_ids):
-        for target_obj in target_iterator(conn, source_object, target_type):
+        is_tag = source_type == "TagAnnotation"
+        for target_obj in target_iterator(conn, source_object,
+                                          target_type, is_tag):
             success = remove_map_annotations(conn, target_obj, namespace_l)
             if success:
                 nsuccess += 1
@@ -145,12 +147,11 @@ def run_script():
     # Cannot add fancy layout if we want auto fill and selct of object ID
     source_types = [rstring("Project"), rstring("Dataset"), rstring("Image"),
                     rstring("Screen"), rstring("Plate"),
-                    rstring("Well"), rstring("Tag"),
-                    rstring("Image"),
+                    rstring("Well"), rstring("Image"), rstring("Tag"),
                     ]
 
     # Duplicate Image for UI, but not a problem for script
-    target_types = [rstring("Project"),
+    target_types = [rstring("<on current>"), rstring("Project"),
                     rstring("- Dataset"), rstring("-- Image"),
                     rstring("Screen"), rstring("- Plate"),
                     rstring("-- Well"), rstring("--- Image")]
@@ -159,7 +160,7 @@ def run_script():
     # Good practice to put url here to give users more guidance on how to run
     # your script.
     client = scripts.client(
-        'Remove_Key_Value.py',
+        'Remove_KV.py',
         """
     This script deletes key-value pairs of all child objects founds.
     Only key-value pairs of the namespace are deleted.
@@ -188,13 +189,15 @@ def run_script():
         scripts.String(
             "Target Data_Type", optional=True, grouping="1.2",
             description="Choose the object type to delete annotation from.",
-            values=target_types, default="-- Image"),
+            values=target_types, default="<on current>"),
 
         scripts.List(
             "Namespace (leave blank for default)", optional=True,
-            grouping="1.3", default="NAMESPACE TO DELETE",
-            description="Annotation with these namespace will \
-                be deleted.").ofType(rstring("")),
+            grouping="1.3",
+            description="Annotation with these namespace will " +
+                        "be deleted. Default is the client" +
+                        " namespace, meaning editable in " +
+                        "OMERO.web").ofType(rstring("")),
 
         scripts.Bool(
             AGREEMENT, optional=False, grouping="2",
@@ -229,7 +232,7 @@ def run_script():
 
 
 def parameters_parsing(client):
-    params = OrderedDict()
+    params = {}
     # Param dict with defaults for optional parameters
     params["Namespace (leave blank for default)"] = [NSCLIENTMAPANNOTATION]
 
@@ -241,10 +244,17 @@ def parameters_parsing(client):
     assert params[AGREEMENT], "Please confirm that you understood the risks."
 
     # Getting rid of the trailing '---' added for the UI
-    if " " in params["Target Data_Type"]:
+    if params["Target Data_Type"] == "<on current>":
+        assert params["Data_Type"] != "Tag", ("Choose a Target type " +
+                                              "with 'Tag' as Data Type ")
+        params["Target Data_Type"] = params["Data_Type"]
+    elif " " in params["Target Data_Type"]:
         params["Target Data_Type"] = params["Target Data_Type"].split(" ")[1]
-    return params
 
+    if params["Data_Type"] == "Tag":
+        params["Data_Type"] = "TagAnnotation"
+
+    return params
 
 if __name__ == "__main__":
     run_script()

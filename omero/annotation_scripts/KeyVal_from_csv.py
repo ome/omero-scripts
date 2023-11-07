@@ -27,20 +27,41 @@ from omero.gateway import BlitzGateway
 from omero.rtypes import rstring, rlong, robject
 import omero.scripts as scripts
 from omero.constants.metadata import NSCLIENTMAPANNOTATION
+from omero.util.populate_roi import DownloadingOriginalFileProvider
 
 import sys
 import csv
 from math import floor
 from collections import OrderedDict
 
-from omero.util.populate_roi import DownloadingOriginalFileProvider
+# source_object = conn.getObject("Acquisition", oid=51)
+# target_type = "Image"
+# if source_object.OMERO_CLASS == "PlateAcquisition":
+#     wellsamp_l = get_children_recursive(source_object.getParent(), "WellSample")
+#     wellsamp_l = list(filter(lambda x: x.getPlateAcquisition() == source_object, wellsamp_l))
+#     image_l = [wellsamp.getImage() for wellsamp in wellsamp_l]
+# def get_children_recursive(source_object, target_type):
+#     if CHILD_OBJECTS[source_object.OMERO_CLASS] == target_type:
+#         # Stop condition, we return the source_obj children
+#         if source_object.OMERO_CLASS != "WellSample":
+#             return source_object.listChildren()
+#         elif target_type == "WellSample":
+#             return [source_object]
+#         else:
+#             return [source_object.getImage()]
+#     else:  # Not yet the target
+#         result = []
+#         for child_obj in source_object.listChildren():
+#             # Going down in the Hierarchy list
+#             result.extend(get_children_recursive(child_obj, target_type))
+#         return result
+
 
 CHILD_OBJECTS = {
                     "Project": "Dataset",
                     "Dataset": "Image",
                     "Screen": "Plate",
                     "Plate": "Well",
-                    # "Run": ["Well", "Image"],
                     "Well": "WellSample",
                     "WellSample": "Image"
                 }
@@ -148,11 +169,10 @@ def get_children_recursive(source_object, target_type):
         return result
 
 
-def target_iterator(conn, source_object, target_type):
-    source_type = source_object.OMERO_CLASS
-    if source_type == target_type:
+def target_iterator(conn, source_object, target_type, is_tag):
+    if target_type == source_object.OMERO_CLASS:
         target_obj_l = [source_object]
-    elif source_type == "TagAnnotation":
+    elif is_tag:
         target_obj_l = conn.getObjectsByAnnotations(target_type,
                                                     [source_object.getId()])
         # Need that to load objects
@@ -199,8 +219,9 @@ def keyval_from_csv(conn, script_params):
         original_file = file_ann.getFile()._obj
 
         data, header = read_csv(conn, original_file, separator)
-
-        target_obj_l = target_iterator(conn, source_object, target_type)
+        is_tag = source_type == "TagAnnotation"
+        target_obj_l = target_iterator(conn, source_object,
+                                       target_type, is_tag)
 
         # Index of the column used to identify the targets. Try for IDs first
         idx_id, idx_name = -1, -1
@@ -289,13 +310,12 @@ def run_script():
     source_types = [
                     rstring("Project"), rstring("Dataset"), rstring("Image"),
                     rstring("Screen"), rstring("Plate"),
-                    rstring("Well"), rstring("Tag"),
-                    rstring("Image"),
+                    rstring("Well"), rstring("Image"), rstring("Tag"),
                     ]
 
     # Duplicate Image for UI, but not a problem for script
     target_types = [
-                    rstring("Project"),
+                    rstring("<on current>"), rstring("Project"),
                     rstring("- Dataset"), rstring("-- Image"),
                     rstring("Screen"), rstring("- Plate"),
                     rstring("-- Well"), rstring("--- Image")
@@ -304,7 +324,7 @@ def run_script():
     separators = ["guess", ";", ",", "TAB"]
 
     client = scripts.client(
-        'Add_Key_Val_from_csv',
+        'Import_KV_from_csv',
         """
     Reads a .csv file to annotate target objects with key-value pairs.
     TODO: add hyperlink to readthedocs
@@ -331,27 +351,28 @@ def run_script():
 
         scripts.List(
             "IDs", optional=False, grouping="1.1",
-            description="List of parent-data IDs containing \
-                the objects to annotate.").ofType(rlong(0)),
+            description="List of parent-data IDs containing" +
+                        " the objects to annotate.").ofType(rlong(0)),
 
         scripts.String(
             "Target Data_Type", optional=False, grouping="1.2",
-            description="The data type which will be annotated. \
-                Entries in the .csv correspond to these objects.",
-            values=target_types, default="-- Image"),
+            description="The data type which will be annotated. " +
+                        "Entries in the .csv correspond to these objects.",
+            values=target_types, default="<on current>"),
 
         scripts.String(
             "File_Annotation", optional=True, grouping="1.3",
-            description="If no file is provided, list of file IDs containing \
-                metadata to populate (must match length of 'IDs'). If \
-                    neither, searches the most recently attached CSV \
-                        file on each parent object."),
+            description="If no file is provided, list of file IDs " +
+                        "containing metadata to populate (must match length" +
+                        " of 'IDs'). If neither, searches the most recently " +
+                        "attached CSV file on each parent object."),
 
         scripts.String(
             "Namespace (leave blank for default)",
             optional=True, grouping="1.4",
-            description="Namespace given to the created key-value \
-                pairs annotations."),
+            description="Namespace given to the created key-value " +
+                        "pairs annotations. Default is the client" +
+                        "namespace, meaning editable in OMERO.web"),
 
         scripts.Bool(
             "Advanced parameters", optional=True, grouping="2", default=False,
@@ -359,29 +380,33 @@ def run_script():
 
         scripts.String(
             "Separator", optional=False, grouping="2.1",
-            description="The separator used in the .csv file. 'guess' will \
-                attempt to detetect automatically which of ,;\\t is used.",
+            description="The separator used in the .csv file. 'guess' will " +
+                        "attempt to detetect automatically which of " +
+                        ",;\\t is used.",
             values=separators, default="guess"),
 
         scripts.List(
             "Columns to exclude", optional=False, grouping="2.2",
             default="<ID>,<NAME>",
-            description="List of columns in the .csv file to exclude from the \
-                key-value pair import. <ID> and <NAME> correspond to the \
-                    two following parameters.").ofType(rstring("")),
+            description="List of columns in the .csv file to exclude " +
+                        "from the key-value pair import. <ID>" +
+                        " and <NAME> correspond to the two " +
+                        "following parameters.").ofType(rstring("")),
 
         scripts.String(
             "Target ID colname", optional=False, grouping="2.3",
             default="OBJECT_ID",
-            description="The column name in the .csv containing the id of the \
-                objects to annotate. Matches <ID> in exclude parameter."),
+            description="The column name in the .csv containing the id" +
+                        " of the objects to annotate. " +
+                        "Matches <ID> in exclude parameter."),
 
         scripts.String(
             "Target name colname", optional=False, grouping="2.4",
             default="OBJECT_NAME",
-            description="The column name in the .csv containing the name of \
-                the objects to annotate (used if no column ID is provided or \
-                    found in the .csv). Matches <NAME> in exclude parameter."),
+            description="The column name in the .csv containing the name of " +
+                        "the objects to annotate (used if no column " +
+                        "ID is provided or  found in the .csv). Matches " +
+                        "<NAME> in exclude parameter."),
 
         authors=["Christian Evenhuis", "Tom Boissonnet"],
         institutions=["MIF UTS", "CAi HHU"],
@@ -413,7 +438,7 @@ def run_script():
 
 
 def parameters_parsing(client):
-    params = OrderedDict()
+    params = {}
     # Param dict with defaults for optional parameters
     params["File_Annotation"] = None
     params["Namespace (leave blank for default)"] = NSCLIENTMAPANNOTATION
@@ -423,7 +448,11 @@ def parameters_parsing(client):
             params[key] = client.getInput(key, unwrap=True)
 
     # Getting rid of the trailing '---' added for the UI
-    if " " in params["Target Data_Type"]:
+    if params["Target Data_Type"] == "<on current>":
+        assert params["Data_Type"] != "Tag", ("Choose a Target type " +
+                                              "with 'Tag' as Data Type ")
+        params["Target Data_Type"] = params["Data_Type"]
+    elif " " in params["Target Data_Type"]:
         params["Target Data_Type"] = params["Target Data_Type"].split(" ")[1]
 
     if params["Data_Type"] == "Tag":

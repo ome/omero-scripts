@@ -1,6 +1,6 @@
 # coding=utf-8
 """
- Convert_namespace_KeyVal.py
+ Convert_KeyVal_namespace.py
 
  Convert the namespace of objects key-value pairs.
 -----------------------------------------------------------------------------
@@ -34,7 +34,6 @@ CHILD_OBJECTS = {
                     "Dataset": "Image",
                     "Screen": "Plate",
                     "Plate": "Well",
-                    # "Run": ["Well", "Image"],
                     "Well": "WellSample",
                     "WellSample": "Image"
                 }
@@ -66,8 +65,9 @@ def get_existing_map_annotions(obj, namespace_l):
                     ann_l.append(ann)
                 else:
                     forbidden_deletion.append(ann.id)
-    print("\tMap Annotation IDs skipped (not permitted):",
-          f"{forbidden_deletion}")
+    if len(forbidden_deletion) > 0:
+        print("\tMap Annotation IDs skipped (not permitted):",
+              f"{forbidden_deletion}")
     return keyval_l, ann_l
 
 
@@ -96,11 +96,10 @@ def annotate_object(conn, obj, kv_list, namespace):
     obj.linkAnnotation(map_ann)
 
 
-def target_iterator(conn, source_object, target_type):
-    source_type = source_object.OMERO_CLASS
-    if source_type == target_type:
+def target_iterator(conn, source_object, target_type, is_tag):
+    if target_type == source_object.OMERO_CLASS:
         target_obj_l = [source_object]
-    elif source_type == "TagAnnotation":
+    elif is_tag:
         target_obj_l = conn.getObjectsByAnnotations(target_type,
                                                     [source_object.getId()])
         # Need that to load objects
@@ -129,8 +128,9 @@ def replace_namespace(conn, script_params):
 
     # One file output per given ID
     for source_object in conn.getObjects(source_type, source_ids):
-
-        for target_obj in target_iterator(conn, source_object, target_type):
+        is_tag = source_type == "TagAnnotation"
+        for target_obj in target_iterator(conn, source_object,
+                                          target_type, is_tag):
             ntarget_processed += 1
             keyval_l, ann_l = get_existing_map_annotions(target_obj,
                                                          old_namespace)
@@ -154,18 +154,17 @@ def run_script():
     # Cannot add fancy layout if we want auto fill and selct of object ID
     source_types = [rstring("Project"), rstring("Dataset"), rstring("Image"),
                     rstring("Screen"), rstring("Plate"),
-                    rstring("Well"), rstring("Tag"),
-                    rstring("Image"),
+                    rstring("Well"), rstring("Image"), rstring("Tag"),
                     ]
 
     # Duplicate Image for UI, but not a problem for script
-    target_types = [rstring("Project"),
+    target_types = [rstring("<on current>"), rstring("Project"),
                     rstring("- Dataset"), rstring("-- Image"),
                     rstring("Screen"), rstring("- Plate"),
                     rstring("-- Well"), rstring("--- Image")]
 
     client = scripts.client(
-        'Convert_KeyVal_namespace',
+        'Convert_KV_namespace',
         """
     This script converts the namespace of key-value pair annotations.
 
@@ -195,7 +194,7 @@ def run_script():
             "Target Data_Type", optional=False, grouping="1.2",
             description="The data type for which key-value pair annotations \
                 will be converted.",
-            values=target_types, default="-- Image"),
+            values=target_types, default="<on current>"),
 
         scripts.List(
             "Old Namespace (leave blank for default)", optional=True,
@@ -239,7 +238,7 @@ def run_script():
 
 
 def parameters_parsing(client):
-    params = OrderedDict()
+    params = {}
     # Param dict with defaults for optional parameters
     params["File_Annotation"] = None
     params["Old Namespace (leave blank for default)"] = [NSCLIENTMAPANNOTATION]
@@ -250,7 +249,11 @@ def parameters_parsing(client):
             params[key] = client.getInput(key, unwrap=True)
 
     # Getting rid of the trailing '---' added for the UI
-    if " " in params["Target Data_Type"]:
+    if params["Target Data_Type"] == "<on current>":
+        assert params["Data_Type"] != "Tag", ("Choose a Target type " +
+                                              "with 'Tag' as Data Type ")
+        params["Target Data_Type"] = params["Data_Type"]
+    elif " " in params["Target Data_Type"]:
         params["Target Data_Type"] = params["Target Data_Type"].split(" ")[1]
 
     if params["Data_Type"] == "Tag":
