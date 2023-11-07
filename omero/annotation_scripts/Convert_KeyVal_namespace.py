@@ -30,13 +30,25 @@ from omero.constants.metadata import NSCLIENTMAPANNOTATION
 from collections import OrderedDict
 
 CHILD_OBJECTS = {
-                    "Project": "Dataset",
-                    "Dataset": "Image",
-                    "Screen": "Plate",
-                    "Plate": "Well",
-                    "Well": "WellSample",
-                    "WellSample": "Image"
-                }
+    "Project": "Dataset",
+    "Dataset": "Image",
+    "Screen": "Plate",
+    "Plate": "Well",
+    "Well": "WellSample",
+    "WellSample": "Image"
+}
+
+ALLOWED_PARAM = {
+    "Project": ["Project", "Dataset", "Image"],
+    "Dataset": ["Dataset", "Image"],
+    "Image": ["Image"],
+    "Screen": ["Screen", "Plate", "Well", "Run", "Image"],
+    "Plate": ["Plate", "Well", "Run", "Image"],
+    "Well": ["Well", "Image"],
+    "Run": ["Run", "Image"],
+    "Tag": ["Project", "Dataset", "Image",
+            "Screen", "Plate", "Well", "Run"]
+}
 
 
 def get_children_recursive(source_object, target_type):
@@ -212,15 +224,16 @@ def run_script():
         contact="https://forum.image.sc/tag/omero"
     )
 
-    params = parameters_parsing(client)
-    print("Input parameters:")
-    keys = ["Data_Type", "IDs", "Target Data_Type",
-            "Old Namespace (leave blank for default)",
-            "New Namespace (leave blank for default)"]
-    for k in keys:
-        print(f"\t- {k}: {params[k]}")
-    print("\n####################################\n")
     try:
+        params = parameters_parsing(client)
+        print("Input parameters:")
+        keys = ["Data_Type", "IDs", "Target Data_Type",
+                "Old Namespace (leave blank for default)",
+                "New Namespace (leave blank for default)"]
+        for k in keys:
+            print(f"\t- {k}: {params[k]}")
+        print("\n####################################\n")
+
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
         message, robj = replace_namespace(conn, params)
@@ -248,13 +261,15 @@ def parameters_parsing(client):
         if client.getInput(key):
             params[key] = client.getInput(key, unwrap=True)
 
-    # Getting rid of the trailing '---' added for the UI
     if params["Target Data_Type"] == "<on current>":
-        assert params["Data_Type"] != "Tag", ("Choose a Target type " +
-                                              "with 'Tag' as Data Type ")
         params["Target Data_Type"] = params["Data_Type"]
     elif " " in params["Target Data_Type"]:
+        # Getting rid of the trailing '---' added for the UI
         params["Target Data_Type"] = params["Target Data_Type"].split(" ")[1]
+
+    assert params["Target Data_Type"] in ALLOWED_PARAM[params["Data_Type"]], \
+           (f"{params['Target Data_Type']} is not a valid target for " +
+            f"{params['Data_Type']}.")
 
     if params["Data_Type"] == "Tag":
         params["Data_Type"] = "TagAnnotation"

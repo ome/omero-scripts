@@ -34,13 +34,25 @@ import os
 from collections import OrderedDict
 
 CHILD_OBJECTS = {
-                    "Project": "Dataset",
-                    "Dataset": "Image",
-                    "Screen": "Plate",
-                    "Plate": "Well",
-                    "Well": "WellSample",
-                    "WellSample": "Image"
-                }
+    "Project": "Dataset",
+    "Dataset": "Image",
+    "Screen": "Plate",
+    "Plate": "Well",
+    "Well": "WellSample",
+    "WellSample": "Image"
+}
+
+ALLOWED_PARAM = {
+    "Project": ["Project", "Dataset", "Image"],
+    "Dataset": ["Dataset", "Image"],
+    "Image": ["Image"],
+    "Screen": ["Screen", "Plate", "Well", "Run", "Image"],
+    "Plate": ["Plate", "Well", "Run", "Image"],
+    "Well": ["Well", "Image"],
+    "Run": ["Run", "Image"],
+    "Tag": ["Project", "Dataset", "Image",
+            "Screen", "Plate", "Well", "Run"]
+}
 
 # To allow duplicated keys
 # (3 means up to 1000 same key on a single object)
@@ -359,16 +371,16 @@ def run_script():
         institutions=["University of Technology Sydney", "CAi HHU"],
         contact="https://forum.image.sc/tag/omero",
     )
-
-    params = parameters_parsing(client)
-    print("Input parameters:")
-    keys = ["Data_Type", "IDs", "Target Data_Type",
-            "Namespace (leave blank for default)",
-            "Separator", "Include column(s) of parents name"]
-    for k in keys:
-        print(f"\t- {k}: {params[k]}")
-    print("\n####################################\n")
     try:
+        params = parameters_parsing(client)
+        print("Input parameters:")
+        keys = ["Data_Type", "IDs", "Target Data_Type",
+                "Namespace (leave blank for default)",
+                "Separator", "Include column(s) of parents name"]
+        for k in keys:
+            print(f"\t- {k}: {params[k]}")
+        print("\n####################################\n")
+
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
         message, fileann, res_obj = main_loop(conn, params)
@@ -404,13 +416,15 @@ def parameters_parsing(client):
             # unwrap rtypes to String, Integer etc
             params[key] = client.getInput(key, unwrap=True)
 
-    # Getting rid of the trailing '---' added for the UI
     if params["Target Data_Type"] == "<on current>":
-        assert params["Data_Type"] != "Tag", ("Choose a Target type " +
-                                              "with 'Tag' as Data Type ")
         params["Target Data_Type"] = params["Data_Type"]
     elif " " in params["Target Data_Type"]:
+        # Getting rid of the trailing '---' added for the UI
         params["Target Data_Type"] = params["Target Data_Type"].split(" ")[1]
+
+    assert params["Target Data_Type"] in ALLOWED_PARAM[params["Data_Type"]], \
+           (f"{params['Target Data_Type']} is not a valid target for " +
+            f"{params['Data_Type']}.")
 
     if params["Separator"] == "TAB":
         params["Separator"] = "\t"
