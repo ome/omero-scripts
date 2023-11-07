@@ -32,29 +32,6 @@ from omero.util.populate_roi import DownloadingOriginalFileProvider
 import sys
 import csv
 from math import floor
-from collections import OrderedDict
-
-# source_object = conn.getObject("Acquisition", oid=51)
-# target_type = "Image"
-# if source_object.OMERO_CLASS == "PlateAcquisition":
-#     wellsamp_l = get_children_recursive(source_object.getParent(), "WellSample")
-#     wellsamp_l = list(filter(lambda x: x.getPlateAcquisition() == source_object, wellsamp_l))
-#     image_l = [wellsamp.getImage() for wellsamp in wellsamp_l]
-# def get_children_recursive(source_object, target_type):
-#     if CHILD_OBJECTS[source_object.OMERO_CLASS] == target_type:
-#         # Stop condition, we return the source_obj children
-#         if source_object.OMERO_CLASS != "WellSample":
-#             return source_object.listChildren()
-#         elif target_type == "WellSample":
-#             return [source_object]
-#         else:
-#             return [source_object.getImage()]
-#     else:  # Not yet the target
-#         result = []
-#         for child_obj in source_object.listChildren():
-#             # Going down in the Hierarchy list
-#             result.extend(get_children_recursive(child_obj, target_type))
-#         return result
 
 
 CHILD_OBJECTS = {
@@ -184,6 +161,24 @@ def get_children_recursive(source_object, target_type):
 def target_iterator(conn, source_object, target_type, is_tag):
     if target_type == source_object.OMERO_CLASS:
         target_obj_l = [source_object]
+    elif source_object.OMERO_CLASS == "PlateAcquisition":
+        # Check if there is more than one Run, otherwise
+        # it's equivalent to start from a plate (and faster this way)
+        plate_o = source_object.getParent()
+        wellsamp_l = get_children_recursive(plate_o, "WellSample")
+        if len(list(plate_o.listPlateAcquisitions())) > 1:
+            # Only case where we need to filter on PlateAcquisition
+            run_id = source_object.getId()
+            wellsamp_l = filter(lambda x: x._obj.plateAcquisition._id._val
+                                == run_id, wellsamp_l)
+        target_obj_l = [wellsamp.getImage() for wellsamp in wellsamp_l]
+    elif target_type == "PlateAcquisition":
+        # No direct children access from a plate
+        if source_object.OMERO_CLASS == "Screen":
+            plate_l = get_children_recursive(source_object, "Plate")
+        elif source_object.OMERO_CLASS == "Plate":
+            plate_l = [source_object]
+        target_obj_l = [r for p in plate_l for r in p.listPlateAcquisitions()]
     elif is_tag:
         target_obj_l = conn.getObjectsByAnnotations(target_type,
                                                     [source_object.getId()])
@@ -321,17 +316,18 @@ def run_script():
     # Cannot add fancy layout if we want auto fill and selct of object ID
     source_types = [
                     rstring("Project"), rstring("Dataset"), rstring("Image"),
-                    rstring("Screen"), rstring("Plate"),
-                    rstring("Well"), rstring("Image"), rstring("Tag"),
-                    ]
+                    rstring("Screen"), rstring("Plate"), rstring("Well"),
+                    rstring("Run"), rstring("Image"), rstring("Tag"),
+    ]
 
     # Duplicate Image for UI, but not a problem for script
     target_types = [
                     rstring("<on current>"), rstring("Project"),
                     rstring("- Dataset"), rstring("-- Image"),
                     rstring("Screen"), rstring("- Plate"),
-                    rstring("-- Well"), rstring("--- Image")
-                    ]
+                    rstring("-- Well"), rstring("-- Run"),
+                    rstring("--- Image")
+    ]
 
     separators = ["guess", ";", ",", "TAB"]
 
@@ -504,6 +500,11 @@ def parameters_parsing(client):
         params["Separator"] = None
     elif params["Separator"] == "TAB":
         params["Separator"] = "\t"
+
+    if params["Data_Type"] == "Run":
+        params["Data_Type"] = "Acquisition"
+    if params["Target Data_Type"] == "Run":
+        params["Target Data_Type"] = "PlateAcquisition"
 
     return params
 

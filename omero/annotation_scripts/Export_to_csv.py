@@ -220,6 +220,24 @@ def attach_csv_file(conn, obj_, csv_name, obj_id_l, obj_name_l,
 def target_iterator(conn, source_object, target_type, is_tag):
     if target_type == source_object.OMERO_CLASS:
         target_obj_l = [source_object]
+    elif source_object.OMERO_CLASS == "PlateAcquisition":
+        # Check if there is more than one Run, otherwise
+        # it's equivalent to start from a plate (and faster this way)
+        plate_o = source_object.getParent()
+        wellsamp_l = get_children_recursive(plate_o, "WellSample")
+        if len(list(plate_o.listPlateAcquisitions())) > 1:
+            # Only case where we need to filter on PlateAcquisition
+            run_id = source_object.getId()
+            wellsamp_l = filter(lambda x: x._obj.plateAcquisition._id._val
+                                == run_id, wellsamp_l)
+        target_obj_l = [wellsamp.getImage() for wellsamp in wellsamp_l]
+    elif target_type == "PlateAcquisition":
+        # No direct children access from a plate
+        if source_object.OMERO_CLASS == "Screen":
+            plate_l = get_children_recursive(source_object, "Plate")
+        elif source_object.OMERO_CLASS == "Plate":
+            plate_l = [source_object]
+        target_obj_l = [r for p in plate_l for r in p.listPlateAcquisitions()]
     elif is_tag:
         target_obj_l = conn.getObjectsByAnnotations(target_type,
                                                     [source_object.getId()])
@@ -294,16 +312,20 @@ def run_script():
     """
 
     # Cannot add fancy layout if we want auto fill and selct of object ID
-    source_types = [rstring("Project"), rstring("Dataset"), rstring("Image"),
-                    rstring("Screen"), rstring("Plate"),
-                    rstring("Well"), rstring("Image"), rstring("Tag"),
-                    ]
+    source_types = [
+                    rstring("Project"), rstring("Dataset"), rstring("Image"),
+                    rstring("Screen"), rstring("Plate"), rstring("Well"),
+                    rstring("Run"), rstring("Image"), rstring("Tag"),
+    ]
 
     # Duplicate Image for UI, but not a problem for script
-    target_types = [rstring("<on current>"), rstring("Project"),
+    target_types = [
+                    rstring("<on current>"), rstring("Project"),
                     rstring("- Dataset"), rstring("-- Image"),
                     rstring("Screen"), rstring("- Plate"),
-                    rstring("-- Well"), rstring("--- Image")]
+                    rstring("-- Well"), rstring("-- Run"),
+                    rstring("--- Image")
+    ]
 
     separators = [";", ",", "TAB"]
     # Here we define the script name and description.
@@ -396,7 +418,7 @@ def run_script():
                 })
                 client.setOutput("URL", url)
             else:
-                client.setOutput("Result", robject(res_obj))
+                client.setOutput("Result", robject(res_obj._obj))
 
     except AssertionError as err:
         # Display assertion errors in OMERO.web activities
@@ -431,6 +453,12 @@ def parameters_parsing(client):
 
     if params["Data_Type"] == "Tag":
         params["Data_Type"] = "TagAnnotation"
+
+    if params["Data_Type"] == "Run":
+        params["Data_Type"] = "Acquisition"
+    if params["Target Data_Type"] == "Run":
+        params["Target Data_Type"] = "PlateAcquisition"
+
     return params
 
 
