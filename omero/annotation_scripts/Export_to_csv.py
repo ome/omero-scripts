@@ -45,7 +45,7 @@ CHILD_OBJECTS = {
 # To allow duplicated keys
 # (3 means up to 1000 same key on a single object)
 ZERO_PADDING = 3
-WEBCLIENT_URL = "https://omero-cai-test.hhu.de/webclient"
+WEBCLIENT_URL = ""
 
 
 def get_obj_name(omero_obj):
@@ -375,15 +375,16 @@ def run_script():
         client.setOutput("Message", rstring(message))
 
         href = f"{WEBCLIENT_URL}/download_original_file/{fileann.getId()}"
-        if WEBCLIENT_URL != "":
-            url = omero.rtypes.wrap({
-                "type": "URL",
-                "href": href,
-                "title": "CSV file of Key-Value pairs",
-            })
-            client.setOutput("URL", url)
-        else:
-            client.setOutput("Result", robject(res_obj))
+        if res_obj is not None and fileann is not None:
+            if WEBCLIENT_URL != "":
+                url = omero.rtypes.wrap({
+                    "type": "URL",
+                    "href": href,
+                    "title": "CSV file of Key-Value pairs",
+                })
+                client.setOutput("URL", url)
+            else:
+                client.setOutput("Result", robject(res_obj))
 
     except AssertionError as err:
         # Display assertion errors in OMERO.web activities
