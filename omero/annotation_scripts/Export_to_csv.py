@@ -239,10 +239,11 @@ def main_loop(conn, script_params):
     is_well = False
 
     # One file output per given ID
+    obj_ancestry_l = []
+    annotation_dicts = []
+    obj_id_l, obj_name_l = [], []
     for source_object in conn.getObjects(source_type, source_ids):
-        obj_ancestry_l = []
-        annotation_dicts = []
-        obj_id_l, obj_name_l = [], []
+
         result_obj = source_object
         if source_type == "TagAnnotation":
             result_obj = None  # Attach result csv on the first object
@@ -262,19 +263,16 @@ def main_loop(conn, script_params):
                 obj_ancestry_l.append(ancestry[::-1])
             if result_obj is None:
                 result_obj = target_obj
-
-        csv_name = "{}_keyval.csv".format(get_obj_name(source_object))
-        file_ann = attach_csv_file(conn, result_obj, csv_name, obj_id_l,
-                                   obj_name_l, obj_ancestry_l,
-                                   annotation_dicts, separator, is_well)
         print("\n------------------------------------\n")
+    csv_name = "{}_keyval.csv".format(get_obj_name(source_object))
+    file_ann = attach_csv_file(conn, result_obj, csv_name, obj_id_l,
+                               obj_name_l, obj_ancestry_l,
+                               annotation_dicts, separator, is_well)
 
-    if len(res_obj_l) == 1:
-        message = f"The csv is attached to {res_obj_l[0].OMERO_CLASS}:{res_obj_l[0].getId()}"
-    else:
-        message = ("The csv are attached to " +
-                   ", ".join(map(lambda x: f"{x.OMERO_CLASS}:{x.getId()}", res_obj_l)))
-    return message, file_ann, res_obj_l[0]
+    message = ("The csv is attached to " +
+               f"{result_obj.OMERO_CLASS}:{result_obj.getId()}")
+
+    return message, file_ann, result_obj
 
 
 def run_script():
