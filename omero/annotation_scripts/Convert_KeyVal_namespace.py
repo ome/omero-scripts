@@ -187,20 +187,20 @@ def run_script():
 
         scripts.List(
             "IDs", optional=False, grouping="1.1",
-            description="List of parent-data IDs containing the objects \
-                to annotate.").ofType(rlong(0)),
+            description="List of parent-data IDs containing the objects " +
+                        "to annotate.").ofType(rlong(0)),
 
         scripts.String(
             "Target Data_Type", optional=False, grouping="1.2",
-            description="The data type for which key-value pair annotations \
-                will be converted.",
+            description="The data type for which key-value pair annotations " +
+                        "will be converted.",
             values=target_types, default="<on current>"),
 
         scripts.List(
             "Old Namespace (leave blank for default)", optional=True,
             grouping="1.4",
-            description="The namespace(s) of the annotations to \
-                group and change.").ofType(rstring("")),
+            description="The namespace(s) of the annotations to " +
+                        "group and change.").ofType(rstring("")),
 
         scripts.String(
             "New Namespace (leave blank for default)", optional=True,

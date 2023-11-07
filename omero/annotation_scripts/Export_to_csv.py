@@ -324,8 +324,8 @@ def run_script():
 
         scripts.List(
             "IDs", optional=False, grouping="1.1",
-            description="List of parent data IDs containing the objects \
-                to delete annotation from.").ofType(rlong(0)),
+            description="List of parent data IDs containing the objects " +
+                        "to delete annotation from.").ofType(rlong(0)),
 
         scripts.String(
             "Target Data_Type", optional=True, grouping="1.2",
@@ -352,8 +352,8 @@ def run_script():
         scripts.Bool(
             "Include column(s) of parents name", optional=False,
             grouping="2.2",
-            description="Weather to include or not the name of the parent(s) \
-                objects as columns in the .csv.", default=False),
+            description="Weather to include or not the name of the parent(s)" +
+                        " objects as columns in the .csv.", default=False),
 
         authors=["Christian Evenhuis", "MIF", "Tom Boissonnet"],
         institutions=["University of Technology Sydney", "CAi HHU"],
@@ -374,14 +374,15 @@ def run_script():
         message, fileann, res_obj = main_loop(conn, params)
         client.setOutput("Message", rstring(message))
 
+        href = f"{WEBCLIENT_URL}/download_original_file/{fileann.getId()}"
         if WEBCLIENT_URL != "":
             url = omero.rtypes.wrap({
                 "type": "URL",
-                "href": f"{WEBCLIENT_URL}/download_original_file/{fileann.getId()}",
+                "href": href,
                 "title": "CSV file of Key-Value pairs",
             })
             client.setOutput("URL", url)
-        elif res_obj is not None:
+        else:
             client.setOutput("Result", robject(res_obj))
 
     except AssertionError as err:

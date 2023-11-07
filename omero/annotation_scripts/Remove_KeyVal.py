@@ -42,8 +42,8 @@ CHILD_OBJECTS = {
                     "WellSample": "Image"
                 }
 
-AGREEMENT = "I understand what I am doing and that this will result \
-        in a batch deletion of key-value pairs from the server"
+AGREEMENT = ("I understand what I am doing and that this will result " +
+             "in a batch deletion of key-value pairs from the server")
 
 
 def remove_map_annotations(conn, obj, namespace_l):
@@ -183,8 +183,8 @@ def run_script():
 
         scripts.List(
             "IDs", optional=False, grouping="1.1",
-            description="List of parent-data IDs containing the objects \
-                to delete annotation from.").ofType(rlong(0)),
+            description="List of parent-data IDs containing the objects " +
+                        "to delete annotation from.").ofType(rlong(0)),
 
         scripts.String(
             "Target Data_Type", optional=True, grouping="1.2",
@@ -201,8 +201,8 @@ def run_script():
 
         scripts.Bool(
             AGREEMENT, optional=False, grouping="2",
-            description="Make sure that you understood the scope of \
-                what will be deleted."),
+            description="Make sure that you understood the scope of " +
+                        "what will be deleted."),
 
         authors=["Christian Evenhuis", "MIF", "Tom Boissonnet"],
         institutions=["University of Technology Sydney", "CAi HHU"],
@@ -255,6 +255,7 @@ def parameters_parsing(client):
         params["Data_Type"] = "TagAnnotation"
 
     return params
+
 
 if __name__ == "__main__":
     run_script()
