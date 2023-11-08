@@ -210,6 +210,8 @@ def run_script():
     - Old Namespace: Namespace(s) of the annotations to group and change.
     - New Namespace: New namespace for the annotations.
     \t
+    Default namespace: openmicroscopy.org/omero/client/mapAnnotation
+    \t
         """,  # Tabs are needed to add line breaks in the HTML
 
         scripts.String(

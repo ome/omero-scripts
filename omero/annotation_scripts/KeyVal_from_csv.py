@@ -350,6 +350,8 @@ def run_script():
     - Target ID colname: Column name in the .csv of the target IDs.
     - Target name colname: Column name in the .csv of the target names.
     \t
+    Default namespace: openmicroscopy.org/omero/client/mapAnnotation
+    \t
         """,  # Tabs are needed to add line breaks in the HTML
 
         scripts.String(

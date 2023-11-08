@@ -206,6 +206,8 @@ def run_script():
     - Target Data Type: Target-objects type of which KV-pairs are deleted.
     - Namespace: Annotations having one of these namespace(s) will be deleted.
     \t
+    Default namespace: openmicroscopy.org/omero/client/mapAnnotation
+    \t
         """,  # Tabs are needed to add line breaks in the HTML
 
         scripts.String(
@@ -240,6 +242,7 @@ def run_script():
         institutions=["University of Technology Sydney", "CAi HHU"],
         contact="https://forum.image.sc/tag/omero",
     )
+
     try:
         params = parameters_parsing(client)
         print("Input parameters:")

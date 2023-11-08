@@ -349,6 +349,8 @@ def run_script():
     - Separator: Separator to be used in the .csv file.
     - Include column(s) of parents name: Add columns for target-data parents.
     \t
+    Default namespace: openmicroscopy.org/omero/client/mapAnnotation
+    \t
         """,  # Tabs are needed to add line breaks in the HTML
 
         scripts.String(
