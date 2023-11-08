@@ -120,7 +120,7 @@ def read_csv(conn, original_file, delimiter):
                         file_handle.read(floor(file_length/2)),
                         ",;\t").delimiter
                     print(f"Using delimiter {delimiter}",
-                          f"after reading {floor(file_length/4)} characters")
+                          f"after reading {floor(file_length/2)} characters")
                 except Exception:
                     file_handle.seek(0)
                     try:
@@ -130,8 +130,8 @@ def read_csv(conn, original_file, delimiter):
                         print(f"Using delimiter {delimiter} after",
                               f"reading {floor(file_length*0.75)} characters")
                     except Exception:
-                        print("Failed to sniff delimiter, use ','")
-                        delimiter = ","
+                        assert False, ("Failed to sniff CSV delimiter, " +
+                                       "please specify the separator")
 
         # reset to start and read whole file...
         file_handle.seek(0)
