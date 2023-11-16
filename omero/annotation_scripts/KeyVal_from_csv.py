@@ -137,10 +137,20 @@ def read_csv(conn, original_file, delimiter):
         file_handle.seek(0)
         data = list(csv.reader(file_handle, delimiter=delimiter))
 
-    # keys are in the header row
-    header = [el.strip() for el in data[0]]
+    # check if namespaces get declared
+    if data[0][0].lower() == "namespace":
+        different_namespaces = True
+
+    # keys are in the header row (first row for no namespaces
+    # second row with namespaces declared)
+    if different_namespaces:
+        header = [el.strip() for el in data[1]]
+        namespaces = [el.strip() for el in data[0]]
+    else:
+        header = [el.strip() for el in data[0]]
+        namespaces = []
     print(f"Header: {header}\n")
-    return data, header
+    return data, header, namespaces
 
 
 def get_children_recursive(source_object, target_type):
@@ -202,6 +212,7 @@ def keyval_from_csv(conn, script_params):
     source_ids = script_params["IDs"]
     file_ids = script_params["File_Annotation"]
     namespace = script_params["Namespace (leave blank for default)"]
+    namespaces_in_csv = script_params["Namespaces defined in the .csv"]
     to_exclude = script_params["Columns to exclude"]
     target_id_colname = script_params["Target ID colname"]
     target_name_colname = script_params["Target name colname"]
@@ -225,7 +236,7 @@ def keyval_from_csv(conn, script_params):
             file_ann = get_original_file(source_object)
         original_file = file_ann.getFile()._obj
 
-        data, header = read_csv(conn, original_file, separator)
+        data, header, namespaces = read_csv(conn, original_file, separator)
         is_tag = source_type == "TagAnnotation"
         target_obj_l = target_iterator(conn, source_object,
                                        target_type, is_tag)
@@ -273,8 +284,32 @@ def keyval_from_csv(conn, script_params):
                 print(f"Not found: {target_id}")
                 continue
 
-            updated = annotate_object(conn, target_obj, header, row,
-                                      cols_to_ignore, namespace)
+            if namespaces_in_csv:
+                # get a dict of Namespaces with all occurring indizes
+                namespace_dict = get_namespace_dict(header, cols_to_ignore,
+                                                    namespaces)
+                kv_list = []
+                # loop over the namespaces
+                for ns in namespace_dict.keys:
+                    # loop over all indizes and add to the list of KV-pairs
+                    # if there is a value
+                    for index in namespace_dict[ns]:
+                        key = header[index].strip()
+                        value = row[index].strip()
+                        if len(value) > 0:
+                            kv_list.append([key, value])
+                    updated = annotate_object(conn, target_obj, kv_list, ns)
+                    kv_list.clear()
+
+            else:
+                for i in range(len(row)):
+                    if i not in cols_to_ignore:
+                        key = header[index].strip()
+                        value = row[index].strip()
+                        if len(value) > 0:
+                            kv_list.append([key, value])
+                updated = annotate_object(conn, target_obj, kv_list, namespace)
+
             if updated:
                 if result_obj is None:
                     result_obj = target_obj
@@ -290,16 +325,25 @@ def keyval_from_csv(conn, script_params):
     return message, result_obj
 
 
-def annotate_object(conn, obj, header, row, cols_to_ignore, namespace):
-
-    kv_list = []
-
-    for i in range(len(row)):
-        if i in cols_to_ignore or i >= len(header):
+def get_namespace_dict(header, cols_to_ignore, namespaces):
+    # create a dictionary of namespaces with corresponding indizes
+    namespace_dict = {}
+    namespace_dict[NSCLIENTMAPANNOTATION] = []
+    for i in range(len(header)):
+        if i in cols_to_ignore or i == 0:
             continue
-        key = header[i].strip()
-        value = row[i].strip()
-        kv_list.append([key, value])
+        if len(namespaces[i]) > 0:
+            if namespaces[i] not in namespace_dict:
+                namespace_dict[namespaces[i]] = []
+            namespace_dict[namespaces[i]].append(i)
+        # if no custom namespace is given fall back to default
+        else:
+            namespace_dict[NSCLIENTMAPANNOTATION].append(i)
+
+    return namespace_dict
+
+
+def annotate_object(conn, obj, kv_list, namespace):
 
     map_ann = omero.gateway.MapAnnotationWrapper(conn)
     map_ann.setNs(namespace)
@@ -385,6 +429,13 @@ def run_script():
                         "namespace, meaning editable in OMERO.web"),
 
         scripts.Bool(
+            "Namespaces defined in the .csv", grouping="1.5", default=False,
+            description="Check if you have defined the namespaces of the" +
+                        " different keys already in the first row of your" +
+                        " .csv.\nFor details check the" +
+                        " documentation."),
+
+        scripts.Bool(
             "Advanced parameters", optional=True, grouping="2", default=False,
             description="Ticking or unticking this has no effect"),
 
@@ -427,8 +478,9 @@ def run_script():
         params = parameters_parsing(client)
         print("Input parameters:")
         keys = ["Data_Type", "IDs", "Target Data_Type", "File_Annotation",
-                "Namespace (leave blank for default)", "Separator",
-                "Columns to exclude", "Target ID colname",
+                "Namespace (leave blank for default)",
+                "Namespaces defined in the .csv",
+                "Separator", "Columns to exclude", "Target ID colname",
                 "Target name colname"]
         for k in keys:
             print(f"\t- {k}: {params[k]}")
