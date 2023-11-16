@@ -326,7 +326,7 @@ def keyval_from_csv(conn, script_params):
 
 
 def get_namespace_dict(header, cols_to_ignore, namespaces):
-# create a dictionary of namespaces with corresponding row-indizes
+    # create a dictionary of namespaces with corresponding row-indizes
     namespace_dict = {}
     namespace_dict[NSCLIENTMAPANNOTATION] = []
     # assuming the header is the longest row
@@ -347,7 +347,7 @@ def get_namespace_dict(header, cols_to_ignore, namespaces):
 
 
 def annotate_object(conn, obj, kv_list, namespace):
-# helper function for the creation and linking of a MapAnnotation
+    # helper function for the creation and linking of a MapAnnotation
     map_ann = omero.gateway.MapAnnotationWrapper(conn)
     map_ann.setNs(namespace)
     map_ann.setValue(kv_list)
