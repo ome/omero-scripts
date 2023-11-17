@@ -81,19 +81,18 @@ def get_original_file(omero_obj):
     return file_ann
 
 
-def link_file_ann(conn, object_type, object_id, file_ann_id):
+def link_file_ann(conn, object_type, object_, file_ann):
     """Link File Annotation to the Object, if not already linked."""
-    file_ann = conn.getObject("Annotation", file_ann_id)
-    if file_ann is None:
-        sys.stderr.write("Error: File Annotation not found: %s.\n"
-                         % file_ann_id)
-        sys.exit(1)
-    omero_object = conn.getObject(object_type, object_id)
     # Check for existing links
-    links = list(conn.getAnnotationLinks(object_type, parent_ids=[object_id],
-                                         ann_ids=[file_ann_id]))
+    if object_type == "TagAnnotation":
+        print("CSV file cannot be attached to the parent tag")
+        return
+    links = list(conn.getAnnotationLinks(
+        object_type, parent_ids=[object_.getId()],
+        ann_ids=[file_ann.getId()]
+        ))
     if len(links) == 0:
-        omero_object.linkAnnotation(file_ann)
+        object_.linkAnnotation(file_ann)
 
 
 def read_csv(conn, original_file, delimiter):
@@ -130,13 +129,9 @@ def read_csv(conn, original_file, delimiter):
             rowlen, i, len(data[i])
         )
 
-    # check if namespaces get declared
-    if data[0][0].lower() == "namespace":
-        different_namespaces = True
-
     # keys are in the header row (first row for no namespaces
     # second row with namespaces declared)
-    if different_namespaces:
+    if data[0][0].lower() == "namespace":
         header = [el.strip() for el in data[1]]
         namespaces = [el.strip() for el in data[0]]
     else:
@@ -210,6 +205,7 @@ def keyval_from_csv(conn, script_params):
     target_id_colname = script_params["Target ID colname"]
     target_name_colname = script_params["Target name colname"]
     separator = script_params["Separator"]
+    attach_file = script_params["Attach csv to parents"]
 
     ntarget_processed = 0
     ntarget_updated = 0
@@ -222,6 +218,7 @@ def keyval_from_csv(conn, script_params):
     for source_object, file_ann_id in zip(source_objects, file_ids):
         if file_ann_id is not None:
             file_ann = conn.getObject("Annotation", oid=file_ann_id)
+            assert file_ann is not None, f"Annotation {file_ann_id} not found"
             assert file_ann.OMERO_TYPE == omero.model.FileAnnotationI, "The \
                     provided annotation ID must reference a FileAnnotation, \
                     not a {file_ann.OMERO_TYPE}"
@@ -230,6 +227,7 @@ def keyval_from_csv(conn, script_params):
         original_file = file_ann.getFile()._obj
 
         data, header, namespaces = read_csv(conn, original_file, separator)
+
         is_tag = source_type == "TagAnnotation"
         target_obj_l = target_iterator(conn, source_object,
                                        target_type, is_tag)
@@ -295,10 +293,11 @@ def keyval_from_csv(conn, script_params):
                     kv_list.clear()
 
             else:
+                kv_list = []
                 for i in range(len(row)):
                     if i not in cols_to_ignore:
-                        key = header[index].strip()
-                        value = row[index].strip()
+                        key = header[i].strip()
+                        value = row[i].strip()
                         if len(value) > 0:
                             kv_list.append([key, value])
                 updated = annotate_object(conn, target_obj, kv_list, namespace)
@@ -307,6 +306,9 @@ def keyval_from_csv(conn, script_params):
                 if result_obj is None:
                     result_obj = target_obj
                 ntarget_updated += 1
+        if ntarget_updated > 0 and attach_file:
+            # Only attaching if this is successful
+            link_file_ann(conn, source_type, source_object, file_ann)
         print("\n------------------------------------\n")
 
     message = f"Added KV-pairs to \
@@ -465,6 +467,11 @@ def run_script():
                         "ID is provided or  found in the .csv). Matches " +
                         "<NAME> in exclude parameter."),
 
+        scripts.Bool(
+            "Attach csv to parents", grouping="2.5", default=False,
+            description="Attach the given CSV to the parent-data objects" +
+            "when not already attached to it."),
+
         authors=["Christian Evenhuis", "Tom Boissonnet"],
         institutions=["MIF UTS", "CAi HHU"],
         contact="https://forum.image.sc/tag/omero"
@@ -477,7 +484,7 @@ def run_script():
                 "Namespace (leave blank for default)",
                 "Namespaces defined in the .csv",
                 "Separator", "Columns to exclude", "Target ID colname",
-                "Target name colname"]
+                "Target name colname", "Attach csv to parents"]
         for k in keys:
             print(f"\t- {k}: {params[k]}")
         print("\n####################################\n")
