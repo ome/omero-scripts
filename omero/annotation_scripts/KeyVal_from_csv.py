@@ -70,7 +70,7 @@ def get_original_file(omero_obj):
         if ann.OMERO_TYPE == omero.model.FileAnnotationI:
             file_name = ann.getFile().getName()
             # Pick file by Ann ID (or name if ID is None)
-            if file_name.endswith(".csv"):
+            if file_name.endswith(".csv") or file_name.endswith(".tsv"):
                 if (file_ann is None) or (ann.getDate() > file_ann.getDate()):
                     # Get the most recent file
                     file_ann = ann
