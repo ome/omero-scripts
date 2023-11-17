@@ -383,7 +383,7 @@ def run_script():
         scripts.String(
             "Separator", optional=False, grouping="2.1",
             description="Choose the .csv separator.",
-            values=separators, default=";"),
+            values=separators, default="TAB"),
 
         scripts.Bool(
             "Include column(s) of parents name", optional=False,
