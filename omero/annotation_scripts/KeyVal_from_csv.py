@@ -206,6 +206,7 @@ def keyval_from_csv(conn, script_params):
     separator = script_params["Separator"]
     attach_file = script_params["Attach csv to parents"]
     exclude_empty_value = script_params["Exclude empty values"]
+    split_on = script_params["Split value on"]
 
     ntarget_processed = 0
     ntarget_updated = 0
@@ -266,8 +267,6 @@ def keyval_from_csv(conn, script_params):
         ntarget_processed += len(target_d)
 
         ok_idxs = [i for i in range(len(header)) if i not in cols_to_ignore]
-        tmp_ns = [namespaces[i] for i in ok_idxs]
-        tmp_head = [header[i] for i in ok_idxs]
         for row in rows:
             # Iterate the CSV rows and search for the matching target
             target_id = row[idx_id]
@@ -278,9 +277,20 @@ def keyval_from_csv(conn, script_params):
                 print(f"Not found: {target_id}")
                 continue
 
-            row = [row[i].strip() for i in ok_idxs]
+            if split_on != "":
+                parsed_row, parsed_ns, parsed_head = [], [], []
+                for i in ok_idxs:
+                    curr_vals = row[i].strip().split(split_on)
+                    parsed_row.extend(curr_vals)
+                    parsed_ns.extend([namespaces[i]] * len(curr_vals))
+                    parsed_head.extend([header[i]] * len(curr_vals))
+            else:
+                parsed_row = [row[i] for i in ok_idxs]
+                parsed_ns = [namespaces[i] for i in ok_idxs]
+                parsed_head = [header[i] for i in ok_idxs]
+
             updated = annotate_object(
-                conn, target_obj, row, tmp_head, tmp_ns,
+                conn, target_obj, parsed_row, parsed_head, parsed_ns,
                 cols_to_ignore, exclude_empty_value
             )
 
@@ -440,7 +450,11 @@ def run_script():
             description="Attach the given CSV to the parent-data objects" +
             "when not already attached to it."),
 
-
+        scripts.String(
+            "Split value on", optional=True, grouping="2.7",
+            default="",
+            description="Split values according to that input to " +
+            "create key duplicates."),
 
         authors=["Christian Evenhuis", "Tom Boissonnet"],
         institutions=["MIF UTS", "CAi HHU"],
@@ -454,7 +468,7 @@ def run_script():
                 "Namespace (leave blank for default)",
                 "Separator", "Columns to exclude", "Target ID colname",
                 "Target name colname", "Exclude empty values",
-                "Attach csv to parents"]
+                "Attach csv to parents", "Split value on"]
         for k in keys:
             print(f"\t- {k}: {params[k]}")
         print("\n####################################\n")
@@ -480,6 +494,7 @@ def parameters_parsing(client):
     # Param dict with defaults for optional parameters
     params["File_Annotation"] = None
     params["Namespace (leave blank for default)"] = NSCLIENTMAPANNOTATION
+    params["Split value on"] = ""
 
     for key in client.getInputKeys():
         if client.getInput(key):
@@ -532,6 +547,11 @@ def parameters_parsing(client):
         params["Data_Type"] = "Acquisition"
     if params["Target Data_Type"] == "Run":
         params["Target Data_Type"] = "PlateAcquisition"
+
+    assert (params["Separator"] is None
+            or params["Separator"] not in params["Split value on"]), (
+                "Cannot split cells with a character used as CSV separator"
+        )
 
     return params
 
