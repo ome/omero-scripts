@@ -104,38 +104,31 @@ def read_csv(conn, original_file, delimiter):
     # read the csv
     temp_file = provider.get_original_file_data(original_file)
     # Needs omero-py 5.9.1 or later
-    temp_name = temp_file.name
-    file_length = original_file.size.val
-    with open(temp_name, 'rt', encoding='utf-8-sig') as file_handle:
+    with open(temp_file.name, 'rt', encoding='utf-8-sig') as file_handle:
         if delimiter is None:
-            try:
+            try:  # Detecting csv delimiter from the first line
                 delimiter = csv.Sniffer().sniff(
-                    file_handle.read(floor(file_length/4)), ",;\t").delimiter
+                    file_handle.readline(), ",;\t").delimiter
                 print(f"Using delimiter {delimiter}",
-                      f"after reading {floor(file_length/4)} characters")
+                      "after reading one line")
             except Exception:
-                file_handle.seek(0)
-                try:
-                    delimiter = csv.Sniffer().sniff(
-                        file_handle.read(floor(file_length/2)),
-                        ",;\t").delimiter
-                    print(f"Using delimiter {delimiter}",
-                          f"after reading {floor(file_length/2)} characters")
-                except Exception:
-                    file_handle.seek(0)
-                    try:
-                        delimiter = csv.Sniffer().sniff(
-                            file_handle.read(floor(file_length*0.75)),
-                            ",;\t").delimiter
-                        print(f"Using delimiter {delimiter} after",
-                              f"reading {floor(file_length*0.75)} characters")
-                    except Exception:
-                        assert False, ("Failed to sniff CSV delimiter, " +
-                                       "please specify the separator")
+                # Send the error back to the UI
+                assert False, ("Failed to sniff CSV delimiter, " +
+                               "please specify the separator")
 
         # reset to start and read whole file...
         file_handle.seek(0)
         data = list(csv.reader(file_handle, delimiter=delimiter))
+
+    rowlen = len(data[0])
+    error_msg = (
+        "CSV rows lenght mismatch: Header has {} " +
+        "items, while line {} has {}"
+    )
+    for i in range(1, len(data)):
+        assert len(data[i]) == rowlen, error_msg.format(
+            rowlen, i, len(data[i])
+        )
 
     # check if namespaces get declared
     if data[0][0].lower() == "namespace":
