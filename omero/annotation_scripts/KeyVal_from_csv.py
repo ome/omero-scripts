@@ -281,7 +281,7 @@ def keyval_from_csv(conn, script_params):
                                                     namespaces)
                 kv_list = []
                 # loop over the namespaces
-                for ns in namespace_dict.keys:
+                for ns in namespace_dict.keys():
                     # loop over all indizes and add to the list of KV-pairs
                     # if there is a value
                     for index in namespace_dict[ns]:

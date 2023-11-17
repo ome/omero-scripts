@@ -31,7 +31,7 @@ import omero.scripts as scripts
 
 import tempfile
 import os
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 CHILD_OBJECTS = {
     "Project": "Dataset",
@@ -54,9 +54,8 @@ ALLOWED_PARAM = {
             "Screen", "Plate", "Well", "Run"]
 }
 
-# To allow duplicated keys
-# (3 means up to 1000 same key on a single object)
-ZERO_PADDING = 3
+# Add your OMERO.web URL for direct download from link:
+# eg https://omero-adress.org/webclient
 WEBCLIENT_URL = ""
 
 
@@ -68,38 +67,57 @@ def get_obj_name(omero_obj):
 
 
 def get_existing_map_annotions(obj, namespace_l):
-    key_l = []
-    result = OrderedDict()
-    for namespace in namespace_l:
-        for ann in obj.listAnnotations(ns=namespace):
+    "Return list of KV with updated keys with NS and occurences"
+    annotation_dict_l = defaultdict(list)
+    for ns in namespace_l:
+        for ann in obj.listAnnotations(ns=ns):
             if isinstance(ann, omero.gateway.MapAnnotationWrapper):
-                for (k, v) in ann.getValue():
-                    n_occurence = key_l.count(k)
-                    pad_key = f"{str(n_occurence).rjust(ZERO_PADDING, '0')}{k}"
-                    result[pad_key] = v
-                    key_l.append(k)  # To count the multiple occurence of keys
-    return result
+                annotation_dict_l[ns].append(ann.getValue())
+    return annotation_dict_l
 
 
-def group_keyvalue_dictionaries(annotation_dicts):
+def group_keyvalue_dicts(annotation_dict_l, include_namespace):
     """ Groups the keys and values of each object into a single dictionary """
-    all_key = OrderedDict()  # To keep the keys in order, for what it's worth
-    for annotation_dict in annotation_dicts:
-        all_key.update({k: None for k in annotation_dict.keys()})
-    all_key = list(all_key.keys())
 
-    result = []
-    for annotation_dict in annotation_dicts:
-        obj_dict = OrderedDict((k, "") for k in all_key)
+    # STEP 1: finding all namespace
+    set_ns = set()
+    for ann_dict in annotation_dict_l:
+        set_ns.update(list(ann_dict.keys()))
+    set_ns = list(set_ns)
+
+    # STEP 2: Changing keys for every object according to occurence
+    # if use namespace, the occurence are given a namespace
+    header_row = []
+    ns_row = []
+    n_obj = len(annotation_dict_l)
+    count_k_l = [[] for i in range(n_obj)]
+    annotation_dict_l_upd = [OrderedDict() for i in range(n_obj)]
+    for idx_ns, ns in enumerate(set_ns):
+        # Iterating by namespace to group the keys
+        if not include_namespace:
+            idx_ns = 0
+        for i, ann_dict in enumerate(annotation_dict_l):
+            for keyval in ann_dict[ns]:
+                for (k, v) in keyval:
+                    # Count key occurence per namespace for that object
+                    n_iden = count_k_l[i].count(f"{idx_ns}#{k}")
+                    count_k_l[i].append(k)
+                    pad_key = f"{idx_ns}#{n_iden}${k}"
+                    annotation_dict_l_upd[i][pad_key] = v
+                    if pad_key not in header_row:
+                        header_row.append(pad_key)
+                        ns_row.append(ns)
+
+    # STEP 3: Populating objects values
+    object_rows = []
+    for annotation_dict in annotation_dict_l_upd:
+        obj_dict = OrderedDict((k, "") for k in header_row)
         obj_dict.update(annotation_dict)
-        for k, v in obj_dict.items():
-            if v is None:
-                obj_dict[k]
-        result.append(list(obj_dict.values()))
+        object_rows.append(list(obj_dict.values()))
 
     # Removing temporary padding
-    all_key = [key[ZERO_PADDING:] for key in all_key]
-    return all_key, result
+    header_row = list(map(lambda x: x[x.index("$")+1:], header_row))
+    return ns_row, header_row, object_rows
 
 
 def get_children_recursive(source_object, target_type):
@@ -118,7 +136,8 @@ def get_children_recursive(source_object, target_type):
 
 
 def attach_csv_file(conn, obj_, csv_name, obj_id_l, obj_name_l,
-                    obj_ancestry_l, annotation_dicts, separator, is_well):
+                    obj_ancestry_l, annotation_dict_l, separator,
+                    is_well, include_namespace):
     def to_csv(ll):
         """convience function to write a csv line"""
         nl = len(ll)
@@ -164,26 +183,31 @@ def attach_csv_file(conn, obj_, csv_name, obj_id_l, obj_name_l,
 
         return result_name, result_ancestry, result_value
 
-    all_key, whole_values_l = group_keyvalue_dictionaries(annotation_dicts)
+    ns_row, header_row, object_rows = group_keyvalue_dicts(annotation_dict_l,
+                                                           include_namespace)
 
     counter = 0
-
     if len(obj_ancestry_l) > 0:  # If there's anything to add at all
+        # Sorting rows
         # Only sort when there are parents to group childs
-        obj_name_l, obj_ancestry_l, whole_values_l = sort_items(obj_name_l,
-                                                                obj_ancestry_l,
-                                                                whole_values_l,
-                                                                is_well)
+        obj_name_l, obj_ancestry_l, object_rows = sort_items(obj_name_l,
+                                                             obj_ancestry_l,
+                                                             object_rows,
+                                                             is_well)
         for (parent_type, _) in obj_ancestry_l[0]:
-            all_key.insert(counter, parent_type)
+            header_row.insert(counter, parent_type)
+            ns_row.insert(counter, "")  # padding namespace like all keys
             counter += 1
-    all_key.insert(counter, "OBJECT_ID")
-    all_key.insert(counter + 1, "OBJECT_NAME")
-    print(f"\tColumn names: {all_key}", "\n")
+    header_row.insert(counter, "OBJECT_ID")
+    header_row.insert(counter + 1, "OBJECT_NAME")
+    ns_row.insert(counter, "")
+    ns_row.insert(counter + 1, "")
+    ns_row[0] = "namespace"  # Finalizing the namespace row
+    print(f"\tColumn names: {header_row}", "\n")
 
     for k, (obj_id, obj_name, whole_values) in enumerate(zip(obj_id_l,
                                                              obj_name_l,
-                                                             whole_values_l)):
+                                                             object_rows)):
         counter = 0
         if len(obj_ancestry_l) > 0:  # If there's anything to add at all
             for (_, parent_name) in obj_ancestry_l[k]:
@@ -196,10 +220,12 @@ def attach_csv_file(conn, obj_, csv_name, obj_id_l, obj_name_l,
     tmp_dir = tempfile.mkdtemp(prefix='MIF_meta')
     (fd, tmp_file) = tempfile.mkstemp(dir=tmp_dir, text=True)
     tfile = os.fdopen(fd, 'w')
-    tfile.write(to_csv(all_key))
+    if include_namespace:
+        tfile.write(to_csv(ns_row))
+    tfile.write(to_csv(header_row))
     # write the keys values for each file
-    for whole_values in whole_values_l:
-        tfile.write(to_csv(whole_values))
+    for object_row in object_rows:
+        tfile.write(to_csv(object_row))
     tfile.close()
 
     # link it to the object
@@ -265,12 +291,13 @@ def main_loop(conn, script_params):
     namespace_l = script_params["Namespace (leave blank for default)"]
     separator = script_params["Separator"]
     include_parent = script_params["Include column(s) of parents name"]
+    include_namespace = script_params["Include namespace"]
 
     is_well = False
 
     # One file output per given ID
     obj_ancestry_l = []
-    annotation_dicts = []
+    annotation_dict_l = []
     obj_id_l, obj_name_l = [], []
     for source_object in conn.getObjects(source_type, source_ids):
 
@@ -282,8 +309,8 @@ def main_loop(conn, script_params):
         for target_obj in target_iterator(conn, source_object,
                                           target_type, is_tag):
             is_well = target_obj.OMERO_CLASS == "Well"
-            annotation_dicts.append(get_existing_map_annotions(target_obj,
-                                                               namespace_l))
+            annotation_dict_l.append(get_existing_map_annotions(target_obj,
+                                                                namespace_l))
             obj_id_l.append(target_obj.getId())
             obj_name_l.append(get_obj_name(target_obj))
             if include_parent:
@@ -297,7 +324,8 @@ def main_loop(conn, script_params):
     csv_name = "{}_keyval.csv".format(get_obj_name(source_object))
     file_ann = attach_csv_file(conn, result_obj, csv_name, obj_id_l,
                                obj_name_l, obj_ancestry_l,
-                               annotation_dicts, separator, is_well)
+                               annotation_dict_l, separator, is_well,
+                               include_namespace)
 
     message = ("The csv is attached to " +
                f"{result_obj.OMERO_CLASS}:{result_obj.getId()}")
@@ -391,6 +419,12 @@ def run_script():
             description="Weather to include or not the name of the parent(s)" +
                         " objects as columns in the .csv.", default=False),
 
+        scripts.Bool(
+            "Include namespace", optional=False,
+            grouping="2.3",
+            description="Weather to include or not the namespace" +
+                        " of the annotations in the .csv.", default=False),
+
         authors=["Christian Evenhuis", "MIF", "Tom Boissonnet"],
         institutions=["University of Technology Sydney", "CAi HHU"],
         contact="https://forum.image.sc/tag/omero",
@@ -400,7 +434,8 @@ def run_script():
         print("Input parameters:")
         keys = ["Data_Type", "IDs", "Target Data_Type",
                 "Namespace (leave blank for default)",
-                "Separator", "Include column(s) of parents name"]
+                "Separator", "Include column(s) of parents name",
+                "Include namespace"]
         for k in keys:
             print(f"\t- {k}: {params[k]}")
         print("\n####################################\n")
