@@ -93,6 +93,46 @@ def link_file_ann(conn, object_type, object_, file_ann):
         object_.linkAnnotation(file_ann)
 
 
+def get_tag_dict(conn):
+    """Gets a dict of all existing Tag Names with their
+    respective OMERO IDs as values
+
+    Parameters:
+    --------------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+
+    Returns:
+    -------------
+    tag_dict: dict
+        Dictionary in the format {tag1.name:tag1.id, tag2.name:tag2.id, ...}
+    """
+    meta = conn.getMetadataService()
+    taglist = meta.loadSpecifiedAnnotations("TagAnnotation", "", "", None)
+    tag_dict = {}
+    for tag in taglist:
+        name = tag.getTextValue().getValue()
+        tag_id = tag.getId().getValue()
+        if name not in tag_dict:
+            tag_dict[name] = tag_id
+    return tag_dict
+
+
+def tag_annotation(conn, obj, tag_value, tag_dict):
+    """Create a TagAnnotation on an Object.
+    If the Tag already exists use it."""
+    if tag_value not in tag_dict:
+        tag_ann = omero.gateway.TagAnnotationWrapper(conn)
+        tag_ann.setValue(tag_value)
+        tag_ann.save()
+        obj.linkAnnotation(tag_ann)
+        print(f"created new Tag '{tag_value}'.")
+    else:
+        tag_ann = conn.getObject("TagAnnotation", tag_dict[tag_value])
+        obj.linkAnnotation(tag_ann)
+    print(f"TagAnnotation:{tag_ann.id} created on {obj}")
+
+
 def read_csv(conn, original_file, delimiter):
     """ Dedicated function to read the CSV file """
     print("Using FileAnnotation",
@@ -315,11 +355,20 @@ def keyval_from_csv(conn, script_params):
 
 def annotate_object(conn, obj, row, header, namespaces, exclude_empty_value):
     updated = False
+    tag_dict = {}
     for curr_ns in set(namespaces):
         kv_list = []
         for ns, h, r in zip(namespaces, header, row):
             if ns == curr_ns and (len(r) > 0 or not exclude_empty_value):
-                kv_list.append([h, r])
+                # check for "tag" in header and create&link a TagAnnotation
+                if h.lower() == "tag":
+                    # create a dict of existing tags, once
+                    if len(tag_dict) == 0:
+                        tag_dict = get_tag_dict(conn)
+                    tag_annotation(conn, obj, r, tag_dict)
+                    updated = True
+                else:
+                    kv_list.append([h, r])
         if len(kv_list) > 0:  # Always exclude empty KV pairs
             # creation and linking of a MapAnnotation
             map_ann = omero.gateway.MapAnnotationWrapper(conn)
@@ -533,7 +582,8 @@ def parameters_parsing(client):
     to_exclude = list(map(lambda x: x.replace('<NAME>',
                                               params["Target name colname"]),
                           to_exclude))
-    params["Columns to exclude"] = to_exclude
+    # add Tag to excluded columns, as it is processed separately
+    params["Columns to exclude"] = to_exclude.append("tag")
 
     if params["Separator"] == "guess":
         params["Separator"] = None
