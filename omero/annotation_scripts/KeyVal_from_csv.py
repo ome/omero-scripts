@@ -313,10 +313,7 @@ def keyval_from_csv(conn, script_params):
     return message, result_obj
 
 
-def annotate_object(
-    conn, obj, row, header, namespaces,
-    cols_to_ignore, exclude_empty_value
-):
+def annotate_object(conn, obj, row, header, namespaces, exclude_empty_value):
     updated = False
     for curr_ns in set(namespaces):
         kv_list = []
