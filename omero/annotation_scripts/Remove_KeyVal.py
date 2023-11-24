@@ -56,32 +56,6 @@ AGREEMENT = ("I understand what I am doing and that this will result " +
              "in a batch deletion of key-value pairs from the server")
 
 
-def remove_map_annotations(conn, obj, namespace_l):
-    mapann_ids = []
-    forbidden_deletion = []
-    for namespace in namespace_l:
-        anns = list(obj.listAnnotations(ns=namespace))
-        for ann in anns:
-            if isinstance(ann, omero.gateway.MapAnnotationWrapper):
-                if ann.canEdit():  # If not, skipping it
-                    mapann_ids.append(ann.id)
-                else:
-                    forbidden_deletion.append(ann.id)
-
-    if len(mapann_ids) == 0:
-        return 0
-    print(f"\tMap Annotation IDs to delete: {mapann_ids}")
-    if len(forbidden_deletion) > 0:
-        print("\tMap Annotation IDs skipped (not permitted):",
-              f"{forbidden_deletion}\n")
-    try:
-        conn.deleteObjects("Annotation", mapann_ids)
-        return 1
-    except Exception:
-        print("Failed to delete links")
-        return 0
-
-
 def get_children_recursive(source_object, target_type):
     if CHILD_OBJECTS[source_object.OMERO_CLASS] == target_type:
         # Stop condition, we return the source_obj children
@@ -134,11 +108,10 @@ def target_iterator(conn, source_object, target_type, is_tag):
         yield target_obj
 
 
-def remove_keyvalue(conn, script_params):
+def main_loop(conn, script_params):
     """
-    File the list of objects
-    @param conn:             Blitz Gateway connection wrapper
-    @param script_params:     A map of the input parameters
+    For every object:
+     - Find annotations in the namespace and remove
     """
     source_type = script_params["Data_Type"]
     target_type = script_params["Target Data_Type"]
@@ -164,6 +137,32 @@ def remove_keyvalue(conn, script_params):
     message = f"Key value data deleted from {nsuccess} of {ntotal} objects"
 
     return message, result_obj
+
+
+def remove_map_annotations(conn, obj, namespace_l):
+    mapann_ids = []
+    forbidden_deletion = []
+    for namespace in namespace_l:
+        anns = list(obj.listAnnotations(ns=namespace))
+        for ann in anns:
+            if isinstance(ann, omero.gateway.MapAnnotationWrapper):
+                if ann.canEdit():  # If not, skipping it
+                    mapann_ids.append(ann.id)
+                else:
+                    forbidden_deletion.append(ann.id)
+
+    if len(mapann_ids) == 0:
+        return 0
+    print(f"\tMap Annotation IDs to delete: {mapann_ids}")
+    if len(forbidden_deletion) > 0:
+        print("\tMap Annotation IDs skipped (not permitted):",
+              f"{forbidden_deletion}\n")
+    try:
+        conn.deleteObjects("Annotation", mapann_ids)
+        return 1
+    except Exception:
+        print("Failed to delete links")
+        return 0
 
 
 def run_script():
@@ -254,7 +253,7 @@ def run_script():
 
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
-        message, robj = remove_keyvalue(conn, params)
+        message, robj = main_loop(conn, params)
         client.setOutput("Message", rstring(message))
         if robj is not None:
             client.setOutput("Result", robject(robj._obj))

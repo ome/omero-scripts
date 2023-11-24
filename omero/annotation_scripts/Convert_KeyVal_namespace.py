@@ -65,6 +65,83 @@ def get_children_recursive(source_object, target_type):
         return result
 
 
+def target_iterator(conn, source_object, target_type, is_tag):
+    if target_type == source_object.OMERO_CLASS:
+        target_obj_l = [source_object]
+    elif source_object.OMERO_CLASS == "PlateAcquisition":
+        # Check if there is more than one Run, otherwise
+        # it's equivalent to start from a plate (and faster this way)
+        plate_o = source_object.getParent()
+        wellsamp_l = get_children_recursive(plate_o, "WellSample")
+        if len(list(plate_o.listPlateAcquisitions())) > 1:
+            # Only case where we need to filter on PlateAcquisition
+            run_id = source_object.getId()
+            wellsamp_l = filter(lambda x: x._obj.plateAcquisition._id._val
+                                == run_id, wellsamp_l)
+        target_obj_l = [wellsamp.getImage() for wellsamp in wellsamp_l]
+    elif target_type == "PlateAcquisition":
+        # No direct children access from a plate
+        if source_object.OMERO_CLASS == "Screen":
+            plate_l = get_children_recursive(source_object, "Plate")
+        elif source_object.OMERO_CLASS == "Plate":
+            plate_l = [source_object]
+        target_obj_l = [r for p in plate_l for r in p.listPlateAcquisitions()]
+    elif is_tag:
+        target_obj_l = conn.getObjectsByAnnotations(target_type,
+                                                    [source_object.getId()])
+        # Need that to load objects
+        obj_ids = [o.getId() for o in target_obj_l]
+        target_obj_l = list(conn.getObjects(target_type, obj_ids))
+    else:
+        target_obj_l = get_children_recursive(source_object,
+                                              target_type)
+
+    print(f"Iterating objects from {source_object}:")
+    for target_obj in target_obj_l:
+        print(f"\t- {target_obj}")
+        yield target_obj
+
+
+def main_loop(conn, script_params):
+    """
+    For every object:
+     - Find annotations in the namespace
+     - Remove annotations with old namespace
+     - Create annotations with new namespace
+    """
+    source_type = script_params["Data_Type"]
+    target_type = script_params["Target Data_Type"]
+    source_ids = script_params["IDs"]
+    old_namespace = script_params["Old Namespace (leave blank for default)"]
+    new_namespace = script_params["New Namespace (leave blank for default)"]
+
+    ntarget_processed = 0
+    ntarget_updated = 0
+    result_obj = None
+
+    # One file output per given ID
+    for source_object in conn.getObjects(source_type, source_ids):
+        is_tag = source_type == "TagAnnotation"
+        for target_obj in target_iterator(conn, source_object,
+                                          target_type, is_tag):
+            ntarget_processed += 1
+            keyval_l, ann_l = get_existing_map_annotions(target_obj,
+                                                         old_namespace)
+            if len(keyval_l) > 0:
+                annotate_object(conn, target_obj, keyval_l, new_namespace)
+                remove_map_annotations(conn, target_obj, ann_l)
+                ntarget_updated += 1
+                if result_obj is None:
+                    result_obj = target_obj
+            else:
+                print("\tNo MapAnnotation found with that namespace\n")
+        print("\n------------------------------------\n")
+    message = f"Updated kv pairs to \
+        {ntarget_updated}/{ntarget_processed} {target_type}"
+
+    return message, result_obj
+
+
 def get_existing_map_annotions(obj, namespace_l):
     keyval_l, ann_l = [], []
     forbidden_deletion = []
@@ -105,77 +182,6 @@ def annotate_object(conn, obj, kv_list, namespace):
 
     print("\tMap Annotation created", map_ann.id)
     obj.linkAnnotation(map_ann)
-
-
-def target_iterator(conn, source_object, target_type, is_tag):
-    if target_type == source_object.OMERO_CLASS:
-        target_obj_l = [source_object]
-    elif source_object.OMERO_CLASS == "PlateAcquisition":
-        # Check if there is more than one Run, otherwise
-        # it's equivalent to start from a plate (and faster this way)
-        plate_o = source_object.getParent()
-        wellsamp_l = get_children_recursive(plate_o, "WellSample")
-        if len(list(plate_o.listPlateAcquisitions())) > 1:
-            # Only case where we need to filter on PlateAcquisition
-            run_id = source_object.getId()
-            wellsamp_l = filter(lambda x: x._obj.plateAcquisition._id._val
-                                == run_id, wellsamp_l)
-        target_obj_l = [wellsamp.getImage() for wellsamp in wellsamp_l]
-    elif target_type == "PlateAcquisition":
-        # No direct children access from a plate
-        if source_object.OMERO_CLASS == "Screen":
-            plate_l = get_children_recursive(source_object, "Plate")
-        elif source_object.OMERO_CLASS == "Plate":
-            plate_l = [source_object]
-        target_obj_l = [r for p in plate_l for r in p.listPlateAcquisitions()]
-    elif is_tag:
-        target_obj_l = conn.getObjectsByAnnotations(target_type,
-                                                    [source_object.getId()])
-        # Need that to load objects
-        obj_ids = [o.getId() for o in target_obj_l]
-        target_obj_l = list(conn.getObjects(target_type, obj_ids))
-    else:
-        target_obj_l = get_children_recursive(source_object,
-                                              target_type)
-
-    print(f"Iterating objects from {source_object}:")
-    for target_obj in target_obj_l:
-        print(f"\t- {target_obj}")
-        yield target_obj
-
-
-def replace_namespace(conn, script_params):
-    source_type = script_params["Data_Type"]
-    target_type = script_params["Target Data_Type"]
-    source_ids = script_params["IDs"]
-    old_namespace = script_params["Old Namespace (leave blank for default)"]
-    new_namespace = script_params["New Namespace (leave blank for default)"]
-
-    ntarget_processed = 0
-    ntarget_updated = 0
-    result_obj = None
-
-    # One file output per given ID
-    for source_object in conn.getObjects(source_type, source_ids):
-        is_tag = source_type == "TagAnnotation"
-        for target_obj in target_iterator(conn, source_object,
-                                          target_type, is_tag):
-            ntarget_processed += 1
-            keyval_l, ann_l = get_existing_map_annotions(target_obj,
-                                                         old_namespace)
-            if len(keyval_l) > 0:
-                annotate_object(conn, target_obj, keyval_l, new_namespace)
-                remove_map_annotations(conn, target_obj, ann_l)
-                ntarget_updated += 1
-                if result_obj is None:
-                    result_obj = target_obj
-            else:
-                print("\tNo MapAnnotation found with that namespace\n")
-        print("\n------------------------------------\n")
-    message = f"Updated kv pairs to \
-        {ntarget_updated}/{ntarget_processed} {target_type}"
-
-    return message, result_obj
 
 
 def run_script():
@@ -258,7 +264,7 @@ def run_script():
 
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
-        message, robj = replace_namespace(conn, params)
+        message, robj = main_loop(conn, params)
         client.setOutput("Message", rstring(message))
         if robj is not None:
             client.setOutput("Result", robject(robj._obj))

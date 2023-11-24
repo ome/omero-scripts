@@ -61,48 +61,11 @@ WEBCLIENT_URL = ""
 
 
 def get_obj_name(omero_obj):
+    """ Helper function """
     if omero_obj.OMERO_CLASS == "Well":
         return omero_obj.getWellPos()
     else:
         return omero_obj.getName()
-
-
-def get_existing_map_annotions(obj, namespace):
-    "Return list of KV with updated keys with NS and occurences"
-    annotation_l = []
-    for ann in obj.listAnnotations(ns=namespace):
-        if isinstance(ann, omero.gateway.MapAnnotationWrapper):
-            annotation_l.append(ann)
-    return annotation_l
-
-
-def group_keyvalues(objannotation_l):
-    """ Groups the keys and values of each object into a single dictionary """
-    header_row = OrderedDict()  # To keep the keys in order
-    keyval_obj_l = []
-    for ann_l in objannotation_l:
-        count_k_l = []
-        keyval_obj_l.append({})
-        for ann in ann_l:
-            for (k, v) in ann.getValue():
-                n_occurence = count_k_l.count(k)
-                pad_k = f"{n_occurence}#{k}"
-                keyval_obj_l[-1][pad_k] = v
-                header_row[pad_k] = None
-                count_k_l.append(k)
-    header_row = list(header_row.keys())
-    # TODO find how to sort columns when multiple exist
-    # or similar
-
-    rows = []
-    for keyval_obj in keyval_obj_l:
-        obj_dict = OrderedDict((k, "") for k in header_row)
-        obj_dict.update(keyval_obj)
-        rows.append(list(obj_dict.values()))
-
-    # Removing temporary padding
-    header_row = [k[k.find("#")+1:] for k in header_row]
-    return header_row, rows
 
 
 def get_children_recursive(source_object, target_type):
@@ -118,101 +81,6 @@ def get_children_recursive(source_object, target_type):
             # Going down in the Hierarchy list
             result.extend(get_children_recursive(child_obj, target_type))
         return result
-
-
-def sort_concat_rows(ns_row, header_row, rows, obj_id_l,
-                     obj_name_l, obj_ancestry_l):
-    def convert(text):
-        return int(text) if text.isdigit() else text.lower()
-
-    def alphanum_key(key):
-        return [convert(c) for c in re.split('([0-9]+)', key)]
-
-    def natural_sort(names):
-        # kudos to https://stackoverflow.com/a/4836734/10712860
-        names = list(map(alphanum_key, names))
-        return sorted(range(len(names)), key=names.__getitem__)
-
-    with_parents = len(obj_ancestry_l) > 0
-
-    prefixes = [""] * len(obj_name_l)
-    if with_parents:
-        for i in range(len(obj_ancestry_l[0])):
-            curr_name_list = [prf+names[i][1] for prf, names
-                              in zip(prefixes, obj_ancestry_l)]
-            curr_name_set = list(set(curr_name_list))
-            indexes = natural_sort(curr_name_set)
-            prefix_d = {curr_name_set[idx]: j for j, idx in enumerate(indexes)}
-            prefixes = [f"{prefix_d[name]}_" for name in curr_name_list]
-    curr_name_list = [prf+name for prf, name in zip(prefixes, obj_name_l)]
-    indexes = natural_sort(curr_name_list)
-
-    # End sorting, start concatenation
-
-    res_rows = []
-    for idx in indexes:
-        curr_row = [str(obj_id_l[idx])] + [obj_name_l[idx]] + rows[idx]
-        if with_parents:
-            curr_row = [e[1] for e in obj_ancestry_l[idx]] + curr_row
-        res_rows.append(curr_row)
-    header_row.insert(0, "OBJECT_ID")
-    header_row.insert(1, "OBJECT_NAME")
-    ns_row.insert(0, "")
-    ns_row.insert(1, "")
-
-    if with_parents:
-        i = 0
-        while "" in [e[0] for e in obj_ancestry_l[i]]:
-            i += 1  # Find the row with complete parent names
-        for j in range(len(obj_ancestry_l[i])):
-            header_row.insert(j, obj_ancestry_l[i][j][0].upper())
-            ns_row.insert(j, "")
-    ns_row[0] = "namespace"
-
-    print(f"\tColumn names: {header_row}", "\n")
-
-    return ns_row, header_row, res_rows
-
-
-def build_rows(annotation_dict_l, include_namespace):
-    ns_row = []
-    if include_namespace:
-        header_row, rows = [], [[] for i in range(len(annotation_dict_l[0]))]
-        for ns, annotation_l in annotation_dict_l.items():
-            if ns == 0:
-                continue
-            next_header, next_rows = group_keyvalues(annotation_l)
-            ns_row.extend([ns]*len(next_header))
-            header_row.extend(next_header)
-            for i, next_row in enumerate(next_rows):
-                rows[i].extend(next_row)
-    else:
-        header_row, rows = group_keyvalues(annotation_dict_l[0])
-    return ns_row, header_row, rows
-
-
-def attach_csv(conn, obj_, rows, separator, csv_name):
-    # create the tmp directory
-    tmp_dir = tempfile.mkdtemp(prefix='MIF_meta')
-    (fd, tmp_file) = tempfile.mkstemp(dir=tmp_dir, text=True)
-    tfile = os.fdopen(fd, 'w')
-    for row in rows:
-        tfile.write(f"{separator.join(row)}\n")
-    tfile.close()
-
-    # link it to the object
-    file_ann = conn.createFileAnnfromLocalFile(
-        tmp_file, origFilePathAndName=csv_name,
-        ns='KeyVal_export')
-    obj_.linkAnnotation(file_ann)
-
-    print(f"{file_ann} linked to {obj_}")
-
-    # remove the tmp file
-    os.remove(tmp_file)
-    os.rmdir(tmp_dir)
-
-    return file_ann.getFile()
 
 
 def target_iterator(conn, source_object, target_type, is_tag):
@@ -253,10 +121,15 @@ def target_iterator(conn, source_object, target_type, is_tag):
 
 
 def main_loop(conn, script_params):
-    ''' writes the data (list of dicts) to a file
-    @param conn:             Blitz Gateway connection wrapper
-    @param script_params:     A map of the input parameters
-    '''
+    """
+    For every object:
+     - Find annotations in the namespace and gather in a dict
+     - (opt) Gather ancestry
+    Finalize:
+     - Group all annotations together
+     - Sort rows (useful for wells)
+     - Write a single CSV file
+    """
     source_type = script_params["Data_Type"]
     target_type = script_params["Target Data_Type"]
     source_ids = script_params["IDs"]
@@ -320,6 +193,139 @@ def main_loop(conn, script_params):
                f"{result_obj.OMERO_CLASS}:{result_obj.getId()}")
 
     return message, file_ann, result_obj
+
+
+def get_existing_map_annotions(obj, namespace):
+    "Return list of KV with updated keys with NS and occurences"
+    annotation_l = []
+    for ann in obj.listAnnotations(ns=namespace):
+        if isinstance(ann, omero.gateway.MapAnnotationWrapper):
+            annotation_l.append(ann)
+    return annotation_l
+
+
+def build_rows(annotation_dict_l, include_namespace):
+    ns_row = []
+    if include_namespace:
+        header_row, rows = [], [[] for i in range(len(annotation_dict_l[0]))]
+        for ns, annotation_l in annotation_dict_l.items():
+            if ns == 0:
+                continue
+            next_header, next_rows = group_keyvalues(annotation_l)
+            ns_row.extend([ns]*len(next_header))
+            header_row.extend(next_header)
+            for i, next_row in enumerate(next_rows):
+                rows[i].extend(next_row)
+    else:
+        header_row, rows = group_keyvalues(annotation_dict_l[0])
+    return ns_row, header_row, rows
+
+
+def group_keyvalues(objannotation_l):
+    """ Groups the keys and values of each object into a single dictionary """
+    header_row = OrderedDict()  # To keep the keys in order
+    keyval_obj_l = []
+    for ann_l in objannotation_l:
+        count_k_l = []
+        keyval_obj_l.append({})
+        for ann in ann_l:
+            for (k, v) in ann.getValue():
+                n_occurence = count_k_l.count(k)
+                pad_k = f"{n_occurence}#{k}"
+                keyval_obj_l[-1][pad_k] = v
+                header_row[pad_k] = None
+                count_k_l.append(k)
+    header_row = list(header_row.keys())
+    # TODO find how to sort columns when multiple exist
+    # or similar
+
+    rows = []
+    for keyval_obj in keyval_obj_l:
+        obj_dict = OrderedDict((k, "") for k in header_row)
+        obj_dict.update(keyval_obj)
+        rows.append(list(obj_dict.values()))
+
+    # Removing temporary padding
+    header_row = [k[k.find("#")+1:] for k in header_row]
+    return header_row, rows
+
+
+def sort_concat_rows(ns_row, header_row, rows, obj_id_l,
+                     obj_name_l, obj_ancestry_l):
+    def convert(text):
+        return int(text) if text.isdigit() else text.lower()
+
+    def alphanum_key(key):
+        return [convert(c) for c in re.split('([0-9]+)', key)]
+
+    def natural_sort(names):
+        # kudos to https://stackoverflow.com/a/4836734/10712860
+        names = list(map(alphanum_key, names))
+        return sorted(range(len(names)), key=names.__getitem__)
+
+    with_parents = len(obj_ancestry_l) > 0
+
+    prefixes = [""] * len(obj_name_l)
+    if with_parents:
+        for i in range(len(obj_ancestry_l[0])):
+            curr_name_list = [prf+names[i][1] for prf, names
+                              in zip(prefixes, obj_ancestry_l)]
+            curr_name_set = list(set(curr_name_list))
+            indexes = natural_sort(curr_name_set)
+            prefix_d = {curr_name_set[idx]: j for j, idx in enumerate(indexes)}
+            prefixes = [f"{prefix_d[name]}_" for name in curr_name_list]
+    curr_name_list = [prf+name for prf, name in zip(prefixes, obj_name_l)]
+    indexes = natural_sort(curr_name_list)
+
+    # End sorting, start concatenation
+
+    res_rows = []
+    for idx in indexes:
+        curr_row = [str(obj_id_l[idx])] + [obj_name_l[idx]] + rows[idx]
+        if with_parents:
+            curr_row = [e[1] for e in obj_ancestry_l[idx]] + curr_row
+        res_rows.append(curr_row)
+    header_row.insert(0, "OBJECT_ID")
+    header_row.insert(1, "OBJECT_NAME")
+    ns_row.insert(0, "")
+    ns_row.insert(1, "")
+
+    if with_parents:
+        i = 0
+        while "" in [e[0] for e in obj_ancestry_l[i]]:
+            i += 1  # Find the row with complete parent names
+        for j in range(len(obj_ancestry_l[i])):
+            header_row.insert(j, obj_ancestry_l[i][j][0].upper())
+            ns_row.insert(j, "")
+    ns_row[0] = "namespace"
+
+    print(f"\tColumn names: {header_row}", "\n")
+
+    return ns_row, header_row, res_rows
+
+
+def attach_csv(conn, obj_, rows, separator, csv_name):
+    # create the tmp directory
+    tmp_dir = tempfile.mkdtemp(prefix='MIF_meta')
+    (fd, tmp_file) = tempfile.mkstemp(dir=tmp_dir, text=True)
+    tfile = os.fdopen(fd, 'w')
+    for row in rows:
+        tfile.write(f"{separator.join(row)}\n")
+    tfile.close()
+
+    # link it to the object
+    file_ann = conn.createFileAnnfromLocalFile(
+        tmp_file, origFilePathAndName=csv_name,
+        ns='KeyVal_export')
+    obj_.linkAnnotation(file_ann)
+
+    print(f"{file_ann} linked to {obj_}")
+
+    # remove the tmp file
+    os.remove(tmp_file)
+    os.rmdir(tmp_dir)
+
+    return file_ann.getFile()
 
 
 def run_script():

@@ -55,130 +55,11 @@ ALLOWED_PARAM = {
 
 
 def get_obj_name(omero_obj):
+    """ Helper function """
     if omero_obj.OMERO_CLASS == "Well":
         return omero_obj.getWellPos()
     else:
         return omero_obj.getName()
-
-
-def get_original_file(omero_obj):
-    """Find last AnnotationFile linked to object"""
-    file_ann = None
-    for ann in omero_obj.listAnnotations():
-        if ann.OMERO_TYPE == omero.model.FileAnnotationI:
-            file_name = ann.getFile().getName()
-            # Pick file by Ann ID (or name if ID is None)
-            if file_name.endswith(".csv") or file_name.endswith(".tsv"):
-                if (file_ann is None) or (ann.getDate() > file_ann.getDate()):
-                    # Get the most recent file
-                    file_ann = ann
-
-    assert file_ann is not None, f"No .csv FileAnnotation was found on \
-        {omero_obj.OMERO_CLASS}:{get_obj_name(omero_obj)}:{omero_obj.getId()}"
-
-    return file_ann
-
-
-def link_file_ann(conn, object_type, object_, file_ann):
-    """Link File Annotation to the Object, if not already linked."""
-    # Check for existing links
-    if object_type == "TagAnnotation":
-        print("CSV file cannot be attached to the parent tag")
-        return
-    links = list(conn.getAnnotationLinks(
-        object_type, parent_ids=[object_.getId()],
-        ann_ids=[file_ann.getId()]
-        ))
-    if len(links) == 0:
-        object_.linkAnnotation(file_ann)
-
-
-def get_tag_dict(conn):
-    """Gets a dict of all existing Tag Names with their
-    respective OMERO IDs as values
-
-    Parameters:
-    --------------
-    conn : ``omero.gateway.BlitzGateway`` object
-        OMERO connection.
-
-    Returns:
-    -------------
-    tag_dict: dict
-        Dictionary in the format {tag1.name:tag1.id, tag2.name:tag2.id, ...}
-    """
-    meta = conn.getMetadataService()
-    taglist = meta.loadSpecifiedAnnotations("TagAnnotation", "", "", None)
-    tag_dict = {}
-    for tag in taglist:
-        name = tag.getTextValue().getValue()
-        tag_id = tag.getId().getValue()
-        if name not in tag_dict:
-            tag_dict[name] = tag_id
-    return tag_dict
-
-
-def tag_annotation(conn, obj, tag_value, tag_dict):
-    """Create a TagAnnotation on an Object.
-    If the Tag already exists use it."""
-    if tag_value not in tag_dict:
-        tag_ann = omero.gateway.TagAnnotationWrapper(conn)
-        tag_ann.setValue(tag_value)
-        tag_ann.save()
-        obj.linkAnnotation(tag_ann)
-        print(f"created new Tag '{tag_value}'.")
-    else:
-        tag_ann = conn.getObject("TagAnnotation", tag_dict[tag_value])
-        obj.linkAnnotation(tag_ann)
-    print(f"TagAnnotation:{tag_ann.id} created on {obj}")
-
-
-def read_csv(conn, original_file, delimiter):
-    """ Dedicated function to read the CSV file """
-    print("Using FileAnnotation",
-          f"{original_file.id.val}:{original_file.name.val}")
-    provider = DownloadingOriginalFileProvider(conn)
-    # read the csv
-    temp_file = provider.get_original_file_data(original_file)
-    # Needs omero-py 5.9.1 or later
-    with open(temp_file.name, 'rt', encoding='utf-8-sig') as file_handle:
-        if delimiter is None:
-            try:  # Detecting csv delimiter from the first line
-                delimiter = csv.Sniffer().sniff(
-                    file_handle.readline(), ",;\t").delimiter
-                print(f"Using delimiter {delimiter}",
-                      "after reading one line")
-            except Exception:
-                # Send the error back to the UI
-                assert False, ("Failed to sniff CSV delimiter, " +
-                               "please specify the separator")
-
-        # reset to start and read whole file...
-        file_handle.seek(0)
-        rows = list(csv.reader(file_handle, delimiter=delimiter))
-
-    rowlen = len(rows[0])
-    error_msg = (
-        "CSV rows lenght mismatch: Header has {} " +
-        "items, while line {} has {}"
-    )
-    for i in range(1, len(rows)):
-        assert len(rows[i]) == rowlen, error_msg.format(
-            rowlen, i, len(rows[i])
-        )
-
-    # keys are in the header row (first row for no namespaces
-    # second row with namespaces declared)
-    namespaces = []
-    if rows[0][0].lower() == "namespace":
-        namespaces = [el.strip() for el in rows[0]]
-        namespaces = [ns if ns else NSCLIENTMAPANNOTATION for ns in namespaces]
-        rows = rows[1:]
-    header = [el.strip() for el in rows[0]]
-    rows = rows[1:]
-
-    print(f"Header: {header}\n")
-    return rows, header, namespaces
 
 
 def get_children_recursive(source_object, target_type):
@@ -234,7 +115,17 @@ def target_iterator(conn, source_object, target_type, is_tag):
     print()
 
 
-def keyval_from_csv(conn, script_params):
+def main_loop(conn, script_params):
+    """
+    Startup:
+     - Find CSV and read
+    For every object:
+     - Gather name and ID
+    Finalize:
+     - Find a match between CSV rows and objects
+     - Annotate the objects
+     - (opt) attach the CSV to the source object
+    """
     source_type = script_params["Data_Type"]
     target_type = script_params["Target Data_Type"]
     source_ids = script_params["IDs"]
@@ -257,6 +148,7 @@ def keyval_from_csv(conn, script_params):
     # One file output per given ID
     source_objects = conn.getObjects(source_type, source_ids)
     for source_object, file_ann_id in zip(source_objects, file_ids):
+        ntarget_updated_curr = 0
         if file_ann_id is not None:
             file_ann = conn.getObject("Annotation", oid=file_ann_id)
             assert file_ann is not None, f"Annotation {file_ann_id} not found"
@@ -331,15 +223,16 @@ def keyval_from_csv(conn, script_params):
 
             updated = annotate_object(
                 conn, target_obj, parsed_row, parsed_head, parsed_ns,
-                cols_to_ignore, exclude_empty_value
+                exclude_empty_value
             )
 
             if updated:
                 if result_obj is None:
                     result_obj = target_obj
                 ntarget_updated += 1
+                ntarget_updated_curr += 1
 
-        if ntarget_updated > 0 and attach_file:
+        if ntarget_updated_curr > 0 and attach_file:
             # Only attaching if this is successful
             link_file_ann(conn, source_type, source_object, file_ann)
         print("\n------------------------------------\n")
@@ -351,6 +244,72 @@ def keyval_from_csv(conn, script_params):
             (using {'ID' if use_id else 'name'} to identify them)."
 
     return message, result_obj
+
+
+def get_original_file(omero_obj):
+    """Find last AnnotationFile linked to object if no annotation is given"""
+    file_ann = None
+    for ann in omero_obj.listAnnotations():
+        if ann.OMERO_TYPE == omero.model.FileAnnotationI:
+            file_name = ann.getFile().getName()
+            # Pick file by Ann ID (or name if ID is None)
+            if file_name.endswith(".csv") or file_name.endswith(".tsv"):
+                if (file_ann is None) or (ann.getDate() > file_ann.getDate()):
+                    # Get the most recent file
+                    file_ann = ann
+
+    assert file_ann is not None, f"No .csv FileAnnotation was found on \
+        {omero_obj.OMERO_CLASS}:{get_obj_name(omero_obj)}:{omero_obj.getId()}"
+
+    return file_ann
+
+
+def read_csv(conn, original_file, delimiter):
+    """ Dedicated function to read the CSV file """
+    print("Using FileAnnotation",
+          f"{original_file.id.val}:{original_file.name.val}")
+    provider = DownloadingOriginalFileProvider(conn)
+    # read the csv
+    temp_file = provider.get_original_file_data(original_file)
+    # Needs omero-py 5.9.1 or later
+    with open(temp_file.name, 'rt', encoding='utf-8-sig') as file_handle:
+        if delimiter is None:
+            try:  # Detecting csv delimiter from the first line
+                delimiter = csv.Sniffer().sniff(
+                    file_handle.readline(), ",;\t").delimiter
+                print(f"Using delimiter {delimiter}",
+                      "after reading one line")
+            except Exception:
+                # Send the error back to the UI
+                assert False, ("Failed to sniff CSV delimiter, " +
+                               "please specify the separator")
+
+        # reset to start and read whole file...
+        file_handle.seek(0)
+        rows = list(csv.reader(file_handle, delimiter=delimiter))
+
+    rowlen = len(rows[0])
+    error_msg = (
+        "CSV rows lenght mismatch: Header has {} " +
+        "items, while line {} has {}"
+    )
+    for i in range(1, len(rows)):
+        assert len(rows[i]) == rowlen, error_msg.format(
+            rowlen, i, len(rows[i])
+        )
+
+    # keys are in the header row (first row for no namespaces
+    # second row with namespaces declared)
+    namespaces = []
+    if rows[0][0].lower() == "namespace":
+        namespaces = [el.strip() for el in rows[0]]
+        namespaces = [ns if ns else NSCLIENTMAPANNOTATION for ns in namespaces]
+        rows = rows[1:]
+    header = [el.strip() for el in rows[0]]
+    rows = rows[1:]
+
+    print(f"Header: {header}\n")
+    return rows, header, namespaces
 
 
 def annotate_object(conn, obj, row, header, namespaces, exclude_empty_value):
@@ -379,6 +338,60 @@ def annotate_object(conn, obj, row, header, namespaces, exclude_empty_value):
             print(f"MapAnnotation:{map_ann.id} created on {obj}")
             updated = True
     return updated
+
+
+def get_tag_dict(conn):
+    """Gets a dict of all existing Tag Names with their
+    respective OMERO IDs as values
+
+    Parameters:
+    --------------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+
+    Returns:
+    -------------
+    tag_dict: dict
+        Dictionary in the format {tag1.name:tag1.id, tag2.name:tag2.id, ...}
+    """
+    meta = conn.getMetadataService()
+    taglist = meta.loadSpecifiedAnnotations("TagAnnotation", "", "", None)
+    tag_dict = {}
+    for tag in taglist:
+        name = tag.getTextValue().getValue()
+        tag_id = tag.getId().getValue()
+        if name not in tag_dict:
+            tag_dict[name] = tag_id
+    return tag_dict
+
+
+def tag_annotation(conn, obj, tag_value, tag_dict):
+    """Create a TagAnnotation on an Object.
+    If the Tag already exists use it."""
+    if tag_value not in tag_dict:
+        tag_ann = omero.gateway.TagAnnotationWrapper(conn)
+        tag_ann.setValue(tag_value)
+        tag_ann.save()
+        obj.linkAnnotation(tag_ann)
+        print(f"created new Tag '{tag_value}'.")
+    else:
+        tag_ann = conn.getObject("TagAnnotation", tag_dict[tag_value])
+        obj.linkAnnotation(tag_ann)
+    print(f"TagAnnotation:{tag_ann.id} created on {obj}")
+
+
+def link_file_ann(conn, object_type, object_, file_ann):
+    """Link File Annotation to the Object, if not already linked."""
+    # Check for existing links
+    if object_type == "TagAnnotation":
+        print("CSV file cannot be attached to the parent tag")
+        return
+    links = list(conn.getAnnotationLinks(
+        object_type, parent_ids=[object_.getId()],
+        ann_ids=[file_ann.getId()]
+        ))
+    if len(links) == 0:
+        object_.linkAnnotation(file_ann)
 
 
 def run_script():
@@ -521,7 +534,7 @@ def run_script():
 
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
-        message, robj = keyval_from_csv(conn, params)
+        message, robj = main_loop(conn, params)
         client.setOutput("Message", rstring(message))
         if robj is not None:
             client.setOutput("Result", robject(robj._obj))
@@ -583,7 +596,8 @@ def parameters_parsing(client):
                                               params["Target name colname"]),
                           to_exclude))
     # add Tag to excluded columns, as it is processed separately
-    params["Columns to exclude"] = to_exclude.append("tag")
+    to_exclude.append("tag")
+    params["Columns to exclude"] = to_exclude
 
     if params["Separator"] == "guess":
         params["Separator"] = None
