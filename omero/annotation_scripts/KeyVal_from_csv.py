@@ -138,6 +138,7 @@ def main_loop(conn, script_params):
     attach_file = script_params["Attach csv to parents"]
     exclude_empty_value = script_params["Exclude empty values"]
     split_on = script_params["Split value on"]
+    use_personal_tags = script_params["Use only personal Tags"]
 
     ntarget_processed = 0
     ntarget_updated = 0
@@ -223,7 +224,7 @@ def main_loop(conn, script_params):
 
             updated = annotate_object(
                 conn, target_obj, parsed_row, parsed_head, parsed_ns,
-                exclude_empty_value
+                exclude_empty_value, use_personal_tags
             )
 
             if updated:
@@ -312,7 +313,8 @@ def read_csv(conn, original_file, delimiter):
     return rows, header, namespaces
 
 
-def annotate_object(conn, obj, row, header, namespaces, exclude_empty_value):
+def annotate_object(conn, obj, row, header, namespaces, exclude_empty_value,
+                    use_personal_tags):
     updated = False
     tag_dict = {}
     for curr_ns in set(namespaces):
@@ -323,7 +325,7 @@ def annotate_object(conn, obj, row, header, namespaces, exclude_empty_value):
                 if h.lower() == "tag":
                     # create a dict of existing tags, once
                     if len(tag_dict) == 0:
-                        tag_dict = get_tag_dict(conn)
+                        tag_dict = get_tag_dict(conn, use_personal_tags)
                     tag_annotation(conn, obj, r, tag_dict)
                     updated = True
                 else:
@@ -340,7 +342,7 @@ def annotate_object(conn, obj, row, header, namespaces, exclude_empty_value):
     return updated
 
 
-def get_tag_dict(conn):
+def get_tag_dict(conn, use_personal_tags):
     """Gets a dict of all existing Tag Names with their
     respective OMERO IDs as values
 
@@ -348,6 +350,8 @@ def get_tag_dict(conn):
     --------------
     conn : ``omero.gateway.BlitzGateway`` object
         OMERO connection.
+    use_personal_tags: ``Boolean``, indicates the use of only tags
+    owned by the user.
 
     Returns:
     -------------
@@ -358,6 +362,8 @@ def get_tag_dict(conn):
     taglist = meta.loadSpecifiedAnnotations("TagAnnotation", "", "", None)
     tag_dict = {}
     for tag in taglist:
+        if use_personal_tags and tag.getOwner().id == conn.getUserId():
+            continue
         name = tag.getTextValue().getValue()
         tag_id = tag.getId().getValue()
         if name not in tag_dict:
@@ -367,13 +373,16 @@ def get_tag_dict(conn):
 
 def tag_annotation(conn, obj, tag_value, tag_dict):
     """Create a TagAnnotation on an Object.
-    If the Tag already exists use it."""
+    If the Tag already exists use it.
+    """
+
     if tag_value not in tag_dict:
         tag_ann = omero.gateway.TagAnnotationWrapper(conn)
         tag_ann.setValue(tag_value)
         tag_ann.save()
         obj.linkAnnotation(tag_ann)
         print(f"created new Tag '{tag_value}'.")
+        tag_dict[tag_value] = tag_ann.id
     else:
         tag_ann = conn.getObject("TagAnnotation", tag_dict[tag_value])
         obj.linkAnnotation(tag_ann)
@@ -502,7 +511,7 @@ def run_script():
 
         scripts.Bool(
             "Exclude empty values", grouping="2.5", default=False,
-            description="Exclude a key-value if the value is empty"),
+            description="Exclude a key-value if the value is empty."),
 
         scripts.Bool(
             "Attach csv to parents", grouping="2.6", default=False,
@@ -514,6 +523,12 @@ def run_script():
             default="",
             description="Split values according to that input to " +
             "create key duplicates."),
+
+        scripts.Bool(
+            "Use only personal Tags", grouping="2.8", default=False,
+            description="Determines if Tags of other users in the group" +
+            "can be used on objects.\n Using only personal Tags might" +
+            "lead to multiple Tags with the same name in one OMERO-group."),
 
         authors=["Christian Evenhuis", "Tom Boissonnet"],
         institutions=["MIF UTS", "CAi HHU"],
