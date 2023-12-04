@@ -27,6 +27,7 @@ from omero.gateway import BlitzGateway
 from omero.rtypes import rstring, rlong, robject
 import omero.scripts as scripts
 from omero.constants.metadata import NSCLIENTMAPANNOTATION
+from omero.model import AnnotationAnnotationLinkI
 from omero.util.populate_roi import DownloadingOriginalFileProvider
 
 import csv
@@ -326,7 +327,14 @@ def annotate_object(conn, obj, row, header, namespaces, exclude_empty_value,
                     # create a dict of existing tags, once
                     if len(tag_dict) == 0:
                         tag_dict = get_tag_dict(conn, use_personal_tags)
-                    tag_annotation(conn, obj, r, tag_dict)
+                    # create a list of tags
+                    tags_raw = r.split(",").strip()
+                    tags = []
+                    # separate the TagSet from the Tag --> [Tag, TagSet]
+                    for tag in tags_raw:
+                        tags.append([x.replace("]", "") for x in
+                                     tag.split("[")])
+                    tag_annotation(conn, obj, tags, tag_dict)
                     updated = True
                 else:
                     kv_list.append([h, r])
@@ -355,38 +363,86 @@ def get_tag_dict(conn, use_personal_tags):
 
     Returns:
     -------------
-    tag_dict: dict
-        Dictionary in the format {tag1.name:tag1.id, tag2.name:tag2.id, ...}
+    tag_dict: ``dictionary`` {tag_name : {tagSet_name : tag_id}}
     """
     meta = conn.getMetadataService()
     taglist = meta.loadSpecifiedAnnotations("TagAnnotation", "", "", None)
     tag_dict = {}
     for tag in taglist:
-        if use_personal_tags and tag.getOwner().id == conn.getUserId():
+        if use_personal_tags and tag.getOwner().id != conn.getUserId():
             continue
         name = tag.getTextValue().getValue()
         tag_id = tag.getId().getValue()
+        # check if it has parents, assert the namespace is correct and
+        # then add them as a dict
+        parents = {"", tag_id}
+        raw_links = list(conn.getAnnotationLinks("TagAnnotation",
+                                                 ann_ids=[tag_id]))
+        if raw_links:
+            parents = {link.parent.textValue.val: tag_id for link
+                       in raw_links if link.parent.ns.val ==
+                       "openmicroscopy.org/omero/insight/tagset"}
         if name not in tag_dict:
-            tag_dict[name] = tag_id
+            tag_dict[name] = parents
+
     return tag_dict
 
 
-def tag_annotation(conn, obj, tag_value, tag_dict):
+def tag_annotation(conn, obj, tags, tag_dict):
     """Create a TagAnnotation on an Object.
     If the Tag already exists use it.
     """
+    update = conn.getUpdateService()
+    for tag in tags:
+        tag_value = tag[0]
+        if len(tag) > 1:
+            tagSet = tag[1]
+        else:
+            tagSet = ""
 
-    if tag_value not in tag_dict:
-        tag_ann = omero.gateway.TagAnnotationWrapper(conn)
-        tag_ann.setValue(tag_value)
-        tag_ann.save()
-        obj.linkAnnotation(tag_ann)
-        print(f"created new Tag '{tag_value}'.")
-        tag_dict[tag_value] = tag_ann.id
-    else:
-        tag_ann = conn.getObject("TagAnnotation", tag_dict[tag_value])
-        obj.linkAnnotation(tag_ann)
-    print(f"TagAnnotation:{tag_ann.id} created on {obj}")
+        # if the Tag does not exist
+        if tag_value not in tag_dict:
+            # create TagAnnotation
+            tag_ann = omero.gateway.TagAnnotationWrapper(conn)
+            tag_ann.setValue(tag_value)
+            tag_ann.save()
+            obj.linkAnnotation(tag_ann)
+            print(f"created new Tag '{tag_value}'.")
+            # update tag dictionary
+            tag_dict[tag_value] = {tagSet: tag_ann.id}
+            if tagSet:
+                if tagSet not in tag_dict:
+                    # create new TagSet
+                    parent_tag = omero.gateway.TagAnnotationWrapper(conn)
+                    parent_tag.setValue(tagSet)
+                    parent_tag.ns = "openmicroscopy.org/omero/insight/tagset"
+                    parent_tag.save()
+                    # update tag dictionary
+                    tag_dict[tagSet] = {"": parent_tag.id}
+                else:
+                    # or get existing
+                    parent_tag = conn.getObject("TagAnnotation",
+                                                tag_dict[tagSet][""])
+                # create a Link and link Tag and TagSet
+                link = AnnotationAnnotationLinkI()
+                link.parent = parent_tag._obj
+                link.child = tag_ann._obj
+                update.saveObject(link)
+
+        # if the Tag does exist
+        else:
+            if tagSet and tagSet not in tag_dict:
+                # create new TagSet
+                parent_tag = omero.gateway.TagAnnotationWrapper(conn)
+                parent_tag.setValue(tagSet)
+                parent_tag.ns = "openmicroscopy.org/omero/insight/tagset"
+                parent_tag.save()
+                # update tag dictionary
+                tag_dict[tagSet] = {"": parent_tag.id}
+            tag_ann = conn.getObject("TagAnnotation",
+                                     tag_dict[tag_value][tagSet])
+            obj.linkAnnotation(tag_ann)
+        print(f"TagAnnotation:{tag_ann.id} created on {obj}")
 
 
 def link_file_ann(conn, object_type, object_, file_ann):
