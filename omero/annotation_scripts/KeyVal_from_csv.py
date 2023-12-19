@@ -27,7 +27,8 @@ from omero.gateway import BlitzGateway
 from omero.rtypes import rstring, rlong, robject
 import omero.scripts as scripts
 from omero.constants.metadata import NSCLIENTMAPANNOTATION
-from omero.model import AnnotationAnnotationLinkI
+from omero.constants.metadata import NSINSIGHTTAGSET
+from omero.model import AnnotationAnnotationLinkI, TagAnnotationI
 from omero.util.populate_roi import DownloadingOriginalFileProvider
 
 import csv
@@ -140,10 +141,13 @@ def main_loop(conn, script_params):
     exclude_empty_value = script_params["Exclude empty values"]
     split_on = script_params["Split value on"]
     use_personal_tags = script_params["Use only personal Tags"]
+    file_ann_multiplied = script_params["File_Annotation_multiplied"]
 
     ntarget_processed = 0
     ntarget_updated = 0
-    missing_names = 0
+    missing_names = set()
+    processed_names = set()
+    total_missing_names = 0
 
     result_obj = None
 
@@ -204,11 +208,21 @@ def main_loop(conn, script_params):
         for row in rows:
             # Iterate the CSV rows and search for the matching target
             target_id = row[idx_id]
+            # skip empty rows
+            if target_id == "":
+                continue
             if target_id in target_d.keys():
                 target_obj = target_d[target_id]
+                # add name/id to processed set
+                if file_ann_multiplied:
+                    processed_names.add(target_id)
             else:
-                missing_names += 1
-                print(f"Not found: {target_id}")
+                # add name/id to missing set
+                if file_ann_multiplied:
+                    missing_names.add(target_id)
+                else:
+                    total_missing_names += 1
+                    print(f"Not found: {target_id}")
                 continue
 
             if split_on != "":
@@ -241,8 +255,17 @@ def main_loop(conn, script_params):
 
     message = f"Added KV-pairs to \
         {ntarget_updated}/{ntarget_processed} {target_type}"
-    if missing_names > 0:
-        message += f". {missing_names} {target_type} not found \
+
+    if file_ann_multiplied and len(missing_names) > 0:
+        # subtract the processed names/ids from the
+        # missing ones and print the missing names/ids
+        missing_names = missing_names - processed_names
+        if len(missing_names) > 0:
+            print(f"Not found: {missing_names}")
+        total_missing_names = len(missing_names)
+
+    if total_missing_names > 0:
+        message += f". {total_missing_names} {target_type} not found \
             (using {'ID' if use_id else 'name'} to identify them)."
 
     return message, result_obj
@@ -328,9 +351,10 @@ def annotate_object(conn, obj, row, header, namespaces, exclude_empty_value,
                     if len(tag_dict) == 0:
                         tag_dict = get_tag_dict(conn, use_personal_tags)
                     # create a list of tags
-                    tags_raw = r.split(",").strip()
+                    tags_raw = [tag.strip() for tag in r.split(",")]
                     tags = []
-                    # separate the TagSet from the Tag --> [Tag, TagSet]
+                    # separate the TagSet from the Tag -->
+                    # [[Tag1, TagSet], [Tag2]]
                     for tag in tags_raw:
                         tags.append([x.replace("]", "") for x in
                                      tag.split("[")])
@@ -352,7 +376,7 @@ def annotate_object(conn, obj, row, header, namespaces, exclude_empty_value,
 
 def get_tag_dict(conn, use_personal_tags):
     """Gets a dict of all existing Tag Names with their
-    respective OMERO IDs as values
+    respective OMERO IDs as values.
 
     Parameters:
     --------------
@@ -364,6 +388,10 @@ def get_tag_dict(conn, use_personal_tags):
     Returns:
     -------------
     tag_dict: ``dictionary`` {tag_name : {tagSet_name : tag_id}}
+        tagSet_name:
+                        "" for a TagAnnotation w/o TagSet parent\n
+                        "*" for a TagSet\n
+                        "<TagSetName>" for a TagAnnotation with a TagSet parent
     """
     meta = conn.getMetadataService()
     taglist = meta.loadSpecifiedAnnotations("TagAnnotation", "", "", None)
@@ -373,9 +401,14 @@ def get_tag_dict(conn, use_personal_tags):
             continue
         name = tag.getTextValue().getValue()
         tag_id = tag.getId().getValue()
+        namespace = tag.getNs()
+        if namespace is not None and\
+                namespace._val == "openmicroscopy.org/omero/insight/tagset":
+            parents = {"*": tag_id}
+        else:
+            parents = {"": tag_id}
         # check if it has parents, assert the namespace is correct and
         # then add them as a dict
-        parents = {"", tag_id}
         raw_links = list(conn.getAnnotationLinks("TagAnnotation",
                                                  ann_ids=[tag_id]))
         if raw_links:
@@ -383,7 +416,8 @@ def get_tag_dict(conn, use_personal_tags):
                        in raw_links if link.parent.ns.val ==
                        "openmicroscopy.org/omero/insight/tagset"}
         if name not in tag_dict:
-            tag_dict[name] = parents
+            tag_dict[name] = {}
+        tag_dict[name].update(parents)
 
     return tag_dict
 
@@ -401,7 +435,9 @@ def tag_annotation(conn, obj, tags, tag_dict):
             tagSet = ""
 
         # if the Tag does not exist
-        if tag_value not in tag_dict:
+        # also check for maybe existing TagSet with same name
+        if tag_value not in tag_dict or tag_value in tag_dict\
+                and "" not in tag_dict[tag_value]:
             # create TagAnnotation
             tag_ann = omero.gateway.TagAnnotationWrapper(conn)
             tag_ann.setValue(tag_value)
@@ -410,38 +446,72 @@ def tag_annotation(conn, obj, tags, tag_dict):
             print(f"created new Tag '{tag_value}'.")
             # update tag dictionary
             tag_dict[tag_value] = {tagSet: tag_ann.id}
+
             if tagSet:
-                if tagSet not in tag_dict:
+                # check if the TagSet exists,
+                # respect potential Tag with the same name
+                if tagSet not in tag_dict or tagSet in tag_dict\
+                        and "*" not in tag_dict[tagSet]:
                     # create new TagSet
-                    parent_tag = omero.gateway.TagAnnotationWrapper(conn)
-                    parent_tag.setValue(tagSet)
-                    parent_tag.ns = "openmicroscopy.org/omero/insight/tagset"
-                    parent_tag.save()
+                    parent_tag = TagAnnotationI()
+                    parent_tag.textValue = rstring(tagSet)
+                    parent_tag.ns = rstring(NSINSIGHTTAGSET)
+                    parent_tag = update.saveAndReturnObject(parent_tag)
+                    print(f"Created new TagSet {tagSet} {parent_tag.id.val}")
                     # update tag dictionary
-                    tag_dict[tagSet] = {"": parent_tag.id}
+                    tag_dict[tagSet] = {"*": parent_tag.id}
                 else:
                     # or get existing
                     parent_tag = conn.getObject("TagAnnotation",
-                                                tag_dict[tagSet][""])
+                                                tag_dict[tagSet]["*"])
                 # create a Link and link Tag and TagSet
                 link = AnnotationAnnotationLinkI()
-                link.parent = parent_tag._obj
+                link.parent = parent_tag
                 link.child = tag_ann._obj
                 update.saveObject(link)
 
         # if the Tag does exist
         else:
-            if tagSet and tagSet not in tag_dict:
-                # create new TagSet
-                parent_tag = omero.gateway.TagAnnotationWrapper(conn)
-                parent_tag.setValue(tagSet)
-                parent_tag.ns = "openmicroscopy.org/omero/insight/tagset"
-                parent_tag.save()
+            # if the correct Tag-TagSet combo does not exist
+            if tagSet and tagSet not in tag_dict[tag_value]:
+                #  if the TagSet does not exist
+                if tagSet not in tag_dict:
+                    # create new TagSet
+                    parent_tag = TagAnnotationI()
+                    parent_tag.textValue = rstring(tagSet)
+                    parent_tag.ns = rstring(NSINSIGHTTAGSET)
+                    parent_tag = update.saveAndReturnObject(parent_tag)
+                    print(f"Created new TagSet {tagSet} {parent_tag.id.val}")
+                    # update tag dictionary
+                    tag_dict[tagSet] = {"*": parent_tag.id}
+                # if the TagSet does exist but does not contain the Tag
+                else:
+                    parent_tag = conn.getObject("TagAnnotation",
+                                                tag_dict[tagSet]["*"])
+                # create TagAnnotation
+                print(f"creating new TagAnnotation for '{tag_value}'" +
+                      f"in the TagSet '{tagSet}'")
+                tag_ann = omero.gateway.TagAnnotationWrapper(conn)
+                tag_ann.setValue(tag_value)
+                tag_ann.save()
                 # update tag dictionary
-                tag_dict[tagSet] = {"": parent_tag.id}
-            tag_ann = conn.getObject("TagAnnotation",
-                                     tag_dict[tag_value][tagSet])
-            obj.linkAnnotation(tag_ann)
+                tag_dict[tag_value] = {tagSet: parent_tag.id}
+                # create a Link and link Tag and TagSet
+                link = AnnotationAnnotationLinkI()
+                link.parent = parent_tag
+                link.child = tag_ann._obj
+                update.saveObject(link)
+                obj.linkAnnotation(tag_ann)
+            # if the correct Tag-TagSet combo exists
+            elif tagSet and tagSet in tag_dict[tag_value]:
+                tag_ann = conn.getObject("TagAnnotation",
+                                         tag_dict[tag_value][tagSet])
+                obj.linkAnnotation(tag_ann)
+            elif not tagSet:
+                tag_ann = conn.getObject("TagAnnotation",
+                                         tag_dict[tag_value][""])
+                obj.linkAnnotation(tag_ann)
+
         print(f"TagAnnotation:{tag_ann.id} created on {obj}")
 
 
@@ -654,6 +724,7 @@ def parameters_parsing(client):
     if len(params["File_Annotation"]) == 1:
         # Poulate the parameter with None or same ID for all source
         params["File_Annotation"] *= len(params["IDs"])
+        params["File_Annotation_multiplied"] = True
     params["File_Annotation"] = list(map(int, params["File_Annotation"]))
 
     assert len(params["File_Annotation"]) == len(params["IDs"]), "Number of \
@@ -666,8 +737,6 @@ def parameters_parsing(client):
     to_exclude = list(map(lambda x: x.replace('<NAME>',
                                               params["Target name colname"]),
                           to_exclude))
-    # add Tag to excluded columns, as it is processed separately
-    to_exclude.append("tag")
     params["Columns to exclude"] = to_exclude
 
     if params["Separator"] == "guess":
