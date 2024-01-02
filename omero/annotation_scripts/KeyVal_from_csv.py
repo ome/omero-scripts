@@ -141,6 +141,7 @@ def main_loop(conn, script_params):
     exclude_empty_value = script_params["Exclude empty values"]
     split_on = script_params["Split value on"]
     use_personal_tags = script_params["Use only personal Tags"]
+    create_new_tags = script_params["Create new Tags"]
     file_ann_multiplied = script_params["File_Annotation_multiplied"]
 
     ntarget_processed = 0
@@ -239,7 +240,7 @@ def main_loop(conn, script_params):
 
             updated = annotate_object(
                 conn, target_obj, parsed_row, parsed_head, parsed_ns,
-                exclude_empty_value, use_personal_tags
+                exclude_empty_value, use_personal_tags, create_new_tags
             )
 
             if updated:
@@ -338,9 +339,10 @@ def read_csv(conn, original_file, delimiter):
 
 
 def annotate_object(conn, obj, row, header, namespaces, exclude_empty_value,
-                    use_personal_tags):
+                    use_personal_tags, create_new_tags):
     updated = False
     tag_dict = {}
+    print(f"-->processing {obj}")
     for curr_ns in set(namespaces):
         kv_list = []
         for ns, h, r in zip(namespaces, header, row):
@@ -354,11 +356,11 @@ def annotate_object(conn, obj, row, header, namespaces, exclude_empty_value,
                     tags_raw = [tag.strip() for tag in r.split(",")]
                     tags = []
                     # separate the TagSet from the Tag -->
-                    # [[Tag1, TagSet], [Tag2]]
+                    # [[Tag1, TagSet(or TagId)], [Tag2]]
                     for tag in tags_raw:
                         tags.append([x.replace("]", "") for x in
                                      tag.split("[")])
-                    tag_annotation(conn, obj, tags, tag_dict)
+                    tag_annotation(conn, obj, tags, tag_dict, create_new_tags)
                     updated = True
                 else:
                     kv_list.append([h, r])
@@ -397,7 +399,8 @@ def get_tag_dict(conn, use_personal_tags):
     taglist = meta.loadSpecifiedAnnotations("TagAnnotation", "", "", None)
     tag_dict = {}
     for tag in taglist:
-        if use_personal_tags and tag.getOwner().id != conn.getUserId():
+        if use_personal_tags and tag.getDetails()._owner._id._val !=\
+                conn.getUserId():
             continue
         name = tag.getTextValue().getValue()
         tag_id = tag.getId().getValue()
@@ -422,7 +425,7 @@ def get_tag_dict(conn, use_personal_tags):
     return tag_dict
 
 
-def tag_annotation(conn, obj, tags, tag_dict):
+def tag_annotation(conn, obj, tags, tag_dict, create_new_tags):
     """Create a TagAnnotation on an Object.
     If the Tag already exists use it.
     """
@@ -430,14 +433,26 @@ def tag_annotation(conn, obj, tags, tag_dict):
     for tag in tags:
         tag_value = tag[0]
         if len(tag) > 1:
-            tagSet = tag[1]
+            # check if it is an Id or a TagSet name
+            if tag[1].strip().isnumeric():
+                tagId = int(tag[1].strip())
+                tagSet = ""
+            else:
+                tagSet = tag[1]
         else:
             tagSet = ""
+            tagId = int()
 
+        # check if a Tag Set exists with the same name as the tag
+        condition = tag_value in tag_dict and len(tag_dict[tag_value]) == 1\
+            and "*" in tag_dict[tag_value]
         # if the Tag does not exist
         # also check for maybe existing TagSet with same name
-        if tag_value not in tag_dict or tag_value in tag_dict\
-                and "" not in tag_dict[tag_value]:
+        if tag_value not in tag_dict or condition:
+            assert create_new_tags is True, (f"Tag '{tag_value}'" +
+                                             " does not exist but" +
+                                             " creation of new Tags" +
+                                             " is not permitted")
             # create TagAnnotation
             tag_ann = omero.gateway.TagAnnotationWrapper(conn)
             tag_ann.setValue(tag_value)
@@ -463,7 +478,7 @@ def tag_annotation(conn, obj, tags, tag_dict):
                 else:
                     # or get existing
                     parent_tag = conn.getObject("TagAnnotation",
-                                                tag_dict[tagSet]["*"])
+                                                tag_dict[tagSet]["*"])._obj
                 # create a Link and link Tag and TagSet
                 link = AnnotationAnnotationLinkI()
                 link.parent = parent_tag
@@ -476,6 +491,10 @@ def tag_annotation(conn, obj, tags, tag_dict):
             if tagSet and tagSet not in tag_dict[tag_value]:
                 #  if the TagSet does not exist
                 if tagSet not in tag_dict:
+                    assert create_new_tags is True, (f"Tag Set '{tagSet}'" +
+                                                     " does not exist but" +
+                                                     " creation of new Tags" +
+                                                     " is not permitted")
                     # create new TagSet
                     parent_tag = TagAnnotationI()
                     parent_tag.textValue = rstring(tagSet)
@@ -487,7 +506,7 @@ def tag_annotation(conn, obj, tags, tag_dict):
                 # if the TagSet does exist but does not contain the Tag
                 else:
                     parent_tag = conn.getObject("TagAnnotation",
-                                                tag_dict[tagSet]["*"])
+                                                tag_dict[tagSet]["*"])._obj
                 # create TagAnnotation
                 print(f"creating new TagAnnotation for '{tag_value}'" +
                       f"in the TagSet '{tagSet}'")
@@ -507,9 +526,21 @@ def tag_annotation(conn, obj, tags, tag_dict):
                 tag_ann = conn.getObject("TagAnnotation",
                                          tag_dict[tag_value][tagSet])
                 obj.linkAnnotation(tag_ann)
-            elif not tagSet:
+            # if there is just a normal Tag without Tag Set
+            elif not tagSet and not tagId:
                 tag_ann = conn.getObject("TagAnnotation",
                                          tag_dict[tag_value][""])
+                obj.linkAnnotation(tag_ann)
+            # if there is a TagId given
+            elif tagId:
+                # check if the Tag-Id exists
+                keys = []
+                for key in tag_dict.values():
+                    for k in key.values():
+                        keys.append(k)
+                assert tagId in keys, (f"The Tag-Id '{tagId}' is not" +
+                                       " in the permitted selection of Tags")
+                tag_ann = conn.getObject("TagAnnotation", tagId)
                 obj.linkAnnotation(tag_ann)
 
         print(f"TagAnnotation:{tag_ann.id} created on {obj}")
