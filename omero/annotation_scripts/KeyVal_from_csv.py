@@ -653,8 +653,13 @@ def run_script():
         scripts.Bool(
             "Use only personal Tags", grouping="2.8", default=False,
             description="Determines if Tags of other users in the group" +
-            "can be used on objects.\n Using only personal Tags might" +
+            " can be used on objects.\n Using only personal Tags might" +
             "lead to multiple Tags with the same name in one OMERO-group."),
+
+        scripts.Bool(
+            "Create new Tags", grouping="2.9", default=False,
+            description="Creates new Tags and Tag Sets if the ones" +
+            " specified in the .csv do not exist."),
 
         authors=["Christian Evenhuis", "Tom Boissonnet"],
         institutions=["MIF UTS", "CAi HHU"],
