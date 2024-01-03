@@ -360,7 +360,9 @@ def annotate_object(conn, obj, row, header, namespaces, exclude_empty_value,
                     for tag in tags_raw:
                         tags.append([x.replace("]", "") for x in
                                      tag.split("[")])
-                    tag_annotation(conn, obj, tags, tag_dict, create_new_tags)
+                    # annotate the Tags and return the updated tag dictionary
+                    tag_dict = tag_annotation(conn, obj, tags, tag_dict,
+                                              create_new_tags)
                     updated = True
                 else:
                     kv_list.append([h, r])
@@ -443,12 +445,10 @@ def tag_annotation(conn, obj, tags, tag_dict, create_new_tags):
             tagSet = ""
             tagId = int()
 
-        # check if a Tag Set exists with the same name as the tag
-        condition = tag_value in tag_dict and len(tag_dict[tag_value]) == 1\
-            and "*" in tag_dict[tag_value]
         # if the Tag does not exist
-        # also check for maybe existing TagSet with same name
-        if tag_value not in tag_dict or condition:
+            # check if a Tag Set exists with the same name as the tag
+        if tag_value not in tag_dict or tag_value in tag_dict and "" not\
+                in tag_dict[tag_value]:
             assert create_new_tags is True, (f"Tag '{tag_value}'" +
                                              " does not exist but" +
                                              " creation of new Tags" +
@@ -460,7 +460,10 @@ def tag_annotation(conn, obj, tags, tag_dict, create_new_tags):
             obj.linkAnnotation(tag_ann)
             print(f"created new Tag '{tag_value}'.")
             # update tag dictionary
-            tag_dict[tag_value] = {tagSet: tag_ann.id}
+            if tag_value not in tag_dict:
+                tag_dict[tag_value] = {"": tag_ann.id}
+            else:
+                tag_dict[tag_value][""] = tag_ann.id
 
             if tagSet:
                 # check if the TagSet exists,
@@ -474,7 +477,10 @@ def tag_annotation(conn, obj, tags, tag_dict, create_new_tags):
                     parent_tag = update.saveAndReturnObject(parent_tag)
                     print(f"Created new TagSet {tagSet} {parent_tag.id.val}")
                     # update tag dictionary
-                    tag_dict[tagSet] = {"*": parent_tag.id}
+                    if tagSet in tag_dict:
+                        tag_dict[tagSet]["*"] = parent_tag.id
+                    else:
+                        tag_dict[tagSet] = {"*": parent_tag.id}
                 else:
                     # or get existing
                     parent_tag = conn.getObject("TagAnnotation",
@@ -490,7 +496,7 @@ def tag_annotation(conn, obj, tags, tag_dict, create_new_tags):
             # if the correct Tag-TagSet combo does not exist
             if tagSet and tagSet not in tag_dict[tag_value]:
                 #  if the TagSet does not exist
-                if tagSet not in tag_dict:
+                if tagSet not in tag_dict or "*" not in tag_dict[tagSet]:
                     assert create_new_tags is True, (f"Tag Set '{tagSet}'" +
                                                      " does not exist but" +
                                                      " creation of new Tags" +
@@ -514,7 +520,10 @@ def tag_annotation(conn, obj, tags, tag_dict, create_new_tags):
                 tag_ann.setValue(tag_value)
                 tag_ann.save()
                 # update tag dictionary
-                tag_dict[tag_value] = {tagSet: parent_tag.id}
+                if tag_value in tag_dict:
+                    tag_dict[tag_value][tagSet] = tag_ann.id
+                else:
+                    tag_dict[tag_value] = {tagSet: tag_ann.id}
                 # create a Link and link Tag and TagSet
                 link = AnnotationAnnotationLinkI()
                 link.parent = parent_tag
@@ -528,6 +537,7 @@ def tag_annotation(conn, obj, tags, tag_dict, create_new_tags):
                 obj.linkAnnotation(tag_ann)
             # if there is just a normal Tag without Tag Set
             elif not tagSet and not tagId:
+                # just get the existing normal Tag
                 tag_ann = conn.getObject("TagAnnotation",
                                          tag_dict[tag_value][""])
                 obj.linkAnnotation(tag_ann)
@@ -544,6 +554,8 @@ def tag_annotation(conn, obj, tags, tag_dict, create_new_tags):
                 obj.linkAnnotation(tag_ann)
 
         print(f"TagAnnotation:{tag_ann.id} created on {obj}")
+        # return the updated tag dictionary
+        return tag_dict
 
 
 def link_file_ann(conn, object_type, object_, file_ann):
@@ -704,7 +716,8 @@ def run_script():
                 "Namespace (leave blank for default)",
                 "Separator", "Columns to exclude", "Target ID colname",
                 "Target name colname", "Exclude empty values",
-                "Attach csv to parents", "Split value on"]
+                "Attach csv to parents", "Split value on",
+                "Use only personal Tags", "Create new Tags"]
         for k in keys:
             print(f"\t- {k}: {params[k]}")
         print("\n####################################\n")
