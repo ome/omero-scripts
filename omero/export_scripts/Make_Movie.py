@@ -594,7 +594,7 @@ def write_movie(command_args, conn):
         movie_name = "%s.%s" % (movie_name, ext)
 
     # spaces etc in file name cause problems
-    movie_name = re.sub("[$&\;|\(\)<>' ]", "", movie_name)
+    movie_name = re.sub("[$&\\;|\\(\\)<>' ]", "", movie_name)
     frames_per_sec = 2
     if "FPS" in command_args:
         frames_per_sec = command_args["FPS"]

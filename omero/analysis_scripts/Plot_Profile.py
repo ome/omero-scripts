@@ -107,13 +107,14 @@ def process_lines(conn, script_params, image, lines, line_width, fout):
         the_t = line['theT']
         the_z = line['theZ']
         roi_id = line['id']
-        if round(line['x1'] - line['x2']) == 0 and round(line['y1'] - line['y2']) == 0:
+        if round(line['x1'] - line['x2']) == 0 and round(line['y1'] - line['y2']) == 0:  # noqa
             continue
         for the_c in the_cs:
             line_data = []
-            line_data = roi_utils.get_line_data(pixels, l['x1'], l['y1'],
-                                                l['x2'], l['y2'], line_width,
-                                                the_z, the_c, the_t)
+            line_data = roi_utils.get_line_data(pixels, line['x1'], line['y1'],
+                                                line['x2'], line['y2'],
+                                                line_width, the_z, the_c,
+                                                the_t)
 
             if script_params['Sum_or_Average'] == 'Sum':
                 output_data = line_data.sum(axis=0)

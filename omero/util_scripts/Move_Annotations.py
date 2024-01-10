@@ -64,7 +64,7 @@ def move_well_annotations(conn, well, ann_type, remove_anns, ns):
     # Filter by type
     old_links = [link for link in old_links
                  if (ann_type is None
-                     or (l.child.__class__.__name__ == ann_type))]
+                     or (link.child.__class__.__name__ == ann_type))]
 
     link_ids = [link.id for link in old_links]
 
@@ -84,7 +84,7 @@ def move_well_annotations(conn, well, ann_type, remove_anns, ns):
     # Find existing links on Well so we don't try to duplicate them
     existing_well_links = list(conn.getAnnotationLinks('Well', [well.id],
                                                        ns=ns, params=params))
-    existing_well_keys = [get_key(l) for link in existing_well_links]
+    existing_well_keys = [get_key(link) for link in existing_well_links]
 
     new_links = []
     for link in old_links:
