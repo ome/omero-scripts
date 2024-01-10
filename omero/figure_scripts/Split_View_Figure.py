@@ -406,7 +406,7 @@ def make_split_view_figure(conn, pixel_ids, z_start, z_end, split_indexes,
             py = left_text_width - text_gap  # start at bottom
             for count, label in enumerate(row):
                 py = py - text_height    # find the top of this row
-                w = textdraw.textbbox(label, font=font)[2]
+                w = textdraw.textlength(label, font=font)
                 inset = int((height - w) // 2)
                 textdraw.text((px+inset, py), label, font=font,
                               fill=(0, 0, 0))
