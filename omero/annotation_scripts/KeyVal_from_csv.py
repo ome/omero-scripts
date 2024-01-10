@@ -23,7 +23,7 @@ Created by Christian Evenhuis
 """
 
 import omero
-from omero.gateway import BlitzGateway
+from omero.gateway import BlitzGateway, TagAnnotationWrapper
 from omero.rtypes import rstring, rlong, robject
 import omero.scripts as scripts
 from omero.constants.metadata import NSCLIENTMAPANNOTATION
@@ -59,7 +59,7 @@ ALLOWED_PARAM = {
 def get_obj_name(omero_obj):
     """ Helper function """
     if omero_obj.OMERO_CLASS == "Well":
-        return omero_obj.getWellPos()
+        return omero_obj.getWellPos().upper()
     else:
         return omero_obj.getName()
 
@@ -188,15 +188,23 @@ def main_loop(conn, script_params):
 
         use_id = idx_id != -1  # use the obj_idx column if exist
         if not use_id:
-            # Identify images by name fail if two images have identical names
             idx_id = idx_name
+            # check if the names in the .csv contain duplicates
+            name_list = [row[idx_id] for row in rows]
+            duplicates = {name for name in name_list
+                          if name_list.count(name) > 1}
+            print("duplicates:", duplicates)
+            assert not len(duplicates) > 0, ("The .csv contains" +
+                                             f"duplicates {duplicates} which" +
+                                             " makes it impossible" +
+                                             " to correctly allocate the" +
+                                             " annotations.")
+            # Identify target-objects by name fail if two have identical names
             target_d = dict()
             for target_obj in target_obj_l:
                 name = get_obj_name(target_obj)
-                if target_type == "Well":
-                    name = name.upper()
                 assert name not in target_d.keys(), f"Target objects \
-                    identified by name have duplicate: {name}"
+                    identified by name have at least one duplicate: {name}"
                 target_d[name] = target_obj
         else:
             # Setting the dictionnary target_id:target_obj
@@ -254,8 +262,8 @@ def main_loop(conn, script_params):
             link_file_ann(conn, source_type, source_object, file_ann)
         print("\n------------------------------------\n")
 
-    message = f"Added KV-pairs to \
-        {ntarget_updated}/{ntarget_processed} {target_type}"
+    message = f"Added Annotations to \
+        {ntarget_updated}/{ntarget_processed} {target_type}(s)"
 
     if file_ann_multiplied and len(missing_names) > 0:
         # subtract the processed names/ids from the
@@ -266,7 +274,7 @@ def main_loop(conn, script_params):
         total_missing_names = len(missing_names)
 
     if total_missing_names > 0:
-        message += f". {total_missing_names} {target_type} not found \
+        message += f". {total_missing_names} {target_type}(s) not found \
             (using {'ID' if use_id else 'name'} to identify them)."
 
     return message, result_obj
@@ -344,6 +352,7 @@ def annotate_object(conn, obj, row, header, namespaces, exclude_empty_value,
     tag_dict = {}
     print(f"-->processing {obj}")
     for curr_ns in set(namespaces):
+        updated = False
         kv_list = []
         for ns, h, r in zip(namespaces, header, row):
             if ns == curr_ns and (len(r) > 0 or not exclude_empty_value):
@@ -425,6 +434,21 @@ def get_tag_dict(conn, use_personal_tags):
         tag_dict[name].update(parents)
 
     return tag_dict
+
+
+def check_tag(id, obj):
+    """check if the Tag already exists on the object.
+    """
+    tag_ids = []
+    # get a list of all Annotations of the object
+    annotations = list(obj.listAnnotations())
+    for ann in annotations:
+        if type(ann) is TagAnnotationWrapper:
+            tag_ids.append(ann.id)
+    if id in tag_ids:
+        return True
+    else:
+        return False
 
 
 def tag_annotation(conn, obj, tags, tag_dict, create_new_tags):
@@ -532,15 +556,25 @@ def tag_annotation(conn, obj, tags, tag_dict, create_new_tags):
                 obj.linkAnnotation(tag_ann)
             # if the correct Tag-TagSet combo exists
             elif tagSet and tagSet in tag_dict[tag_value]:
-                tag_ann = conn.getObject("TagAnnotation",
-                                         tag_dict[tag_value][tagSet])
-                obj.linkAnnotation(tag_ann)
+                id = tag_dict[tag_value][tagSet]
+                # check if the Tag already exists on the object
+                if check_tag(id, obj):
+                    continue
+                else:
+                    tag_ann = conn.getObject("TagAnnotation",
+                                             tag_dict[tag_value][tagSet])
+                    obj.linkAnnotation(tag_ann)
             # if there is just a normal Tag without Tag Set
             elif not tagSet and not tagId:
-                # just get the existing normal Tag
-                tag_ann = conn.getObject("TagAnnotation",
-                                         tag_dict[tag_value][""])
-                obj.linkAnnotation(tag_ann)
+                id = tag_dict[tag_value][""]
+                # check if the Tag already exists on the object
+                if check_tag(id, obj):
+                    continue
+                else:
+                    # just get the existing normal Tag
+                    tag_ann = conn.getObject("TagAnnotation",
+                                             tag_dict[tag_value][""])
+                    obj.linkAnnotation(tag_ann)
             # if there is a TagId given
             elif tagId:
                 # check if the Tag-Id exists
@@ -550,8 +584,12 @@ def tag_annotation(conn, obj, tags, tag_dict, create_new_tags):
                         keys.append(k)
                 assert tagId in keys, (f"The Tag-Id '{tagId}' is not" +
                                        " in the permitted selection of Tags")
-                tag_ann = conn.getObject("TagAnnotation", tagId)
-                obj.linkAnnotation(tag_ann)
+                # check if the Tag already exists on the object
+                if check_tag(tagId, obj):
+                    continue
+                else:
+                    tag_ann = conn.getObject("TagAnnotation", tagId)
+                    obj.linkAnnotation(tag_ann)
 
         print(f"TagAnnotation:{tag_ann.id} created on {obj}")
         # return the updated tag dictionary
