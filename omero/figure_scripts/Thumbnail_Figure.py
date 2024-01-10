@@ -476,8 +476,8 @@ def paint_dataset_canvas(conn, images, title, tag_ids=None,
     #     figureDate = "%s - %s" % (firstdate, lastdate)
 
     draw = ImageDraw.Draw(full_canvas)
-    # dateWidth = draw.textsize(figureDate, font=font)[0]
-    # titleWidth = draw.textsize(title, font=font)[0]
+    # dateWidth = draw.textbbox(figureDate, font=font)[2]
+    # titleWidth = draw.textbbox(title, font=font)[2]
     # dateX = fullCanvas.size[0] - spacing - dateWidth
     # title
     draw.text((left_spacer, spacing), title, font=font, fill=(0, 0, 0))
