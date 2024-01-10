@@ -355,7 +355,7 @@ def reshape_to_fit(image, size_x, size_y, bg=(0, 0, 0)):
     # scale
     ratio = min(float(size_x) / image_w, float(size_y) / image_h)
     image = image.resize(map(lambda x: int(x*ratio), image.size),
-                         Image.ANTIALIAS)
+                         Image.LANCZOS)
     # paste
     bg = Image.new("RGBA", (size_x, size_y), (0, 0, 0))     # black bg
     ovlpos = (size_x-image.size[0]) / 2, (size_y-image.size[1]) / 2
