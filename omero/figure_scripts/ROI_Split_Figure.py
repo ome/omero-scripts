@@ -224,7 +224,7 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
 
     # now assemble the roi split-view canvas
     font = image_utils.get_font(fontsize)
-    text_height = font.getsize("Textq")[1]
+    text_height = font.getbbox("Textq")[3]
     top_spacer = 0
     if show_top_labels:
         if merged_names:
@@ -247,7 +247,7 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
     draw = ImageDraw.Draw(canvas)
     for i, index in enumerate(split_indexes):
         label = channel_names.get(index, index)
-        indent = (panel_width - (font.getsize(label)[0])) // 2
+        indent = (panel_width - (font.getbbox(label)[2])) // 2
         # text is coloured if channel is not coloured AND in the merged image
         rgb = (0, 0, 0)
         if index in merged_colours:
@@ -275,12 +275,12 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
                     name = channel_names[index]
                 else:
                     name = str(index)
-                comb_text_width = font.getsize(name)[0]
+                comb_text_width = font.getbbox(name)[2]
                 inset = int((panel_width - comb_text_width) / 2)
                 draw.text((px + inset, text_y), name, font=font, fill=rgb)
                 text_y = text_y - text_height
         else:
-            comb_text_width = font.getsize("Merged")[0]
+            comb_text_width = font.getbbox("Merged")[2]
             inset = int((panel_width - comb_text_width) / 2)
             draw.text((px + inset, text_y), "Merged", font=font,
                       fill=(0, 0, 0))
@@ -431,7 +431,7 @@ def get_split_view(conn, image_ids, pixel_ids, split_indexes, channel_names,
     elif width > 200:
         fontsize = 16
     font = image_utils.get_font(fontsize)
-    text_height = font.getsize("Textq")[1]
+    text_height = font.getbbox("Textq")[3]
     max_count = 0
     for row in image_labels:
         max_count = max(max_count, len(row))
