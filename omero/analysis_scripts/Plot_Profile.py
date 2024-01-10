@@ -57,9 +57,9 @@ def process_polylines(conn, script_params, image, polylines, line_width, fout):
         points = pl['points']
         for the_c in the_cs:
             ldata = []
-            for l in range(len(points)-1):
-                x1, y1 = points[l]
-                x2, y2 = points[l+1]
+            for point in range(len(points)-1):
+                x1, y1 = points[point]
+                x2, y2 = points[point+1]
                 if round(x1 - x2) == 0 and round(y1 - y2) == 0:
                     continue
                 ld = roi_utils.get_line_data(
@@ -103,11 +103,11 @@ def process_lines(conn, script_params, image, lines, line_width, fout):
     pixels = image.getPrimaryPixels()
     the_cs = script_params['Channels']
 
-    for l in lines:
-        the_t = l['theT']
-        the_z = l['theZ']
-        roi_id = l['id']
-        if round(l['x1'] - l['x2']) == 0 and round(l['y1'] - l['y2']) == 0:
+    for line in lines:
+        the_t = line['theT']
+        the_z = line['theZ']
+        roi_id = line['id']
+        if round(line['x1'] - line['x2']) == 0 and round(line['y1'] - line['y2']) == 0:
             continue
         for the_c in the_cs:
             line_data = []
@@ -192,7 +192,7 @@ def process_images(conn, script_params):
                     z = the_z
                 # TODO: Add some filter of shapes e.g. text? / 'lines' only
                 # etc.
-                if type(s) == omero.model.LineI:
+                if isinstance(s, omero.model.LineI):
                     x1 = s.getX1().getValue()
                     x2 = s.getX2().getValue()
                     y1 = s.getY1().getValue()
@@ -200,7 +200,7 @@ def process_images(conn, script_params):
                     lines.append({'id': roi_id, 'theT': t, 'theZ': z,
                                   'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2})
 
-                elif type(s) == omero.model.PolylineI:
+                elif isinstance(s, omero.model.PolylineI):
                     v = s.getPoints().getValue()
                     points = roi_utils.points_string_to_xy_list(v)
                     polylines.append({'id': roi_id, 'theT': t, 'theZ': z,

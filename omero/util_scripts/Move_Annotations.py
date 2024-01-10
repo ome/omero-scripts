@@ -62,11 +62,11 @@ def move_well_annotations(conn, well, ann_type, remove_anns, ns):
                                              ns=ns, params=params))
 
     # Filter by type
-    old_links = [l for l in old_links
+    old_links = [link for link in old_links
                  if (ann_type is None
                      or (l.child.__class__.__name__ == ann_type))]
 
-    link_ids = [l.id for l in old_links]
+    link_ids = [link.id for link in old_links]
 
     def get_key(ann_link, with_owner=False):
         # We use ann's 'key' to avoid adding duplicate annotations
@@ -76,28 +76,28 @@ def move_well_annotations(conn, well, ann_type, remove_anns, ns):
 
     links_dict = {}
     # Remove duplicate annotations according to get_key(l)
-    for l in old_links:
-        links_dict[get_key(l, conn.isAdmin())] = l
+    for link in old_links:
+        links_dict[get_key(link, conn.isAdmin())] = link
 
     old_links = links_dict.values()
 
     # Find existing links on Well so we don't try to duplicate them
     existing_well_links = list(conn.getAnnotationLinks('Well', [well.id],
                                                        ns=ns, params=params))
-    existing_well_keys = [get_key(l) for l in existing_well_links]
+    existing_well_keys = [get_key(l) for link in existing_well_links]
 
     new_links = []
-    for l in old_links:
-        if get_key(l) in existing_well_keys:
+    for link in old_links:
+        if get_key(link) in existing_well_keys:
             continue
-        log("    Annotation: %s %s" % (l.child.id.val,
-                                       l.child.__class__.__name__))
+        log("    Annotation: %s %s" % (link.child.id.val,
+                                       link.child.__class__.__name__))
         link = WellAnnotationLinkI()
         link.parent = WellI(well.id, False)
-        link.child = l.child
+        link.child = link.child
         # If Admin, the new link Owner is same as old link Owner
         if conn.isAdmin():
-            owner_id = l.details.owner.id.val
+            owner_id = link.details.owner.id.val
             link.details.owner = ExperimenterI(owner_id, False)
         new_links.append(link)
     try:

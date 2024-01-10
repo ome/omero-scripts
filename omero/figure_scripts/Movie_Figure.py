@@ -311,7 +311,7 @@ def add_left_labels(panel_canvas, image_labels, row_index, width, spacer):
 
     labels = image_labels[row_index]
     py = left_text_height - text_gap  # start at bottom
-    for l, label in enumerate(labels):
+    for count, label in enumerate(labels):
         py = py - text_height    # find the top of this row
         w = textdraw.textsize(label, font=font)[0]
         inset = int((left_text_width - w) / 2)

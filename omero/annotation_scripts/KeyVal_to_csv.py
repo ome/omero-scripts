@@ -39,7 +39,7 @@ from collections import OrderedDict
 def get_existing_map_annotions(obj):
     ord_dict = OrderedDict()
     for ann in obj.listAnnotations():
-        if(isinstance(ann, omero.gateway.MapAnnotationWrapper)):
+        if isinstance(ann, omero.gateway.MapAnnotationWrapper):
             kvs = ann.getValue()
             for k, v in kvs:
                 if k not in ord_dict:
@@ -152,8 +152,8 @@ def run_script():
 
             # remove the csv if it exists
             for ann in ds.listAnnotations():
-                if(isinstance(ann, omero.gateway.FileAnnotationWrapper)):
-                    if(ann.getFileName() == csv_name):
+                if isinstance(ann, omero.gateway.FileAnnotationWrapper):
+                    if ann.getFileName() == csv_name:
                         # if the name matches delete it
                         try:
                             delete = Delete2(

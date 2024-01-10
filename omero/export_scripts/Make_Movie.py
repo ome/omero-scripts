@@ -486,8 +486,8 @@ def write_movie(command_args, conn):
         c_windows = []
         c_colours = []
         for c in command_args["ChannelsExtended"]:
-            m = re.match('^(?P<i>\d+)(\|(?P<ws>\d+)' +
-                         '\:(?P<we>\d+))?(\$(?P<c>.+))?$', c)
+            m = re.match('^(?P<i>\\d+)(\\|(?P<ws>\\d+)' +
+                         '\\:(?P<we>\\d+))?(\\$(?P<c>.+))?$', c)
             if m is not None:
                 c_range.append(int(m.group('i'))-1)
                 c_windows.append([float(m.group('ws')), float(m.group('we'))])

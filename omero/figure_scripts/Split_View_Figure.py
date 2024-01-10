@@ -404,7 +404,7 @@ def make_split_view_figure(conn, pixel_ids, z_start, z_end, split_indexes,
         image_labels.reverse()
         for row in image_labels:
             py = left_text_width - text_gap  # start at bottom
-            for l, label in enumerate(row):
+            for count, label in enumerate(row):
                 py = py - text_height    # find the top of this row
                 w = textdraw.textsize(label, font=font)[0]
                 inset = int((height - w) // 2)

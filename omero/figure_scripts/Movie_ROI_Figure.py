@@ -589,7 +589,7 @@ def roi_figure(conn, command_args):
         try:
             height = int(h)
         except ValueError:
-            log("Invalid height: %s Using default value" % (str(h), size_y))
+            log("Invalid height: %s Using default value %s" % (str(h), size_y))
 
     log("Image dimensions for all panels (pixels): width: %d  height: %d"
         % (width, height))

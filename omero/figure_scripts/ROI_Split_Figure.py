@@ -320,7 +320,7 @@ def get_rectangle(roi_service, image_id, roi_label):
         roi_count += 1
         # go through all the shapes of the ROI
         for shape in roi.copyShapes():
-            if type(shape) == omero.model.RectangleI:
+            if isinstance(shape, omero.model.RectangleI):
                 the_t = unwrap(shape.getTheT())
                 the_z = unwrap(shape.getTheZ())
                 t = 0
@@ -660,7 +660,7 @@ def roi_figure(conn, command_args):
         try:
             height = int(h)
         except ValueError:
-            log("Invalid height: %s Using default value" % (str(h), size_y))
+            log("Invalid height: %s Using default value: %d" % (str(h), size_y))
 
     log("Image dimensions for all panels (pixels): width: %d  height: %d"
         % (width, height))
