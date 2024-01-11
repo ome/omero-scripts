@@ -386,7 +386,8 @@ def make_split_view_figure(conn, pixel_ids, z_start, z_end, split_indexes,
     font = image_utils.get_font(fontsize)
     mode = "RGB"
     white = (255, 255, 255)
-    text_height = font.getbbox("Textq")[3]
+    box = font.getbbox("Textq")
+    text_height = box[3] - box[1]
 
     # if adding text to the left, write the text on horizontal canvas, then
     # rotate to vertical (below)
@@ -442,7 +443,8 @@ def make_split_view_figure(conn, pixel_ids, z_start, z_end, split_indexes,
     py = top_text_height + spacer - (text_height + text_gap)
     for index in split_indexes:
         # calculate the position of the text, centered above the image
-        w = font.getbbox(channel_names[index])[2]
+        box = font.getbbox(channel_names[index])
+        w = box[2] - box[0]
         inset = int((width - w) // 2)
         # text is coloured if channel is grey AND in the merged image
         rgba = (0, 0, 0, 255)
@@ -465,12 +467,14 @@ def make_split_view_figure(conn, pixel_ids, z_start, z_end, split_indexes,
                 if rgba == (255, 255, 255, 255):  # if white (unreadable)
                     rgba = (0, 0, 0, 255)  # needs to be black!
             name = channel_names[index]
-            comb_text_width = font.getbbox(name)[2]
+            box = font.getbbox(name)
+            comb_text_width = box[2] - box[0]
             inset = int((width - comb_text_width) // 2)
             draw.text((px + inset, py), name, font=font, fill=rgba)
             py = py - text_height
     else:
-        comb_text_width = font.getbbox("Merged")[2]
+        box = font.getbbox("Merged")
+        comb_text_width = box[2] - box[0]
         inset = int((width - comb_text_width) // 2)
         px = px + inset
         draw.text((px, py), "Merged", font=font, fill=(0, 0, 0))

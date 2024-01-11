@@ -144,10 +144,14 @@ def paint_thumbnail_grid(thumbnail_store, length, spacing, pixel_ids,
             fontsize = (length // 10) + 5
         font = get_font(fontsize)
         if left_label:
-            text_width, text_height = font.getbbox(left_label)[2:]
+            box = font.getbbox(left_label)
+            text_width = box[2] - box[0]
+            text_height = box[3] - box[1]
             left_space = spacing + text_height + spacing
         if top_label:
-            text_width, text_height = font.getbbox(top_label)[2:]
+            box = font.getbbox(top_label)
+            text_width = box[2] - box[0]
+            text_height = box[3] - box[1]
             top_space = spacing + text_height + spacing
             min_width = left_space + text_width + spacing
 
@@ -168,7 +172,8 @@ def paint_thumbnail_grid(thumbnail_store, length, spacing, pixel_ids,
         label_size = (label_canvas_width, label_canvas_height)
         text_canvas = Image.new(mode, label_size, bg)
         draw = ImageDraw.Draw(text_canvas)
-        text_width = font.getbbox(left_label)[2]
+        box = font.getbbox(left_label)
+        text_width = box[2] - box[0]
         text_x = (label_canvas_width - text_width) // 2
         draw.text((text_x, spacing), left_label, font=font, fill=text_color)
         vertical_canvas = text_canvas.rotate(90)
@@ -297,7 +302,8 @@ def paint_dataset_canvas(conn, images, title, tag_ids=None,
     # set-up fonts
     fontsize = length/7 + 5
     font = get_font(fontsize)
-    text_height = font.getbbox("Textq")[3]
+    box = font.getbbox("Textq")
+    text_height = box[3] - box[1]
     top_spacer = spacing + text_height
     left_spacer = spacing + text_height
 
@@ -372,11 +378,12 @@ def paint_dataset_canvas(conn, images, title, tag_ids=None,
             'showSubsetLabels': show_subset_labels})
 
         # Find the indent we need
-        max_tag_name_width = max([font.getbbox(ts['tagText'])[2]
-                                 for ts in toptag_sets])
+        for ts in toptag_sets:
+            box = font.getbbox(ts['tagText'])
+            max_tag_name_width = max(box[2] - box[0])
         if show_untagged:
-            max_tag_name_width = max(max_tag_name_width,
-                                     font.getbbox("Not Tagged")[2])
+            box = font.getbbox("Not Tagged")
+            max_tag_name_width = max(max_tag_name_width, (box[2] - box[0]))
 
         tag_sub_panes = []
 
@@ -435,7 +442,9 @@ def paint_dataset_canvas(conn, images, title, tag_ids=None,
                 p_y += pane.size[1]
             if tag_text is not None:
                 draw = ImageDraw.Draw(tag_canvas)
-                tt_w, tt_h = font.getbbox(tag_text)[2:]
+                box = font.getbbox(tag_text)
+                tt_w = box[2] - box[0]
+                tt_h = box[3] - box[1]
                 h_offset = (total_height - tt_h)/2
                 draw.text((spacing, h_offset), tag_text, font=font,
                           fill=(50, 50, 50))
