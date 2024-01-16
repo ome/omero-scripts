@@ -671,11 +671,12 @@ def run_script():
 
         scripts.List(
             "Columns to exclude", optional=False, grouping="2.2",
-            default="<ID>,<NAME>",
+            default="<ID>,<NAME>,<PARENTS>",
             description="List of columns in the .csv file to exclude " +
                         "from the key-value pair import. <ID>" +
                         " and <NAME> correspond to the two " +
-                        "following parameters.").ofType(rstring("")),
+                        "following parameters. <PARENTS> corresponds " +
+                        "to the six container types.").ofType(rstring("")),
 
         scripts.String(
             "Target ID colname", optional=False, grouping="2.3",
@@ -800,6 +801,11 @@ def parameters_parsing(client):
     to_exclude = list(map(lambda x: x.replace('<NAME>',
                                               params["Target name colname"]),
                           to_exclude))
+    if "<PARENTS>" in to_exclude:
+        to_exclude.remove("<PARENTS>")
+        to_exclude.extend(["PROJECT", "DATASET", "SCREEN",
+                           "PLATE", "RUN", "WELL"])
+
     params["Columns to exclude"] = to_exclude
 
     if params["Separator"] == "guess":
