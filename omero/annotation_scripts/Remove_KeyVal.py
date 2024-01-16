@@ -275,7 +275,8 @@ def parameters_parsing(client):
             # unwrap rtypes to String, Integer etc
             params[key] = client.getInput(key, unwrap=True)
 
-    assert params[AGREEMENT], "Please confirm that you understood the risks."
+    assert params[AGREEMENT], "Please tick the box to confirm that you " +\
+                              "understood the risks."
 
     if params["Target Data_Type"] == "<on current>":
         params["Target Data_Type"] = params["Data_Type"]

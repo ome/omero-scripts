@@ -63,7 +63,7 @@ WEBCLIENT_URL = ""
 def get_obj_name(omero_obj):
     """ Helper function """
     if omero_obj.OMERO_CLASS == "Well":
-        return omero_obj.getWellPos()
+        return omero_obj.getWellPos().upper()
     else:
         return omero_obj.getName()
 
