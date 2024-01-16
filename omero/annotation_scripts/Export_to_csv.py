@@ -161,10 +161,13 @@ def main_loop(conn, script_params):
             obj_id_l.append(target_obj.getId())
             obj_name_l.append(get_obj_name(target_obj))
             if include_parent:
-                ancestry = [(o.OMERO_CLASS, get_obj_name(o))
-                            for o in target_obj.getAncestry()
-                            if o.OMERO_CLASS != "WellSample"]
+                ancestry = []
+                for o in target_obj.getAncestry():
+                    if o.OMERO_CLASS == "WellSample":
+                        o = o.getPlateAcquisition()
+                    ancestry.append((o.OMERO_CLASS, get_obj_name(o)))
                 obj_ancestry_l.append(ancestry[::-1])
+
             if result_obj is None:
                 result_obj = target_obj
         print("\n------------------------------------\n")
@@ -174,6 +177,8 @@ def main_loop(conn, script_params):
     # Complete ancestry for image/dataset/plate without parents
     norm_ancestry_l = []
     if len(obj_ancestry_l) > 0:
+        # Issue with image that don't have a plateacquisition
+        # if combined with images that have
         max_level = max(map(lambda x: len(x), obj_ancestry_l))
         for ancestry in obj_ancestry_l:
             norm_ancestry_l.append([("", "")] *
