@@ -26,8 +26,7 @@ import omero
 from omero.gateway import BlitzGateway, TagAnnotationWrapper
 from omero.rtypes import rstring, rlong, robject
 import omero.scripts as scripts
-from omero.constants.metadata import NSCLIENTMAPANNOTATION
-from omero.constants.metadata import NSINSIGHTTAGSET
+from omero.constants.metadata import NSCLIENTMAPANNOTATION, NSINSIGHTTAGSET
 from omero.model import AnnotationAnnotationLinkI, TagAnnotationI
 from omero.util.populate_roi import DownloadingOriginalFileProvider
 

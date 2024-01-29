@@ -26,7 +26,7 @@ Created by Christian Evenhuis
 import omero
 from omero.gateway import BlitzGateway
 from omero.rtypes import rstring, rlong, robject
-from omero.constants.metadata import NSCLIENTMAPANNOTATION
+from omero.constants.metadata import NSCLIENTMAPANNOTATION, NSINSIGHTTAGSET
 import omero.scripts as scripts
 
 import tempfile
@@ -137,11 +137,14 @@ def main_loop(conn, script_params):
     separator = script_params["Separator"]
     include_parent = script_params["Include column(s) of parents name"]
     include_namespace = script_params["Include namespace"]
+    include_tags = script_params["Include tags"]
 
     # One file output per given ID
     obj_ancestry_l = []
     annotations_d = defaultdict(list)
-    obj_id_l, obj_name_l = [], []
+    if include_tags:
+        all_tag_d = get_all_tags(conn)
+    obj_id_l, obj_name_l, tagannotation_l = [], [], []
     for source_object in conn.getObjects(source_type, source_ids):
 
         result_obj = source_object
@@ -153,10 +156,13 @@ def main_loop(conn, script_params):
                                           target_type, is_tag):
             annotations_d[0].append([])  # (when no ns exported, all ann in 0)
             for ns in namespace_l:
-                next_ann_l = get_existing_map_annotions(target_obj,
-                                                        ns)
+                next_ann_l = get_existing_map_annotations(target_obj,
+                                                          ns)
                 annotations_d[ns].append(next_ann_l)
                 annotations_d[0][-1].extend(next_ann_l)
+            if include_tags:
+                tagannotation_l.append(get_existing_tag_annotations(target_obj,
+                                                              all_tag_d))
 
             obj_id_l.append(target_obj.getId())
             obj_name_l.append(get_obj_name(target_obj))
@@ -185,7 +191,8 @@ def main_loop(conn, script_params):
                                    (max_level - len(ancestry))
                                    + ancestry)
 
-    ns_row, header_row, rows = build_rows(annotations_d, include_namespace)
+    ns_row, header_row, rows = build_rows(annotations_d, tagannotation_l,
+                                          include_namespace)
     ns_row, header_row, rows = sort_concat_rows(ns_row, header_row, rows,
                                                 obj_id_l, obj_name_l,
                                                 norm_ancestry_l)
@@ -200,7 +207,27 @@ def main_loop(conn, script_params):
     return message, file_ann, result_obj
 
 
-def get_existing_map_annotions(obj, namespace):
+def get_all_tags(conn):
+    all_tag_d = {}
+    for tag in conn.getObjects("TagAnnotation"):
+
+        tagname = tag.getValue()
+        if (tag.getNs() == NSINSIGHTTAGSET):
+            # It's a tagset, set all tag_id to "tagname[tagset_name]"
+            for lk in conn.getAnnotationLinks("TagAnnotation",
+                                              parent_ids=[tag.id]):
+                child_id = int(lk.child.id.val)
+                child_name = lk.child.textValue.val
+                all_tag_d[child_id] = f"{child_name}[{tagname}]"
+        elif tag.id not in all_tag_d.keys():
+            # Normal tag and not in the dict yet
+            # (if found as part of a tagset, it is not overwritten)
+            all_tag_d[int(tag.id)] = tagname
+
+    return all_tag_d
+
+
+def get_existing_map_annotations(obj, namespace):
     "Return list of KV with updated keys with NS and occurences"
     annotation_l = []
     for ann in obj.listAnnotations(ns=namespace):
@@ -209,7 +236,17 @@ def get_existing_map_annotions(obj, namespace):
     return annotation_l
 
 
-def build_rows(annotation_dict_l, include_namespace):
+def get_existing_tag_annotations(obj, all_tag_d):
+    "Return list of tag names with tagset if any"
+    annotation_l = []
+    for ann in obj.listAnnotations():
+        if (isinstance(ann, omero.gateway.TagAnnotationWrapper)
+           and ann.getId() in all_tag_d.keys()):
+            annotation_l.append(all_tag_d[ann.getId()])
+    return annotation_l
+
+
+def build_rows(annotation_dict_l, tagannotation_l, include_namespace):
     ns_row = []
     if include_namespace:
         header_row, rows = [], [[] for i in range(len(annotation_dict_l[0]))]
@@ -223,6 +260,16 @@ def build_rows(annotation_dict_l, include_namespace):
                 rows[i].extend(next_row)
     else:
         header_row, rows = group_keyvalues(annotation_dict_l[0])
+
+    if len(tagannotation_l) > 0:
+        max_tag = max(map(len, tagannotation_l))
+        if include_namespace:
+            ns_row.extend([""] * max_tag)
+        header_row.extend(["TAG"] * max_tag)
+        for i, tag_l in enumerate(tagannotation_l):
+            rows[i].extend(tag_l)
+            rows[i].extend([""] * (max_tag - len(tag_l)))
+
     return ns_row, header_row, rows
 
 
@@ -416,14 +463,20 @@ def run_script():
         scripts.Bool(
             "Include column(s) of parents name", optional=False,
             grouping="2.2",
-            description="Weather to include or not the name of the parent(s)" +
+            description="Whether to include or not the name of the parent(s)" +
                         " objects as columns in the .csv.", default=False),
 
         scripts.Bool(
             "Include namespace", optional=False,
             grouping="2.3",
-            description="Weather to include or not the namespace" +
-                        " of the annotations in the .csv.", default=False),
+            description="Whether to include the annotation namespaces" +
+                        " in the .csv.", default=False),
+
+        scripts.Bool(
+            "Include tags", optional=False,
+            grouping="2.4",
+            description="Whether to include tags in the .csv.",
+            default=False),
 
         authors=["Christian Evenhuis", "MIF", "Tom Boissonnet"],
         institutions=["University of Technology Sydney", "CAi HHU"],
