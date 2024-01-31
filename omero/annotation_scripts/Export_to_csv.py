@@ -479,7 +479,7 @@ def run_script():
         keys = ["Data_Type", "IDs", "Target Data_Type",
                 "Namespace (leave blank for default)",
                 "Separator", "Include column(s) of parents name",
-                "Include namespace"]
+                "Include namespace", "Include tags"]
         for k in keys:
             print(f"\t- {k}: {params[k]}")
         print("\n####################################\n")

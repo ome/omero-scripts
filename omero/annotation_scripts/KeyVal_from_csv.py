@@ -141,8 +141,8 @@ def main_loop(conn, script_params):
     attach_file = script_params["Attach csv to parents"]
     exclude_empty_value = script_params["Exclude empty values"]
     split_on = script_params["Split value on"]
-    use_personal_tags = script_params["Use only personal Tags"]
-    create_new_tags = script_params["Create new Tags"]
+    use_personal_tags = script_params["Use only personal tags"]
+    create_new_tags = script_params["Create new tags"]
     file_ann_multiplied = script_params["File_Annotation_multiplied"]
 
     ntarget_processed = 0
@@ -698,14 +698,14 @@ def run_script():
             "create key duplicates."),
 
         scripts.Bool(
-            "Use only personal Tags", grouping="2.8", default=False,
-            description="Determines if Tags of other users in the group" +
-            " can be used on objects.\n Using only personal Tags might" +
+            "Use only personal tags", grouping="2.8", default=False,
+            description="Determines if tags of other users in the group" +
+            " can be used on objects.\n Using only personal tags might" +
             "lead to multiple Tags with the same name in one OMERO-group."),
 
         scripts.Bool(
-            "Create new Tags", grouping="2.9", default=False,
-            description="Creates new Tags and Tag Sets if the ones" +
+            "Create new tags", grouping="2.9", default=False,
+            description="Creates new tags and tagsets if the ones" +
             " specified in the .csv do not exist."),
 
         authors=["Christian Evenhuis", "Tom Boissonnet"],
@@ -721,7 +721,7 @@ def run_script():
                 "Separator", "Columns to exclude", "Target ID colname",
                 "Target name colname", "Exclude empty values",
                 "Attach csv to parents", "Split value on",
-                "Use only personal Tags", "Create new Tags"]
+                "Use only personal tags", "Create new tags"]
         for k in keys:
             print(f"\t- {k}: {params[k]}")
         print("\n####################################\n")
