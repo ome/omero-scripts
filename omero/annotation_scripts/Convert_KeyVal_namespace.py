@@ -146,7 +146,8 @@ def get_existing_map_annotions(obj, namespace_l):
     keyval_l, ann_l = [], []
     forbidden_deletion = []
     for namespace in namespace_l:
-        for ann in obj.listAnnotations(ns=namespace):
+        p = {} if namespace == "*" else {"ns": namespace}
+        for ann in obj.listAnnotations(**p):
             if isinstance(ann, omero.gateway.MapAnnotationWrapper):
                 if ann.canEdit():  # If not, skipping it
                     keyval_l.extend([(k, v) for (k, v) in ann.getValue()])

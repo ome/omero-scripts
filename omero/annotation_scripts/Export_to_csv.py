@@ -230,7 +230,8 @@ def get_all_tags(conn):
 def get_existing_map_annotations(obj, namespace):
     "Return list of KV with updated keys with NS and occurences"
     annotation_l = []
-    for ann in obj.listAnnotations(ns=namespace):
+    p = {} if namespace == "*" else {"ns": namespace}
+    for ann in obj.listAnnotations(**p):
         if isinstance(ann, omero.gateway.MapAnnotationWrapper):
             annotation_l.append(ann)
     return annotation_l
