@@ -607,24 +607,14 @@ def run_script():
     client = scripts.client(
         'Import_KV_from_csv',
         """
-    Reads a .csv file to annotate target objects with key-value pairs.
+    Reads a .csv file to annotate the given objects with key-value pairs.
     TODO: add hyperlink to readthedocs
     \t
-    Parameters:
-    \t
-    - Data Type: parent-objects type in which target-objects are searched.
-    - IDs: IDs of the parent-objects.
-    - Target Data Type: Type of the target-objects that will be annotated.
-    - File_Annotation: IDs of .csv FileAnnotation or input file.
-    - Namespace: Namespace that will be given to the annotations.
-    \t
-    - Separator: Separator used in the .csv file.
-    - Columns to exclude: Columns name of the .csv file to exclude.
-    - Target ID colname: Column name in the .csv of the target IDs.
-    - Target name colname: Column name in the .csv of the target names.
+    Check the guide for more information about the script parameters:
+    TODO link to omero-guides
+    https://github.com/German-BioImaging/guide-KVpairs-scripts/blob/master/docs/gettingstarted.rst#importing-key-value-pairs
     \t
     Default namespace: openmicroscopy.org/omero/client/mapAnnotation
-    \t
         """,  # Tabs are needed to add line breaks in the HTML
 
         scripts.String(

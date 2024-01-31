@@ -409,23 +409,14 @@ def run_script():
     client = scripts.client(
         'Export_KV_to_csv.py',
         """
-    This script exports key-value pairs of objects to a .csv file.
-    Can also export a blank .csv with only of target objects' name and IDs.
-    (for example by providing a non-existing namespace)
-    TODO: add hyperlink to readthedocs
+    This script exports for the selected objects their name, IDs and associated
+    key-value pairs.
     \t
-    Parameters:
-    \t
-    - Data Type: parent-objects type in which target-objects are searched.
-    - IDs: IDs of the parent-objects.
-    - Target Data Type: target-objects type from which KV-pairs are exported.
-    - Namespace: Annotations having one of these namespace(s) will be exported.
-    \t
-    - Separator: Separator to be used in the .csv file.
-    - Include column(s) of parents name: Add columns for target-data parents.
+    Check the guide for more information about the script parameters:
+    TODO link to omero-guides
+    https://github.com/German-BioImaging/guide-KVpairs-scripts/blob/master/docs/gettingstarted.rst#exporting-key-value-pairs
     \t
     Default namespace: openmicroscopy.org/omero/client/mapAnnotation
-    \t
         """,  # Tabs are needed to add line breaks in the HTML
 
         scripts.String(

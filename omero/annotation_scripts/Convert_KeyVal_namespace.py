@@ -205,19 +205,12 @@ def run_script():
         'Convert_KV_namespace',
         """
     This script converts the namespace of key-value pair annotations.
-
-    TODO: add hyperlink to readthedocs
     \t
-    Parameters:
-    \t
-    - Data Type: parent-objects type in which target-objects are searched.
-    - IDs: IDs of the parent-objects.
-    - Target Data Type: Type of the target-objects that will be changed.
-    - Old Namespace: Namespace(s) of the annotations to group and change.
-    - New Namespace: New namespace for the annotations.
+    Check the guide for more information about the script parameters:
+    TODO link to omero-guides
+    https://github.com/German-BioImaging/guide-KVpairs-scripts/blob/master/docs/gettingstarted.rst#converting-the-key-value-pairs-namespace
     \t
     Default namespace: openmicroscopy.org/omero/client/mapAnnotation
-    \t
         """,  # Tabs are needed to add line breaks in the HTML
 
         scripts.String(

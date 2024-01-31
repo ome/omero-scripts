@@ -193,20 +193,14 @@ def run_script():
     client = scripts.client(
         'Remove_KV.py',
         """
-    This script deletes key-value pairs of all child objects founds.
-    Only key-value pairs of the namespace are deleted.
-    (default namespace correspond to editable KV pairs in web)
-    TODO: add hyperlink to readthedocs
+    This script deletes for the selected objects the key-value pairs
+    associated to the given namespace.
     \t
-    Parameters:
-    \t
-    - Data Type: parent-objects type in which target-objects are searched.
-    - IDs: IDs of the parent-objects.
-    - Target Data Type: Target-objects type of which KV-pairs are deleted.
-    - Namespace: Annotations having one of these namespace(s) will be deleted.
+    Check the guide for more information about the script parameters:
+    TODO link to omero-guides
+    https://github.com/German-BioImaging/guide-KVpairs-scripts/blob/master/docs/gettingstarted.rst#deleting-key-value-pairs
     \t
     Default namespace: openmicroscopy.org/omero/client/mapAnnotation
-    \t
         """,  # Tabs are needed to add line breaks in the HTML
 
         scripts.String(
