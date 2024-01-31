@@ -290,6 +290,12 @@ def parameters_parsing(client):
     if params["Target Data_Type"] == "Run":
         params["Target Data_Type"] = "PlateAcquisition"
 
+    # Remove duplicate entries from namespace list
+    tmp = params["Namespace (leave blank for default)"]
+    if "*" in tmp:
+        tmp = ["*"]
+    params["Namespace (leave blank for default)"] = list(set(tmp))
+
     return params
 
 

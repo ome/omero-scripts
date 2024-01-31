@@ -158,11 +158,13 @@ def main_loop(conn, script_params):
             for ns in namespace_l:
                 next_ann_l = get_existing_map_annotations(target_obj,
                                                           ns)
-                annotations_d[ns].append(next_ann_l)
+                if ns != "*":
+                    annotations_d[ns].append(next_ann_l)
                 annotations_d[0][-1].extend(next_ann_l)
+
             if include_tags:
                 tagannotation_l.append(get_existing_tag_annotations(target_obj,
-                                                              all_tag_d))
+                                                                    all_tag_d))
 
             obj_id_l.append(target_obj.getId())
             obj_name_l.append(get_obj_name(target_obj))
@@ -179,6 +181,17 @@ def main_loop(conn, script_params):
         print("\n------------------------------------\n")
 
     csv_name = "{}_keyval.csv".format(get_obj_name(source_object))
+
+    if include_namespace and "*" in namespace_l:
+        # Assign entries of * namespace
+        ns_set = set()
+        for ann_l in annotations_d[0]:
+            ns_set = ns_set.union([ann.getNs() for ann in ann_l])
+        for ann_l in annotations_d[0]:
+            for ns in ns_set:
+                annotations_d[ns].append([])
+            for ann in ann_l:
+                annotations_d[ann.getNs()][-1].append(ann)
 
     # Complete ancestry for image/dataset/plate without parents
     norm_ancestry_l = []
@@ -540,6 +553,13 @@ def parameters_parsing(client):
         params["Data_Type"] = "Acquisition"
     if params["Target Data_Type"] == "Run":
         params["Target Data_Type"] = "PlateAcquisition"
+
+    # Remove duplicate entries from namespace list
+    tmp = params["Namespace (leave blank for default)"]
+    if "*" in tmp:
+        tmp = ["*"]
+    params["Namespace (leave blank for default)"] = list(set(tmp))
+
 
     return params
 
