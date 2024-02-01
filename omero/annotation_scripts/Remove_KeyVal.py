@@ -196,7 +196,7 @@ def run_script():
     This script deletes for the selected objects the key-value pairs
     associated to the given namespace.
     \t
-    Check the guide for more information about the script parameters:
+    Check the guide for more information on parameters and errors:
     TODO link to omero-guides
     https://github.com/German-BioImaging/guide-KVpairs-scripts/blob/master/docs/gettingstarted.rst#deleting-key-value-pairs
     \t

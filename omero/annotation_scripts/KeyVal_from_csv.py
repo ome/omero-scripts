@@ -499,8 +499,8 @@ def preprocess_tag_rows(conn, header, rows, tag_d, tagset_d,
                 if tagid is not None:
                     # If an ID is found, take precedence
                     assert int(tagid) in tagid_d.keys(), \
-                        (f"The Tag ID:'{tagid}' is not" +
-                         " in the permitted selection of Tags")
+                        (f"The tag ID:'{tagid}' is not" +
+                         " in the permitted selection of tags")
                     tag_o = tagid_d[tagid]
                     if tagname is not None or tagname != "":
                         assert tag_o.getValue() == tagname, (
@@ -518,7 +518,7 @@ def preprocess_tag_rows(conn, header, rows, tag_d, tagset_d,
                     assert (tag_exist or create_new_tags), (
                         f"Tag '{tagname}'" +
                         " does not exist while" +
-                        " creation of new Tags" +
+                        " creation of new tags" +
                         " is not permitted"
                     )
                     if not tag_exist:
@@ -537,7 +537,7 @@ def preprocess_tag_rows(conn, header, rows, tag_d, tagset_d,
                         f"Tag '{tagname}' " +
                         f"in TagSet '{tagset}'" +
                         " does not exist while" +
-                        " creation of new Tags" +
+                        " creation of new tags" +
                         " is not permitted"
                     )
                     if not tag_exist:
@@ -562,7 +562,7 @@ def preprocess_tag_rows(conn, header, rows, tag_d, tagset_d,
                         update.saveObject(link)
                         tagtree_d[tagset][tagname] = tag_o.id
                         print(f"creating new Tag for '{tagname}' " +
-                              f"in the TagSet '{tagset}'")
+                              f"in the tagset '{tagset}'")
                     tagid_l.append(str(tagtree_d[tagset][tagname]))
 
             # joined list of tag_ids instead of ambiguous names
@@ -608,9 +608,8 @@ def run_script():
         'Import_KV_from_csv',
         """
     Reads a .csv file to annotate the given objects with key-value pairs.
-    TODO: add hyperlink to readthedocs
     \t
-    Check the guide for more information about the script parameters:
+    Check the guide for more information on parameters and errors:
     TODO link to omero-guides
     https://github.com/German-BioImaging/guide-KVpairs-scripts/blob/master/docs/gettingstarted.rst#importing-key-value-pairs
     \t
@@ -701,7 +700,7 @@ def run_script():
             "Use only personal tags", grouping="2.8", default=False,
             description="Determines if tags of other users in the group" +
             " can be used on objects.\n Using only personal tags might" +
-            "lead to multiple Tags with the same name in one OMERO-group."),
+            "lead to multiple tags with the same name in one OMERO-group."),
 
         scripts.Bool(
             "Create new tags", grouping="2.9", default=False,

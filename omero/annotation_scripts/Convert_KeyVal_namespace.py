@@ -207,7 +207,7 @@ def run_script():
         """
     This script converts the namespace of key-value pair annotations.
     \t
-    Check the guide for more information about the script parameters:
+    Check the guide for more information on parameters and errors:
     TODO link to omero-guides
     https://github.com/German-BioImaging/guide-KVpairs-scripts/blob/master/docs/gettingstarted.rst#converting-the-key-value-pairs-namespace
     \t
