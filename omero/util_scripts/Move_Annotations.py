@@ -87,17 +87,17 @@ def move_well_annotations(conn, well, ann_type, remove_anns, ns):
     existing_well_keys = [get_key(link) for link in existing_well_links]
 
     new_links = []
-    for link in old_links:
-        if get_key(link) in existing_well_keys:
+    for old_link in old_links:
+        if get_key(old_link) in existing_well_keys:
             continue
-        log("    Annotation: %s %s" % (link.child.id.val,
-                                       link.child.__class__.__name__))
+        log("    Annotation: %s %s" % (old_link.child.id.val,
+                                       old_link.child.__class__.__name__))
         link = WellAnnotationLinkI()
         link.parent = WellI(well.id, False)
-        link.child = link.child
+        link.child = old_link.child
         # If Admin, the new link Owner is same as old link Owner
         if conn.isAdmin():
-            owner_id = link.details.owner.id.val
+            owner_id = old_link.details.owner.id.val
             link.details.owner = ExperimenterI(owner_id, False)
         new_links.append(link)
     try:
