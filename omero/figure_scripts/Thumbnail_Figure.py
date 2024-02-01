@@ -378,6 +378,7 @@ def paint_dataset_canvas(conn, images, title, tag_ids=None,
             'showSubsetLabels': show_subset_labels})
 
         # Find the indent we need
+        max_tag_name_width = 0
         for ts in toptag_sets:
             box = font.getbbox(ts['tagText'])
             max_tag_name_width = max(max_tag_name_width, box[2] - box[0])
