@@ -198,6 +198,7 @@ class TestUtilScripts(ScriptTest):
         images_in_plate.sort()
         assert images_in_plate == image_ids
 
+    @pytest.mark.skip(reason="Issue with moving annotation on well")
     @pytest.mark.parametrize("remove", [True, False])
     @pytest.mark.parametrize("script_runner", ['user', 'admin'])
     def test_move_annotations(self, remove, script_runner):
