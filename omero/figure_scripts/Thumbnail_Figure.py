@@ -380,7 +380,7 @@ def paint_dataset_canvas(conn, images, title, tag_ids=None,
         # Find the indent we need
         for ts in toptag_sets:
             box = font.getbbox(ts['tagText'])
-            max_tag_name_width = max(box[2] - box[0])
+            max_tag_name_width = max(max_tag_name_width, box[2] - box[0])
         if show_untagged:
             box = font.getbbox("Not Tagged")
             max_tag_name_width = max(max_tag_name_width, (box[2] - box[0]))
