@@ -443,7 +443,6 @@ def paint_dataset_canvas(conn, images, title, tag_ids=None,
             if tag_text is not None:
                 draw = ImageDraw.Draw(tag_canvas)
                 box = font.getbbox(tag_text)
-                tt_w = box[2] - box[0]
                 tt_h = box[3] - box[1]
                 h_offset = (total_height - tt_h)/2
                 draw.text((spacing, h_offset), tag_text, font=font,
