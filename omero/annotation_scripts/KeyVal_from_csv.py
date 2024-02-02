@@ -48,12 +48,12 @@ ALLOWED_PARAM = {
     "Project": ["Project", "Dataset", "Image"],
     "Dataset": ["Dataset", "Image"],
     "Image": ["Image"],
-    "Screen": ["Screen", "Plate", "Well", "Run", "Image"],
-    "Plate": ["Plate", "Well", "Run", "Image"],
+    "Screen": ["Screen", "Plate", "Well", "Acquisition", "Image"],
+    "Plate": ["Plate", "Well", "Acquisition", "Image"],
     "Well": ["Well", "Image"],
-    "Run": ["Run", "Image"],
+    "Acquisition": ["Acquisition", "Image"],
     "Tag": ["Project", "Dataset", "Image",
-            "Screen", "Plate", "Well", "Run"]
+            "Screen", "Plate", "Well", "Acquisition"]
 }
 
 P_DTYPE = "Data_Type"  # Do not change
@@ -619,7 +619,7 @@ def run_script():
     source_types = [
                     rstring("Project"), rstring("Dataset"), rstring("Image"),
                     rstring("Screen"), rstring("Plate"), rstring("Well"),
-                    rstring("Run"), rstring("Image"), rstring("Tag"),
+                    rstring("Acquisition"), rstring("Image"), rstring("Tag"),
     ]
 
     # Duplicate Image for UI, but not a problem for script
@@ -627,7 +627,7 @@ def run_script():
                     rstring("<on current>"), rstring("Project"),
                     rstring("- Dataset"), rstring("-- Image"),
                     rstring("Screen"), rstring("- Plate"),
-                    rstring("-- Well"), rstring("-- Run"),
+                    rstring("-- Well"), rstring("-- Acquisition"),
                     rstring("--- Image")
     ]
 
@@ -841,9 +841,7 @@ def parameters_parsing(client):
 
     if params[P_DTYPE] == "Tag":
         params[P_DTYPE] = "TagAnnotation"
-    if params[P_DTYPE] == "Run":
-        params[P_DTYPE] = "Acquisition"
-    if params[P_TARG_DTYPE] == "Run":
+    if params[P_TARG_DTYPE] == "Acquisition":
         params[P_TARG_DTYPE] = "PlateAcquisition"
 
     return params
