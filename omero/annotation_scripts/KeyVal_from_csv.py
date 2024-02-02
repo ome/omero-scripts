@@ -133,7 +133,7 @@ def main_loop(conn, script_params):
     target_type = script_params["Target Data_Type"]
     source_ids = script_params["IDs"]
     file_ids = script_params["File_Annotation"]
-    namespace = script_params["Namespace (for default or from csv)"]
+    namespace = script_params["Namespace (blank for default or from csv)"]
     to_exclude = script_params["Columns to exclude"]
     target_id_colname = script_params["Target ID colname"]
     target_name_colname = script_params["Target name colname"]
@@ -171,8 +171,10 @@ def main_loop(conn, script_params):
         original_file = file_ann.getFile()._obj
 
         rows, header, namespaces = read_csv(conn, original_file, separator)
-        if len(namespaces) == 0:
+        if namespace is not None:
             namespaces = [namespace] * len(header)
+        elif len(namespaces) == 0:
+            namespaces = [NSCLIENTMAPANNOTATION] * len(header)
 
         is_tag = source_type == "TagAnnotation"
         target_obj_l = target_iterator(conn, source_object,
@@ -745,7 +747,7 @@ def parameters_parsing(client):
     params = {}
     # Param dict with defaults for optional parameters
     params["File_Annotation"] = None
-    params["Namespace (blank for default or from csv)"] = NSCLIENTMAPANNOTATION
+    params["Namespace (blank for default or from csv)"] = None
     params["Split value on"] = ""
 
     for key in client.getInputKeys():
