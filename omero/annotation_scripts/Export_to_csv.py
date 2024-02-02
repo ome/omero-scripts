@@ -60,7 +60,7 @@ P_IDS = "IDs"  # Do not change
 P_TARG_DTYPE = "Target Data_Type"
 P_NAMESPACE = "Namespace (blank for default)"
 P_CSVSEP = "CSV separator"
-P_INCL_PARENT = "Include column(s) of parents name"
+P_INCL_PARENT = "Include parent container names"
 P_INCL_NS = "Include namespace"
 P_INCL_TAG = "Include tags"
 
