@@ -1,11 +1,11 @@
 # coding=utf-8
 """
- KeyVal_from_csv.py
+ Import_from_csv.py
 
  Adds key-value pairs to a target object on OMERO from a CSV file.
 
 -----------------------------------------------------------------------------
-  Copyright (C) 2018
+  Copyright (C) 2018 - 2024
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
@@ -634,7 +634,7 @@ def run_script():
     separators = ["guess", ";", ",", "TAB"]
 
     client = scripts.client(
-        'Import_KV_from_csv',
+        'Import from CSV',
         """
     Reads a .csv file to annotate the given objects with key-value pairs.
     \t
@@ -741,8 +741,8 @@ def run_script():
             description="Attach the given CSV to the selected objects" +
             "when not already attached to it."),
 
-        authors=["Christian Evenhuis", "Tom Boissonnet"],
-        institutions=["MIF UTS", "CAi HHU"],
+        authors=["Christian Evenhuis", "Tom Boissonnet", "Jens Wendt"],
+        institutions=["MIF UTS", "CAi HHU", "MiN WWU"],
         contact="https://forum.image.sc/tag/omero"
     )
 

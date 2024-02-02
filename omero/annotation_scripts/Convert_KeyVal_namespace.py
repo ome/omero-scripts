@@ -4,7 +4,7 @@
 
  Convert the namespace of objects key-value pairs.
 -----------------------------------------------------------------------------
-  Copyright (C) 2018
+  Copyright (C) 2024
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
@@ -209,7 +209,7 @@ def run_script():
     ]
 
     client = scripts.client(
-        'Convert_KV_namespace',
+        'Convert Key-Value pairs namespace',
         """
     This script converts the namespace of key-value pair annotations.
     \t

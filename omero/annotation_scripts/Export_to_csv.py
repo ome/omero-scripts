@@ -6,7 +6,7 @@
  and creates a csv file attached to dataset
 
 -----------------------------------------------------------------------------
-  Copyright (C) 2018
+  Copyright (C) 2018 - 2024
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
@@ -430,7 +430,7 @@ def run_script():
     # Good practice to put url here to give users more guidance on how to run
     # your script.
     client = scripts.client(
-        'Export_KV_to_csv.py',
+        'Export to CSV',
         """
     This script exports for the selected objects their name, IDs and associated
     key-value pairs.
@@ -471,25 +471,25 @@ def run_script():
 
         scripts.String(
             P_CSVSEP, optional=False, grouping="2.1",
-            description="Choose the .csv separator.",
+            description="Choose the csv separator.",
             values=separators, default="TAB"),
 
         scripts.Bool(
             P_INCL_PARENT, optional=False,
             grouping="2.2",
-            description="Whether to include or not the name of the parent(s)" +
-                        " objects as columns in the .csv.", default=False),
+            description="Check to include or not the name of the parent(s)" +
+                        " objects as columns in the csv", default=False),
 
         scripts.Bool(
             P_INCL_NS, optional=False,
             grouping="2.3",
-            description="Whether to include the annotation namespaces" +
-                        " in the .csv.", default=False),
+            description="Check to include the annotation namespaces" +
+                        " in the csv file.", default=False),
 
         scripts.Bool(
             P_INCL_TAG, optional=False,
             grouping="2.4",
-            description="Whether to include tags in the .csv.",
+            description="Check to include tags in the csv file.",
             default=False),
 
         authors=["Christian Evenhuis", "MIF", "Tom Boissonnet"],

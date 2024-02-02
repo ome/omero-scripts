@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
- MIF/Key_Value_remove.py"
+ Remove_KeyVal.py"
 
  Remove all key-value pairs associated with a namespace from
  objects on OMERO.
 
 -----------------------------------------------------------------------------
-  Copyright (C) 2018 - 2022
+  Copyright (C) 2018 - 2024
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
@@ -195,7 +195,7 @@ def run_script():
     # Good practice to put url here to give users more guidance on how to run
     # your script.
     client = scripts.client(
-        'Remove_KV.py',
+        'Remove Key-Value pairs',
         """
     This script deletes for the selected objects the key-value pairs
     associated to the given namespace.
