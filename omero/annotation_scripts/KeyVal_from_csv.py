@@ -27,7 +27,7 @@ from omero.gateway import BlitzGateway, TagAnnotationWrapper
 from omero.rtypes import rstring, rlong, robject
 import omero.scripts as scripts
 from omero.constants.metadata import NSCLIENTMAPANNOTATION, NSINSIGHTTAGSET
-from omero.model import AnnotationAnnotationLinkI, TagAnnotationI
+from omero.model import AnnotationAnnotationLinkI
 from omero.util.populate_roi import DownloadingOriginalFileProvider
 
 import csv
@@ -55,6 +55,22 @@ ALLOWED_PARAM = {
     "Tag": ["Project", "Dataset", "Image",
             "Screen", "Plate", "Well", "Run"]
 }
+
+P_DTYPE = "Data_Type"  # Do not change
+P_FILE_ANN = "File_Annotation"  # Do not change
+P_IDS = "IDs"  # Do not change
+P_TARG_DTYPE = "Target Data_Type"
+P_NAMESPACE = "Namespace (blank for default or from csv)"
+P_CSVSEP = "CSV separator"
+P_EXCL_COL = "Columns to exclude"
+P_TARG_COLID = "Target ID colname"
+P_TARG_COLNAME = "Target name colname"
+P_EXCL_EMPTY = "Exclude empty values"
+P_ATTACH = "Attach CSV file"
+P_SPLIT_CELL = "Split values on"
+P_IMPORT_TAGS = "Import tags"
+P_OWN_TAG = "Only use personal tags"
+P_ALLOW_NEWTAG = "Allow tag creation"
 
 
 def get_obj_name(omero_obj):
@@ -129,20 +145,21 @@ def main_loop(conn, script_params):
      - Annotate the objects
      - (opt) attach the CSV to the source object
     """
-    source_type = script_params["Data_Type"]
-    target_type = script_params["Target Data_Type"]
-    source_ids = script_params["IDs"]
-    file_ids = script_params["File_Annotation"]
-    namespace = script_params["Namespace (blank for default or from csv)"]
-    to_exclude = script_params["Columns to exclude"]
-    target_id_colname = script_params["Target ID colname"]
-    target_name_colname = script_params["Target name colname"]
-    separator = script_params["Separator"]
-    attach_file = script_params["Attach csv to parents"]
-    exclude_empty_value = script_params["Exclude empty values"]
-    split_on = script_params["Split value on"]
-    use_personal_tags = script_params["Use only personal tags"]
-    create_new_tags = script_params["Create new tags"]
+    source_type = script_params[P_DTYPE]
+    target_type = script_params[P_TARG_DTYPE]
+    source_ids = script_params[P_IDS]
+    file_ids = script_params[P_FILE_ANN]
+    namespace = script_params[P_NAMESPACE]
+    to_exclude = script_params[P_EXCL_COL]
+    target_id_colname = script_params[P_TARG_COLID]
+    target_name_colname = script_params[P_TARG_COLNAME]
+    separator = script_params[P_CSVSEP]
+    attach_file = script_params[P_ATTACH]
+    exclude_empty_value = script_params[P_EXCL_EMPTY]
+    split_on = script_params[P_SPLIT_CELL]
+    use_personal_tags = script_params[P_OWN_TAG]
+    create_new_tags = script_params[P_ALLOW_NEWTAG]
+    import_tags = script_params[P_IMPORT_TAGS]
     file_ann_multiplied = script_params["File_Annotation_multiplied"]
 
     ntarget_processed = 0
@@ -163,14 +180,14 @@ def main_loop(conn, script_params):
         if file_ann_id is not None:
             file_ann = conn.getObject("Annotation", oid=file_ann_id)
             assert file_ann is not None, f"Annotation {file_ann_id} not found"
-            assert file_ann.OMERO_TYPE == omero.model.FileAnnotationI, "The \
-                    provided annotation ID must reference a FileAnnotation, \
-                    not a {file_ann.OMERO_TYPE}"
+            assert file_ann.OMERO_TYPE == omero.model.FileAnnotationI, \
+                ("The provided annotation ID must reference a " +
+                 f"FileAnnotation, not a {file_ann.OMERO_TYPE}")
         else:
             file_ann = get_original_file(source_object)
         original_file = file_ann.getFile()._obj
 
-        rows, header, namespaces = read_csv(conn, original_file, separator)
+        rows, header, namespaces = read_csv(conn, original_file, separator, import_tags)
         if namespace is not None:
             namespaces = [namespace] * len(header)
         elif len(namespaces) == 0:
@@ -189,8 +206,9 @@ def main_loop(conn, script_params):
         cols_to_ignore = [header.index(el) for el in to_exclude
                           if el in header]
 
-        assert (idx_id != -1) or (idx_name != -1), "Neither \
-            the column for the objects' name or the objects' index were found"
+        assert (idx_id != -1) or (idx_name != -1), \
+            ("Neither the column for the objects' name or" +
+             " the objects' index were found")
 
         use_id = idx_id != -1  # use the obj_idx column if exist
         if not use_id:
@@ -200,17 +218,17 @@ def main_loop(conn, script_params):
             duplicates = {name for name in name_list
                           if name_list.count(name) > 1}
             print("duplicates:", duplicates)
-            assert not len(duplicates) > 0, ("The .csv contains" +
-                                             f"duplicates {duplicates} which" +
-                                             " makes it impossible" +
-                                             " to correctly allocate the" +
-                                             " annotations.")
+            assert not len(duplicates) > 0, \
+                (f"The .csv contains duplicates {duplicates} which makes" +
+                 " it impossible to correctly allocate the annotations.")
+
             # Identify target-objects by name fail if two have identical names
             target_d = dict()
             for target_obj in target_obj_l:
                 name = get_obj_name(target_obj)
-                assert name not in target_d.keys(), f"Target objects \
-                    identified by name have at least one duplicate: {name}"
+                assert name not in target_d.keys(), \
+                    ("Target objects identified by name have at " +
+                     f"least one duplicate: {name}")
                 target_d[name] = target_obj
         else:
             # Setting the dictionnary target_id:target_obj
@@ -309,13 +327,14 @@ def get_original_file(omero_obj):
                     # Get the most recent file
                     file_ann = ann
 
-    assert file_ann is not None, f"No .csv FileAnnotation was found on \
-        {omero_obj.OMERO_CLASS}:{get_obj_name(omero_obj)}:{omero_obj.getId()}"
+    assert file_ann is not None, \
+        (f"No .csv FileAnnotation was found on {omero_obj.OMERO_CLASS}" +
+         f":{get_obj_name(omero_obj)}:{omero_obj.getId()}")
 
     return file_ann
 
 
-def read_csv(conn, original_file, delimiter):
+def read_csv(conn, original_file, delimiter, import_tags):
     """ Dedicated function to read the CSV file """
     print("Using FileAnnotation",
           f"{original_file.id.val}:{original_file.name.val}")
@@ -358,6 +377,13 @@ def read_csv(conn, original_file, delimiter):
         rows = rows[1:]
     header = [el.strip() for el in rows[0]]
     rows = rows[1:]
+
+    if not import_tags:
+        idx_l = [i for i in range(len(header)) if header[i].lower() != "tag"]
+        header = [header[i] for i in idx_l]
+        namespaces = [namespaces[i] for i in idx_l]
+        for j in range(len(rows)):
+            rows[j] = [rows[j][i] for i in idx_l]
 
     print(f"Header: {header}\n")
     return rows, header, namespaces
@@ -524,7 +550,7 @@ def preprocess_tag_rows(conn, header, rows, tag_d, tagset_d,
                         " is not permitted"
                     )
                     if not tag_exist:
-                        tag_o = omero.gateway.TagAnnotationWrapper(conn)
+                        tag_o = TagAnnotationWrapper(conn)
                         tag_o.setValue(tagname)
                         tag_o.save()
                         tagid_d[tag_o.id] = tag_o
@@ -534,7 +560,8 @@ def preprocess_tag_rows(conn, header, rows, tag_d, tagset_d,
 
                 else:  # has tagset
                     tagset_exist = tagset in tagset_d.keys()
-                    tag_exist = tagset_exist and (tagname in tagtree_d[tagset].keys())
+                    tag_exist = (tagset_exist
+                                 and (tagname in tagtree_d[tagset].keys()))
                     assert (tag_exist or create_new_tags), (
                         f"Tag '{tagname}' " +
                         f"in TagSet '{tagset}'" +
@@ -543,13 +570,13 @@ def preprocess_tag_rows(conn, header, rows, tag_d, tagset_d,
                         " is not permitted"
                     )
                     if not tag_exist:
-                        tag_o = omero.gateway.TagAnnotationWrapper(conn)
+                        tag_o = TagAnnotationWrapper(conn)
                         tag_o.setValue(tagname)
                         tag_o.save()
                         tagid_d[tag_o.id] = tag_o
                         tag_d[tagname] = tag_o.id
                         if not tagset_exist:
-                            tagset_o = omero.gateway.TagAnnotationWrapper(conn)
+                            tagset_o = TagAnnotationWrapper(conn)
                             tagset_o.setValue(tagset)
                             tagset_o.setNs(NSINSIGHTTAGSET)
                             tagset_o.save()
@@ -619,48 +646,74 @@ def run_script():
         """,  # Tabs are needed to add line breaks in the HTML
 
         scripts.String(
-            "Data_Type", optional=False, grouping="1",
+            P_DTYPE, optional=False, grouping="1",
             description="Parent-data type of the objects to annotate.",
             values=source_types, default="Dataset"),
 
         scripts.List(
-            "IDs", optional=False, grouping="1.1",
+            P_IDS, optional=False, grouping="1.1",
             description="List of parent-data IDs containing" +
                         " the objects to annotate.").ofType(rlong(0)),
 
         scripts.String(
-            "Target Data_Type", optional=False, grouping="1.2",
+            P_TARG_DTYPE, optional=False, grouping="1.2",
             description="The data type which will be annotated. " +
                         "Entries in the .csv correspond to these objects.",
             values=target_types, default="<on current>"),
 
         scripts.String(
-            "File_Annotation", optional=True, grouping="1.3",
+            P_FILE_ANN, optional=True, grouping="1.3",
             description="If no file is provided, list of file IDs " +
                         "containing metadata to populate (must match length" +
                         " of 'IDs'). If neither, searches the most recently " +
                         "attached CSV file on each parent object."),
 
         scripts.String(
-            "Namespace (blank for default or from csv)",
+            P_NAMESPACE,
             optional=True, grouping="1.4",
             description="Namespace given to the created key-value " +
                         "pairs annotations. Default is the client" +
                         "namespace, meaning editable in OMERO.web"),
 
         scripts.Bool(
-            "Advanced parameters", optional=True, grouping="2", default=False,
+            P_IMPORT_TAGS, optional=True, grouping="2", default=True,
+            description="Untick this to prevent importing tags specified " +
+                        "in the CSV."),
+
+        scripts.Bool(
+            P_OWN_TAG, grouping="2.1", default=False,
+            description="Determines if tags of other users in the group" +
+            " can be used on objects.\n Using only personal tags might " +
+            "lead to multiple tags with the same name in one OMERO-group."),
+
+        scripts.Bool(
+            P_ALLOW_NEWTAG, grouping="2.2", default=False,
+            description="Creates new tags and tagsets if the ones" +
+            " specified in the .csv do not exist."),
+
+        scripts.Bool(
+            "Other parameters", optional=True, grouping="3", default=True,
             description="Ticking or unticking this has no effect"),
 
+        scripts.Bool(
+            P_EXCL_EMPTY, grouping="3.1", default=True,
+            description="Exclude a key-value if the value is empty."),
+
         scripts.String(
-            "Separator", optional=False, grouping="2.1",
+            P_CSVSEP, optional=True, grouping="3.2",
             description="The separator used in the .csv file. 'guess' will " +
                         "attempt to detetect automatically which of " +
                         ",;\\t is used.",
             values=separators, default="guess"),
 
+        scripts.String(
+            P_SPLIT_CELL, optional=True, grouping="3.3",
+            default="",
+            description="Split cells according to this into multiple " +
+                        "values for a given key."),
+
         scripts.List(
-            "Columns to exclude", optional=False, grouping="2.2",
+            P_EXCL_COL, optional=True, grouping="3.4",
             default="<ID>,<NAME>,<PARENTS>",
             description="List of columns in the .csv file to exclude " +
                         "from the key-value pair import. <ID>" +
@@ -669,14 +722,14 @@ def run_script():
                         "to the six container types.").ofType(rstring("")),
 
         scripts.String(
-            "Target ID colname", optional=False, grouping="2.3",
+            P_TARG_COLID, optional=False, grouping="3.5",
             default="OBJECT_ID",
             description="The column name in the .csv containing the id" +
                         " of the objects to annotate. " +
                         "Matches <ID> in exclude parameter."),
 
         scripts.String(
-            "Target name colname", optional=False, grouping="2.4",
+            P_TARG_COLNAME, optional=False, grouping="3.6",
             default="OBJECT_NAME",
             description="The column name in the .csv containing the name of " +
                         "the objects to annotate (used if no column " +
@@ -684,30 +737,9 @@ def run_script():
                         "<NAME> in exclude parameter."),
 
         scripts.Bool(
-            "Exclude empty values", grouping="2.5", default=False,
-            description="Exclude a key-value if the value is empty."),
-
-        scripts.Bool(
-            "Attach csv to parents", grouping="2.6", default=False,
-            description="Attach the given CSV to the parent-data objects" +
+            P_ATTACH, grouping="3.7", default=False,
+            description="Attach the given CSV to the selected objects" +
             "when not already attached to it."),
-
-        scripts.String(
-            "Split value on", optional=True, grouping="2.7",
-            default="",
-            description="Split values according to that input to " +
-            "create key duplicates."),
-
-        scripts.Bool(
-            "Use only personal tags", grouping="2.8", default=False,
-            description="Determines if tags of other users in the group" +
-            " can be used on objects.\n Using only personal tags might " +
-            "lead to multiple tags with the same name in one OMERO-group."),
-
-        scripts.Bool(
-            "Create new tags", grouping="2.9", default=False,
-            description="Creates new tags and tagsets if the ones" +
-            " specified in the .csv do not exist."),
 
         authors=["Christian Evenhuis", "Tom Boissonnet"],
         institutions=["MIF UTS", "CAi HHU"],
@@ -716,16 +748,6 @@ def run_script():
 
     try:
         params = parameters_parsing(client)
-        print("Input parameters:")
-        keys = ["Data_Type", "IDs", "Target Data_Type", "File_Annotation",
-                "Namespace (blank for default or from csv)",
-                "Separator", "Columns to exclude", "Target ID colname",
-                "Target name colname", "Exclude empty values",
-                "Attach csv to parents", "Split value on",
-                "Use only personal tags", "Create new tags"]
-        for k in keys:
-            print(f"\t- {k}: {params[k]}")
-        print("\n####################################\n")
 
         # wrap client to use the Blitz Gateway
         conn = BlitzGateway(client_obj=client)
@@ -746,72 +768,83 @@ def run_script():
 def parameters_parsing(client):
     params = {}
     # Param dict with defaults for optional parameters
-    params["File_Annotation"] = None
-    params["Namespace (blank for default or from csv)"] = None
-    params["Split value on"] = ""
+    params[P_FILE_ANN] = None
+    params[P_NAMESPACE] = None
+    params[P_SPLIT_CELL] = ""
 
     for key in client.getInputKeys():
         if client.getInput(key):
             params[key] = client.getInput(key, unwrap=True)
 
-    if params["Target Data_Type"] == "<on current>":
-        params["Target Data_Type"] = params["Data_Type"]
-    elif " " in params["Target Data_Type"]:
+    if params[P_TARG_DTYPE] == "<on current>":
+        params[P_TARG_DTYPE] = params[P_DTYPE]
+    elif " " in params[P_TARG_DTYPE]:
         # Getting rid of the trailing '---' added for the UI
-        params["Target Data_Type"] = params["Target Data_Type"].split(" ")[1]
+        params[P_TARG_DTYPE] = params[P_TARG_DTYPE].split(" ")[1]
 
-    assert params["Target Data_Type"] in ALLOWED_PARAM[params["Data_Type"]], \
+    assert params[P_TARG_DTYPE] in ALLOWED_PARAM[params[P_DTYPE]], \
            (f"{params['Target Data_Type']} is not a valid target for " +
             f"{params['Data_Type']}.")
 
-    if params["Data_Type"] == "Tag":
-        params["Data_Type"] = "TagAnnotation"
-        assert None not in params["File_Annotation"], "File annotation \
-            ID must be given when using Tag as source"
+    if params[P_DTYPE] == "Tag":
+        assert None not in params[P_FILE_ANN], \
+            "File annotation ID must be given when using Tag as source"
 
-    if ((params["File_Annotation"]) is not None
-            and ("," in params["File_Annotation"])):
+    if ((params[P_FILE_ANN]) is not None
+            and ("," in params[P_FILE_ANN])):
         # List of ID provided, have to do the split
-        params["File_Annotation"] = params["File_Annotation"].split(",")
+        params[P_FILE_ANN] = params[P_FILE_ANN].split(",")
     else:
-        params["File_Annotation"] = [int(params["File_Annotation"])]
-    if len(params["File_Annotation"]) == 1:
+        params[P_FILE_ANN] = [int(params[P_FILE_ANN])]
+    if len(params[P_FILE_ANN]) == 1:
         # Poulate the parameter with None or same ID for all source
-        params["File_Annotation"] *= len(params["IDs"])
+        params[P_FILE_ANN] *= len(params[P_IDS])
         params["File_Annotation_multiplied"] = True
-    params["File_Annotation"] = list(map(int, params["File_Annotation"]))
+    params[P_FILE_ANN] = list(map(int, params[P_FILE_ANN]))
 
-    assert len(params["File_Annotation"]) == len(params["IDs"]), "Number of \
-        Source IDs and FileAnnotation IDs must match"
+    assert len(params[P_FILE_ANN]) == len(params[P_IDS]), \
+        "Number of IDs and FileAnnotation IDs must match"
 
     # Replacing the placeholders <ID> and <NAME> with values from params
     to_exclude = list(map(lambda x: x.replace('<ID>',
-                                              params["Target ID colname"]),
-                          params["Columns to exclude"]))
+                                              params[P_TARG_COLID]),
+                          params[P_EXCL_COL]))
     to_exclude = list(map(lambda x: x.replace('<NAME>',
-                                              params["Target name colname"]),
+                                              params[P_TARG_COLNAME]),
                           to_exclude))
     if "<PARENTS>" in to_exclude:
         to_exclude.remove("<PARENTS>")
         to_exclude.extend(["PROJECT", "DATASET", "SCREEN",
                            "PLATE", "RUN", "WELL"])
 
-    params["Columns to exclude"] = to_exclude
+    params[P_EXCL_COL] = to_exclude
 
-    if params["Separator"] == "guess":
-        params["Separator"] = None
-    elif params["Separator"] == "TAB":
-        params["Separator"] = "\t"
-
-    if params["Data_Type"] == "Run":
-        params["Data_Type"] = "Acquisition"
-    if params["Target Data_Type"] == "Run":
-        params["Target Data_Type"] = "PlateAcquisition"
-
-    assert (params["Separator"] is None
-            or params["Separator"] not in params["Split value on"]), (
+    assert (params[P_CSVSEP] is None
+            or params[P_CSVSEP] not in params[P_SPLIT_CELL]), (
                 "Cannot split cells with a character used as CSV separator"
         )
+
+    print("Input parameters:")
+    keys = [P_DTYPE, P_IDS, P_TARG_DTYPE, P_FILE_ANN,
+            P_NAMESPACE, P_CSVSEP, P_EXCL_COL, P_TARG_COLID,
+            P_TARG_COLNAME, P_EXCL_EMPTY, P_ATTACH, P_SPLIT_CELL,
+            P_IMPORT_TAGS, P_OWN_TAG, P_ALLOW_NEWTAG]
+
+    for k in keys:
+        print(f"\t- {k}: {params[k]}")
+    print("\n####################################\n")
+
+    if params[P_CSVSEP] == "guess":
+        params[P_CSVSEP] = None
+    elif params[P_CSVSEP] == "TAB":
+        params[P_CSVSEP] = "\t"
+
+    if params[P_DTYPE] == "Tag":
+        params[P_DTYPE] = "TagAnnotation"
+    if params[P_DTYPE] == "Run":
+        params[P_DTYPE] = "Acquisition"
+    if params[P_TARG_DTYPE] == "Run":
+        params[P_TARG_DTYPE] = "PlateAcquisition"
 
     return params
 

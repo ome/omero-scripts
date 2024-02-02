@@ -52,8 +52,12 @@ ALLOWED_PARAM = {
             "Screen", "Plate", "Well", "Run"]
 }
 
-AGREEMENT = ("I understand what I am doing and that this will result " +
-             "in a batch deletion of key-value pairs from the server")
+P_DTYPE = "Data_Type"  # Do not change
+P_IDS = "IDs"  # Do not change
+P_TARG_DTYPE = "Target Data_Type"
+P_NAMESPACE = "Namespace (blank for default)"
+P_AGREEMENT = ("I understand what I am doing and that this will result " +
+               "in a batch deletion of key-value pairs from the server")
 
 
 def get_children_recursive(source_object, target_type):
@@ -113,10 +117,10 @@ def main_loop(conn, script_params):
     For every object:
      - Find annotations in the namespace and remove
     """
-    source_type = script_params["Data_Type"]
-    target_type = script_params["Target Data_Type"]
-    source_ids = script_params["IDs"]
-    namespace_l = script_params["Namespace (blank for default)"]
+    source_type = script_params[P_DTYPE]
+    target_type = script_params[P_TARG_DTYPE]
+    source_ids = script_params[P_IDS]
+    namespace_l = script_params[P_NAMESPACE]
 
     nsuccess = 0
     ntotal = 0
@@ -204,22 +208,22 @@ def run_script():
         """,  # Tabs are needed to add line breaks in the HTML
 
         scripts.String(
-            "Data_Type", optional=False, grouping="1",
+            P_DTYPE, optional=False, grouping="1",
             description="Parent-data type of the objects to annotate.",
             values=source_types, default="Dataset"),
 
         scripts.List(
-            "IDs", optional=False, grouping="1.1",
+            P_IDS, optional=False, grouping="1.1",
             description="List of parent-data IDs containing the objects " +
                         "to delete annotation from.").ofType(rlong(0)),
 
         scripts.String(
-            "Target Data_Type", optional=True, grouping="1.2",
+            P_TARG_DTYPE, optional=True, grouping="1.2",
             description="Choose the object type to delete annotation from.",
             values=target_types, default="<on current>"),
 
         scripts.List(
-            "Namespace (blank for default)", optional=True,
+            P_NAMESPACE, optional=True,
             grouping="1.3",
             description="Annotation with these namespace will " +
                         "be deleted. Default is the client" +
@@ -227,7 +231,7 @@ def run_script():
                         "OMERO.web").ofType(rstring("")),
 
         scripts.Bool(
-            AGREEMENT, optional=False, grouping="2",
+            P_AGREEMENT, optional=False, grouping="2",
             description="Make sure that you understood the scope of " +
                         "what will be deleted."),
 
@@ -239,8 +243,7 @@ def run_script():
     try:
         params = parameters_parsing(client)
         print("Input parameters:")
-        keys = ["Data_Type", "IDs", "Target Data_Type",
-                "Namespace (blank for default)"]
+        keys = [P_DTYPE, P_IDS, P_TARG_DTYPE, P_NAMESPACE]
         for k in keys:
             print(f"\t- {k}: {params[k]}")
         print("\n####################################\n")
@@ -262,39 +265,39 @@ def run_script():
 def parameters_parsing(client):
     params = {}
     # Param dict with defaults for optional parameters
-    params["Namespace (blank for default)"] = [NSCLIENTMAPANNOTATION]
+    params[P_NAMESPACE] = [NSCLIENTMAPANNOTATION]
 
     for key in client.getInputKeys():
         if client.getInput(key):
             # unwrap rtypes to String, Integer etc
             params[key] = client.getInput(key, unwrap=True)
 
-    assert params[AGREEMENT], "Please tick the box to confirm that you " +\
-                              "understood the risks."
+    assert params[P_AGREEMENT], "Please tick the box to confirm that you " +\
+                                "understood the risks."
 
-    if params["Target Data_Type"] == "<on current>":
-        params["Target Data_Type"] = params["Data_Type"]
-    elif " " in params["Target Data_Type"]:
+    if params[P_TARG_DTYPE] == "<on current>":
+        params[P_TARG_DTYPE] = params[P_DTYPE]
+    elif " " in params[P_TARG_DTYPE]:
         # Getting rid of the trailing '---' added for the UI
-        params["Target Data_Type"] = params["Target Data_Type"].split(" ")[1]
+        params[P_TARG_DTYPE] = params[P_TARG_DTYPE].split(" ")[1]
 
-    assert params["Target Data_Type"] in ALLOWED_PARAM[params["Data_Type"]], \
+    assert params[P_TARG_DTYPE] in ALLOWED_PARAM[params[P_DTYPE]], \
            (f"{params['Target Data_Type']} is not a valid target for " +
             f"{params['Data_Type']}.")
 
-    if params["Data_Type"] == "Tag":
-        params["Data_Type"] = "TagAnnotation"
+    if params[P_DTYPE] == "Tag":
+        params[P_DTYPE] = "TagAnnotation"
 
-    if params["Data_Type"] == "Run":
-        params["Data_Type"] = "Acquisition"
-    if params["Target Data_Type"] == "Run":
-        params["Target Data_Type"] = "PlateAcquisition"
+    if params[P_DTYPE] == "Run":
+        params[P_DTYPE] = "Acquisition"
+    if params[P_TARG_DTYPE] == "Run":
+        params[P_TARG_DTYPE] = "PlateAcquisition"
 
     # Remove duplicate entries from namespace list
-    tmp = params["Namespace (blank for default)"]
+    tmp = params[P_NAMESPACE]
     if "*" in tmp:
         tmp = ["*"]
-    params["Namespace (blank for default)"] = list(set(tmp))
+    params[P_NAMESPACE] = list(set(tmp))
 
     return params
 

@@ -49,6 +49,12 @@ ALLOWED_PARAM = {
             "Screen", "Plate", "Well", "Run"]
 }
 
+P_DTYPE = "Data_Type"  # Do not change
+P_IDS = "IDs"  # Do not change
+P_TARG_DTYPE = "Target Data_Type"
+P_OLD_NS = "Old Namespace (blank for default)"
+P_NEW_NS = "New Namespace (blank for default)"
+
 
 def get_children_recursive(source_object, target_type):
     if CHILD_OBJECTS[source_object.OMERO_CLASS] == target_type:
@@ -109,11 +115,11 @@ def main_loop(conn, script_params):
      - Remove annotations with old namespace
      - Create annotations with new namespace
     """
-    source_type = script_params["Data_Type"]
-    target_type = script_params["Target Data_Type"]
-    source_ids = script_params["IDs"]
-    old_namespace = script_params["Old Namespace (blank for default)"]
-    new_namespace = script_params["New Namespace (blank for default)"]
+    source_type = script_params[P_DTYPE]
+    target_type = script_params[P_TARG_DTYPE]
+    source_ids = script_params[P_IDS]
+    old_namespace = script_params[P_OLD_NS]
+    new_namespace = script_params[P_NEW_NS]
 
     ntarget_processed = 0
     ntarget_updated = 0
@@ -215,29 +221,29 @@ def run_script():
         """,  # Tabs are needed to add line breaks in the HTML
 
         scripts.String(
-            "Data_Type", optional=False, grouping="1",
+            P_DTYPE, optional=False, grouping="1",
             description="Parent-data type of the objects to annotate.",
             values=source_types, default="Dataset"),
 
         scripts.List(
-            "IDs", optional=False, grouping="1.1",
+            P_IDS, optional=False, grouping="1.1",
             description="List of parent-data IDs containing the objects " +
                         "to annotate.").ofType(rlong(0)),
 
         scripts.String(
-            "Target Data_Type", optional=False, grouping="1.2",
+            P_TARG_DTYPE, optional=False, grouping="1.2",
             description="The data type for which key-value pair annotations " +
                         "will be converted.",
             values=target_types, default="<on current>"),
 
         scripts.List(
-            "Old Namespace (blank for default)", optional=True,
+            P_OLD_NS, optional=True,
             grouping="1.4",
             description="The namespace(s) of the annotations to " +
                         "group and change.").ofType(rstring("")),
 
         scripts.String(
-            "New Namespace (blank for default)", optional=True,
+            P_NEW_NS, optional=True,
             grouping="1.5",
             description="The new namespace for the annotations."),
 
@@ -249,9 +255,7 @@ def run_script():
     try:
         params = parameters_parsing(client)
         print("Input parameters:")
-        keys = ["Data_Type", "IDs", "Target Data_Type",
-                "Old Namespace (blank for default)",
-                "New Namespace (blank for default)"]
+        keys = [P_DTYPE, P_IDS, P_TARG_DTYPE, P_OLD_NS, P_NEW_NS]
         for k in keys:
             print(f"\t- {k}: {params[k]}")
         print("\n####################################\n")
@@ -275,37 +279,36 @@ def run_script():
 def parameters_parsing(client):
     params = {}
     # Param dict with defaults for optional parameters
-    params["File_Annotation"] = None
-    params["Old Namespace (blank for default)"] = [NSCLIENTMAPANNOTATION]
-    params["New Namespace (blank for default)"] = NSCLIENTMAPANNOTATION
+    params[P_OLD_NS] = [NSCLIENTMAPANNOTATION]
+    params[P_NEW_NS] = NSCLIENTMAPANNOTATION
 
     for key in client.getInputKeys():
         if client.getInput(key):
             params[key] = client.getInput(key, unwrap=True)
 
-    if params["Target Data_Type"] == "<on current>":
-        params["Target Data_Type"] = params["Data_Type"]
-    elif " " in params["Target Data_Type"]:
+    if params[P_TARG_DTYPE] == "<on current>":
+        params[P_TARG_DTYPE] = params[P_DTYPE]
+    elif " " in params[P_TARG_DTYPE]:
         # Getting rid of the trailing '---' added for the UI
-        params["Target Data_Type"] = params["Target Data_Type"].split(" ")[1]
+        params[P_TARG_DTYPE] = params[P_TARG_DTYPE].split(" ")[1]
 
-    assert params["Target Data_Type"] in ALLOWED_PARAM[params["Data_Type"]], \
+    assert params[P_TARG_DTYPE] in ALLOWED_PARAM[params[P_DTYPE]], \
            (f"{params['Target Data_Type']} is not a valid target for " +
             f"{params['Data_Type']}.")
 
-    if params["Data_Type"] == "Tag":
-        params["Data_Type"] = "TagAnnotation"
+    if params[P_DTYPE] == "Tag":
+        params[P_DTYPE] = "TagAnnotation"
 
-    if params["Data_Type"] == "Run":
-        params["Data_Type"] = "Acquisition"
-    if params["Target Data_Type"] == "Run":
-        params["Target Data_Type"] = "PlateAcquisition"
+    if params[P_DTYPE] == "Run":
+        params[P_DTYPE] = "Acquisition"
+    if params[P_TARG_DTYPE] == "Run":
+        params[P_TARG_DTYPE] = "PlateAcquisition"
 
     # Remove duplicate entries from namespace list
-    tmp = params["Old Namespace (blank for default)"]
+    tmp = params[P_OLD_NS]
     if "*" in tmp:
         tmp = ["*"]
-    params["Old Namespace (blank for default)"] = list(set(tmp))
+    params[P_OLD_NS] = list(set(tmp))
 
     return params
 
