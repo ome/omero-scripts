@@ -449,7 +449,7 @@ def run_script():
             values=target_types, default="<on current>"),
 
         scripts.List(
-            "Namespace (leave blank for default)", optional=True,
+            "Namespace (blank for default)", optional=True,
             grouping="1.3",
             description="Namespace(s) to include for the export of key-" +
                         "value pairs annotations. Default is the client" +
