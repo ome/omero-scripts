@@ -133,7 +133,7 @@ def main_loop(conn, script_params):
     source_type = script_params["Data_Type"]
     target_type = script_params["Target Data_Type"]
     source_ids = script_params["IDs"]
-    namespace_l = script_params["Namespace (leave blank for default)"]
+    namespace_l = script_params["Namespace (blank for default)"]
     separator = script_params["Separator"]
     include_parent = script_params["Include column(s) of parents name"]
     include_namespace = script_params["Include namespace"]
@@ -491,7 +491,7 @@ def run_script():
         params = parameters_parsing(client)
         print("Input parameters:")
         keys = ["Data_Type", "IDs", "Target Data_Type",
-                "Namespace (leave blank for default)",
+                "Namespace (blank for default)",
                 "Separator", "Include column(s) of parents name",
                 "Include namespace", "Include tags"]
         for k in keys:
@@ -526,7 +526,7 @@ def run_script():
 def parameters_parsing(client):
     params = {}
     # Param dict with defaults for optional parameters
-    params["Namespace (leave blank for default)"] = [NSCLIENTMAPANNOTATION]
+    params["Namespace (blank for default)"] = [NSCLIENTMAPANNOTATION]
 
     for key in client.getInputKeys():
         if client.getInput(key):
@@ -555,10 +555,10 @@ def parameters_parsing(client):
         params["Target Data_Type"] = "PlateAcquisition"
 
     # Remove duplicate entries from namespace list
-    tmp = params["Namespace (leave blank for default)"]
+    tmp = params["Namespace (blank for default)"]
     if "*" in tmp:
         tmp = ["*"]
-    params["Namespace (leave blank for default)"] = list(set(tmp))
+    params["Namespace (blank for default)"] = list(set(tmp))
 
 
     return params

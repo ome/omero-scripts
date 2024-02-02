@@ -112,8 +112,8 @@ def main_loop(conn, script_params):
     source_type = script_params["Data_Type"]
     target_type = script_params["Target Data_Type"]
     source_ids = script_params["IDs"]
-    old_namespace = script_params["Old Namespace (leave blank for default)"]
-    new_namespace = script_params["New Namespace (leave blank for default)"]
+    old_namespace = script_params["Old Namespace (blank for default)"]
+    new_namespace = script_params["New Namespace (blank for default)"]
 
     ntarget_processed = 0
     ntarget_updated = 0
@@ -231,13 +231,13 @@ def run_script():
             values=target_types, default="<on current>"),
 
         scripts.List(
-            "Old Namespace (leave blank for default)", optional=True,
+            "Old Namespace (blank for default)", optional=True,
             grouping="1.4",
             description="The namespace(s) of the annotations to " +
                         "group and change.").ofType(rstring("")),
 
         scripts.String(
-            "New Namespace (leave blank for default)", optional=True,
+            "New Namespace (blank for default)", optional=True,
             grouping="1.5",
             description="The new namespace for the annotations."),
 
@@ -250,8 +250,8 @@ def run_script():
         params = parameters_parsing(client)
         print("Input parameters:")
         keys = ["Data_Type", "IDs", "Target Data_Type",
-                "Old Namespace (leave blank for default)",
-                "New Namespace (leave blank for default)"]
+                "Old Namespace (blank for default)",
+                "New Namespace (blank for default)"]
         for k in keys:
             print(f"\t- {k}: {params[k]}")
         print("\n####################################\n")
@@ -276,8 +276,8 @@ def parameters_parsing(client):
     params = {}
     # Param dict with defaults for optional parameters
     params["File_Annotation"] = None
-    params["Old Namespace (leave blank for default)"] = [NSCLIENTMAPANNOTATION]
-    params["New Namespace (leave blank for default)"] = NSCLIENTMAPANNOTATION
+    params["Old Namespace (blank for default)"] = [NSCLIENTMAPANNOTATION]
+    params["New Namespace (blank for default)"] = NSCLIENTMAPANNOTATION
 
     for key in client.getInputKeys():
         if client.getInput(key):
@@ -302,10 +302,10 @@ def parameters_parsing(client):
         params["Target Data_Type"] = "PlateAcquisition"
 
     # Remove duplicate entries from namespace list
-    tmp = params["Old Namespace (leave blank for default)"]
+    tmp = params["Old Namespace (blank for default)"]
     if "*" in tmp:
         tmp = ["*"]
-    params["Old Namespace (leave blank for default)"] = list(set(tmp))
+    params["Old Namespace (blank for default)"] = list(set(tmp))
 
     return params
 

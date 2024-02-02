@@ -133,7 +133,7 @@ def main_loop(conn, script_params):
     target_type = script_params["Target Data_Type"]
     source_ids = script_params["IDs"]
     file_ids = script_params["File_Annotation"]
-    namespace = script_params["Namespace (leave blank for default)"]
+    namespace = script_params["Namespace (for default or from csv)"]
     to_exclude = script_params["Columns to exclude"]
     target_id_colname = script_params["Target ID colname"]
     target_name_colname = script_params["Target name colname"]
@@ -640,7 +640,7 @@ def run_script():
                         "attached CSV file on each parent object."),
 
         scripts.String(
-            "Namespace (leave blank for default)",
+            "Namespace (blank for default or from csv)",
             optional=True, grouping="1.4",
             description="Namespace given to the created key-value " +
                         "pairs annotations. Default is the client" +
@@ -699,7 +699,7 @@ def run_script():
         scripts.Bool(
             "Use only personal tags", grouping="2.8", default=False,
             description="Determines if tags of other users in the group" +
-            " can be used on objects.\n Using only personal tags might" +
+            " can be used on objects.\n Using only personal tags might " +
             "lead to multiple tags with the same name in one OMERO-group."),
 
         scripts.Bool(
@@ -716,7 +716,7 @@ def run_script():
         params = parameters_parsing(client)
         print("Input parameters:")
         keys = ["Data_Type", "IDs", "Target Data_Type", "File_Annotation",
-                "Namespace (leave blank for default)",
+                "Namespace (blank for default or from csv)",
                 "Separator", "Columns to exclude", "Target ID colname",
                 "Target name colname", "Exclude empty values",
                 "Attach csv to parents", "Split value on",
@@ -745,7 +745,7 @@ def parameters_parsing(client):
     params = {}
     # Param dict with defaults for optional parameters
     params["File_Annotation"] = None
-    params["Namespace (leave blank for default)"] = NSCLIENTMAPANNOTATION
+    params["Namespace (blank for default or from csv)"] = NSCLIENTMAPANNOTATION
     params["Split value on"] = ""
 
     for key in client.getInputKeys():

@@ -116,7 +116,7 @@ def main_loop(conn, script_params):
     source_type = script_params["Data_Type"]
     target_type = script_params["Target Data_Type"]
     source_ids = script_params["IDs"]
-    namespace_l = script_params["Namespace (leave blank for default)"]
+    namespace_l = script_params["Namespace (blank for default)"]
 
     nsuccess = 0
     ntotal = 0
@@ -219,7 +219,7 @@ def run_script():
             values=target_types, default="<on current>"),
 
         scripts.List(
-            "Namespace (leave blank for default)", optional=True,
+            "Namespace (blank for default)", optional=True,
             grouping="1.3",
             description="Annotation with these namespace will " +
                         "be deleted. Default is the client" +
@@ -240,7 +240,7 @@ def run_script():
         params = parameters_parsing(client)
         print("Input parameters:")
         keys = ["Data_Type", "IDs", "Target Data_Type",
-                "Namespace (leave blank for default)"]
+                "Namespace (blank for default)"]
         for k in keys:
             print(f"\t- {k}: {params[k]}")
         print("\n####################################\n")
@@ -262,7 +262,7 @@ def run_script():
 def parameters_parsing(client):
     params = {}
     # Param dict with defaults for optional parameters
-    params["Namespace (leave blank for default)"] = [NSCLIENTMAPANNOTATION]
+    params["Namespace (blank for default)"] = [NSCLIENTMAPANNOTATION]
 
     for key in client.getInputKeys():
         if client.getInput(key):
@@ -291,10 +291,10 @@ def parameters_parsing(client):
         params["Target Data_Type"] = "PlateAcquisition"
 
     # Remove duplicate entries from namespace list
-    tmp = params["Namespace (leave blank for default)"]
+    tmp = params["Namespace (blank for default)"]
     if "*" in tmp:
         tmp = ["*"]
-    params["Namespace (leave blank for default)"] = list(set(tmp))
+    params["Namespace (blank for default)"] = list(set(tmp))
 
     return params
 
