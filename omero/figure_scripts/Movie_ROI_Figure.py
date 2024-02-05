@@ -203,7 +203,8 @@ def get_roi_movie_view(re, query_service, pixels, time_shape_map,
             row_count += 1
         col_count = max_columns
     font = image_utils.get_font(font_size)
-    text_height = font.getsize("Textq")[1]
+    box = font.getbbox("Textq")
+    text_height = box[3] - box[1]
     # no spaces around panels
     canvas_width = ((panel_width + spacer) * col_count) - spacer
     row_height = rendered_images[0].size[1] + spacer + text_height
@@ -221,7 +222,8 @@ def get_roi_movie_view(re, query_service, pixels, time_shape_map,
     col = 0
     for i, img in enumerate(rendered_images):
         label = time_labels[i]
-        indent = (panel_width - (font.getsize(label)[0])) // 2
+        box = font.getbbox(label)
+        indent = (panel_width - (box[2] - box[0])) // 2
         draw.text((px+indent, text_y), label, font=font, fill=(0, 0, 0))
         image_utils.paste_image(img, canvas, px, panel_y)
         if col == (col_count - 1):
@@ -381,7 +383,8 @@ def get_split_view(conn, image_ids, pixel_ids, merged_indexes, merged_colours,
     elif width > 200:
         font_size = 16
     font = image_utils.get_font(font_size)
-    text_height = font.getsize("Textq")[1]
+    box = font.getbbox("Textq")
+    text_height = box[3] - box[1]
     max_count = 0
     for row in image_labels:
         max_count = max(max_count, len(row))
@@ -589,7 +592,7 @@ def roi_figure(conn, command_args):
         try:
             height = int(h)
         except ValueError:
-            log("Invalid height: %s Using default value" % (str(h), size_y))
+            log("Invalid height: %s Using default value %s" % (str(h), size_y))
 
     log("Image dimensions for all panels (pixels): width: %d  height: %d"
         % (width, height))

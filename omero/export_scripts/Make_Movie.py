@@ -355,7 +355,7 @@ def reshape_to_fit(image, size_x, size_y, bg=(0, 0, 0)):
     # scale
     ratio = min(float(size_x) / image_w, float(size_y) / image_h)
     image = image.resize(map(lambda x: int(x*ratio), image.size),
-                         Image.ANTIALIAS)
+                         Image.LANCZOS)
     # paste
     bg = Image.new("RGBA", (size_x, size_y), (0, 0, 0))     # black bg
     ovlpos = (size_x-image.size[0]) / 2, (size_y-image.size[1]) / 2
@@ -486,8 +486,8 @@ def write_movie(command_args, conn):
         c_windows = []
         c_colours = []
         for c in command_args["ChannelsExtended"]:
-            m = re.match('^(?P<i>\d+)(\|(?P<ws>\d+)' +
-                         '\:(?P<we>\d+))?(\$(?P<c>.+))?$', c)
+            m = re.match('^(?P<i>\\d+)(\\|(?P<ws>\\d+)' +
+                         '\\:(?P<we>\\d+))?(\\$(?P<c>.+))?$', c)
             if m is not None:
                 c_range.append(int(m.group('i'))-1)
                 c_windows.append([float(m.group('ws')), float(m.group('we'))])
@@ -594,7 +594,7 @@ def write_movie(command_args, conn):
         movie_name = "%s.%s" % (movie_name, ext)
 
     # spaces etc in file name cause problems
-    movie_name = re.sub("[$&\;|\(\)<>' ]", "", movie_name)
+    movie_name = re.sub("[$&\\;|\\(\\)<>' ]", "", movie_name)
     frames_per_sec = 2
     if "FPS" in command_args:
         frames_per_sec = command_args["FPS"]

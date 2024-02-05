@@ -180,7 +180,7 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
                 # hoping that when we zoom, don't zoom fullImage
             if roi_zoom != 1:
                 new_size = (int(roi_width*roi_zoom), int(roi_height*roi_zoom))
-                roi_image = roi_image.resize(new_size, Image.ANTIALIAS)
+                roi_image = roi_image.resize(new_size, Image.LANCZOS)
             rendered_images.append(roi_image)
             panel_width = roi_image.size[0]
             re.setActive(index, False)  # turn the channel off again!
@@ -213,7 +213,7 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
 
     if roi_zoom != 1:
         new_size = (int(roi_width*roi_zoom), int(roi_height*roi_zoom))
-        roi_merged_image = roi_merged_image.resize(new_size, Image.ANTIALIAS)
+        roi_merged_image = roi_merged_image.resize(new_size, Image.LANCZOS)
 
     if channel_mismatch:
         log(" WARNING channel mismatch: The current image has fewer channels"
@@ -224,7 +224,8 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
 
     # now assemble the roi split-view canvas
     font = image_utils.get_font(fontsize)
-    text_height = font.getsize("Textq")[1]
+    box = font.getbbox("Textq")
+    text_height = box[3] - box[1]
     top_spacer = 0
     if show_top_labels:
         if merged_names:
@@ -247,7 +248,8 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
     draw = ImageDraw.Draw(canvas)
     for i, index in enumerate(split_indexes):
         label = channel_names.get(index, index)
-        indent = (panel_width - (font.getsize(label)[0])) // 2
+        box = font.getbbox(label)
+        indent = (panel_width - (box[2] - box[0])) // 2
         # text is coloured if channel is not coloured AND in the merged image
         rgb = (0, 0, 0)
         if index in merged_colours:
@@ -275,12 +277,14 @@ def get_roi_split_view(re, pixels, z_start, z_end, split_indexes,
                     name = channel_names[index]
                 else:
                     name = str(index)
-                comb_text_width = font.getsize(name)[0]
+                box = font.getbbox(name)
+                comb_text_width = box[2] - box[0]
                 inset = int((panel_width - comb_text_width) / 2)
                 draw.text((px + inset, text_y), name, font=font, fill=rgb)
                 text_y = text_y - text_height
         else:
-            comb_text_width = font.getsize("Merged")[0]
+            box = font.getbbox("Merged")
+            comb_text_width = box[2] - box[0]
             inset = int((panel_width - comb_text_width) / 2)
             draw.text((px + inset, text_y), "Merged", font=font,
                       fill=(0, 0, 0))
@@ -320,7 +324,7 @@ def get_rectangle(roi_service, image_id, roi_label):
         roi_count += 1
         # go through all the shapes of the ROI
         for shape in roi.copyShapes():
-            if type(shape) == omero.model.RectangleI:
+            if isinstance(shape, omero.model.RectangleI):
                 the_t = unwrap(shape.getTheT())
                 the_z = unwrap(shape.getTheZ())
                 t = 0
@@ -431,7 +435,8 @@ def get_split_view(conn, image_ids, pixel_ids, split_indexes, channel_names,
     elif width > 200:
         fontsize = 16
     font = image_utils.get_font(fontsize)
-    text_height = font.getsize("Textq")[1]
+    box = font.getbbox("Textq")
+    text_height = box[3] - box[1]
     max_count = 0
     for row in image_labels:
         max_count = max(max_count, len(row))
@@ -660,7 +665,7 @@ def roi_figure(conn, command_args):
         try:
             height = int(h)
         except ValueError:
-            log("Invalid height: %s Using default value" % (str(h), size_y))
+            log("Invalid height: %s Using default value: %d" % (str(h), size_y))  # noqa
 
     log("Image dimensions for all panels (pixels): width: %d  height: %d"
         % (width, height))
