@@ -54,6 +54,7 @@ P_IDS = "IDs"  # Do not change
 P_TARG_DTYPE = "Target Data_Type"
 P_OLD_NS = "Old Namespace (blank for default)"
 P_NEW_NS = "New Namespace (blank for default)"
+P_MERGE = "Create new and merge"
 
 
 def get_children_recursive(source_object, target_type):
@@ -120,6 +121,7 @@ def main_loop(conn, script_params):
     source_ids = script_params[P_IDS]
     old_namespace = script_params[P_OLD_NS]
     new_namespace = script_params[P_NEW_NS]
+    merge = script_params[P_MERGE]
 
     ntarget_processed = 0
     ntarget_updated = 0
@@ -131,11 +133,21 @@ def main_loop(conn, script_params):
         for target_obj in target_iterator(conn, source_object,
                                           target_type, is_tag):
             ntarget_processed += 1
-            keyval_l, ann_l = get_existing_map_annotions(target_obj,
-                                                         old_namespace)
+            keyval_l, ann_l = get_existing_map_annotations(target_obj,
+                                                           old_namespace)
             if len(keyval_l) > 0:
-                annotate_object(conn, target_obj, keyval_l, new_namespace)
-                remove_map_annotations(conn, target_obj, ann_l)
+                if merge:
+                    annotate_object(conn, target_obj, keyval_l,
+                                    new_namespace)
+                    remove_map_annotations(conn, target_obj, ann_l)
+                else:
+                    for ann in ann_l:
+                        try:
+                            ann.setNs(new_namespace)
+                            ann.save()
+                        except Exception:
+                            print(f"Failed to edit {ann}")
+                            continue
                 ntarget_updated += 1
                 if result_obj is None:
                     result_obj = target_obj
@@ -148,7 +160,7 @@ def main_loop(conn, script_params):
     return message, result_obj
 
 
-def get_existing_map_annotions(obj, namespace_l):
+def get_existing_map_annotations(obj, namespace_l):
     keyval_l, ann_l = [], []
     forbidden_deletion = []
     for namespace in namespace_l:
@@ -246,6 +258,12 @@ def run_script():
             P_NEW_NS, optional=True,
             grouping="1.5",
             description="The new namespace for the annotations."),
+
+        scripts.Bool(
+            P_MERGE, optional=False,
+            grouping="1.6",
+            description="Check to merge selected key-value pairs" +
+                        " into a single new one", default=True),
 
         authors=["Tom Boissonnet"],
         institutions=["CAi HHU"],
