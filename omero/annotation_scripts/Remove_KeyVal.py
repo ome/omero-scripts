@@ -150,7 +150,7 @@ def remove_map_annotations(conn, obj, namespace_l):
         p = {} if namespace == "*" else {"ns": namespace}
         for ann in obj.listAnnotations(**p):
             if isinstance(ann, omero.gateway.MapAnnotationWrapper):
-                if ann.canEdit():  # If not, skipping it
+                if ann.canDelete():  # If not, skipping it
                     mapann_ids.append(ann.id)
                 else:
                     forbidden_deletion.append(ann.id)

@@ -223,8 +223,11 @@ def main_loop(conn, script_params):
         rows.insert(0, ns_row)
     file_ann = attach_csv(conn, result_obj, rows, separator, csv_name)
 
-    message = ("The csv is attached to " +
-               f"{result_obj.OMERO_CLASS}:{result_obj.getId()}")
+    if file_ann is None:
+        message = "The CSV is printed in output, no file could be attached:"
+    else:
+        message = ("The csv is attached to " +
+                   f"{result_obj.OMERO_CLASS}:{result_obj.getId()}")
 
     return message, file_ann, result_obj
 
@@ -380,6 +383,11 @@ def sort_concat_rows(ns_row, header_row, rows, obj_id_l,
 
 
 def attach_csv(conn, obj_, rows, separator, csv_name):
+    if not obj_.canAnnotate() and WEBCLIENT_URL == "":
+        for row in rows:
+            print(f"{separator.join(row)}")
+        return None
+
     # create the tmp directory
     tmp_dir = tempfile.mkdtemp(prefix='MIF_meta')
     (fd, tmp_file) = tempfile.mkstemp(dir=tmp_dir, text=True)
@@ -392,9 +400,10 @@ def attach_csv(conn, obj_, rows, separator, csv_name):
     file_ann = conn.createFileAnnfromLocalFile(
         tmp_file, origFilePathAndName=csv_name,
         ns='KeyVal_export')
-    obj_.linkAnnotation(file_ann)
 
-    print(f"{file_ann} linked to {obj_}")
+    if obj_.canAnnotate():
+        obj_.linkAnnotation(file_ann)
+        print(f"{file_ann} linked to {obj_}")
 
     # remove the tmp file
     os.remove(tmp_file)
@@ -504,8 +513,8 @@ def run_script():
         message, fileann, res_obj = main_loop(conn, params)
         client.setOutput("Message", rstring(message))
 
-        href = f"{WEBCLIENT_URL}/download_original_file/{fileann.getId()}"
         if res_obj is not None and fileann is not None:
+            href = f"{WEBCLIENT_URL}/download_original_file/{fileann.getId()}"
             if WEBCLIENT_URL != "":
                 url = omero.rtypes.wrap({
                     "type": "URL",

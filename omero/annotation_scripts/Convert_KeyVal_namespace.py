@@ -139,7 +139,7 @@ def main_loop(conn, script_params):
                 if merge:
                     annotate_object(conn, target_obj, keyval_l,
                                     new_namespace)
-                    remove_map_annotations(conn, target_obj, ann_l)
+                    remove_map_annotations(conn, ann_l)
                 else:
                     for ann in ann_l:
                         try:
@@ -178,7 +178,7 @@ def get_existing_map_annotations(obj, namespace_l):
     return keyval_l, ann_l
 
 
-def remove_map_annotations(conn, obj, ann_l):
+def remove_map_annotations(conn, ann_l):
     mapann_ids = [ann.id for ann in ann_l]
 
     if len(mapann_ids) == 0:
@@ -188,7 +188,7 @@ def remove_map_annotations(conn, obj, ann_l):
         conn.deleteObjects("Annotation", mapann_ids)
         return 1
     except Exception:
-        print("Failed to delete links")
+        print(f"Failed to delete old annotations {mapann_ids}")
         return 0
 
 
@@ -263,7 +263,7 @@ def run_script():
             P_MERGE, optional=False,
             grouping="1.6",
             description="Check to merge selected key-value pairs" +
-                        " into a single new one", default=True),
+                        " into a single new one", default=False),
 
         authors=["Tom Boissonnet"],
         institutions=["CAi HHU"],

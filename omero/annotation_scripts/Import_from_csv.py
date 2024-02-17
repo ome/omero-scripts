@@ -129,8 +129,11 @@ def target_iterator(conn, source_object, target_type, is_tag):
 
     print(f"Iterating objects from {source_object}:")
     for target_obj in target_obj_l:
-        print(f"\t- {target_obj}")
-        yield target_obj
+        if target_obj.canAnnotate():
+            print(f"\t- {target_obj}")
+            yield target_obj
+        else:
+            print(f"\t- Annotate {target_obj} is not permitted, skipping")
     print()
 
 
@@ -187,7 +190,8 @@ def main_loop(conn, script_params):
             file_ann = get_original_file(source_object)
         original_file = file_ann.getFile()._obj
 
-        rows, header, namespaces = read_csv(conn, original_file, separator, import_tags)
+        rows, header, namespaces = read_csv(conn, original_file,
+                                            separator, import_tags)
         if namespace is not None:
             namespaces = [namespace] * len(header)
         elif len(namespaces) == 0:
