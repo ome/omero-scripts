@@ -548,7 +548,7 @@ def preprocess_tag_rows(conn, header, rows, tag_d, tagset_d,
                 if not has_tagset:
                     tag_exist = tagname in tag_d.keys()
                     assert (tag_exist or create_new_tags), (
-                        f"Tag '{tagname}'" +
+                        f"The tag '{tagname}'" +
                         " does not exist while" +
                         " creation of new tags" +
                         " is not permitted"
@@ -567,7 +567,7 @@ def preprocess_tag_rows(conn, header, rows, tag_d, tagset_d,
                     tag_exist = (tagset_exist
                                  and (tagname in tagtree_d[tagset].keys()))
                     assert (tag_exist or create_new_tags), (
-                        f"Tag '{tagname}' " +
+                        f"The tag '{tagname}' " +
                         f"in TagSet '{tagset}'" +
                         " does not exist while" +
                         " creation of new tags" +
