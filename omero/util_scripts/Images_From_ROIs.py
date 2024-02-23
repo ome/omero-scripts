@@ -29,7 +29,6 @@ images with the regions within the ROIs, and saves them back to the server.
 # @version 3.0
 # @since 3.0-Beta4.2
 
-from __future__ import print_function
 import omero
 import omero.scripts as scripts
 from omero.gateway import BlitzGateway
