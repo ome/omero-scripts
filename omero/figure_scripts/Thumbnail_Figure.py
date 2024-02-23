@@ -41,12 +41,7 @@ from omero.rtypes import rint, rlong, rstring, robject
 from omero.constants.namespaces import NSCREATED
 import os
 
-try:
-    from PIL import Image, ImageDraw, ImageFont
-except ImportError:
-    import Image
-    import ImageDraw  # see ticket:2597
-    import ImageFont
+from PIL import Image, ImageDraw, ImageFont
 
 from omero.gateway import THISPATH as GATEWAYPATH
 

@@ -47,11 +47,7 @@ from omero.constants.projection import ProjectionType
 from datetime import date
 import math
 
-try:
-    from PIL import Image, ImageDraw  # see ticket:2597
-except ImportError:
-    import Image
-    import ImageDraw  # see ticket:2597
+from PIL import Image, ImageDraw
 
 COLOURS = script_utils.COLOURS    # name:(rgba) map
 OVERLAY_COLOURS = dict(COLOURS, **script_utils.EXTRA_COLOURS)

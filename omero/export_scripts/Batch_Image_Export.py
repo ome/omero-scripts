@@ -42,10 +42,7 @@ import glob
 import zipfile
 from datetime import datetime
 
-try:
-    from PIL import Image  # see ticket:2597
-except ImportError:
-    import Image
+from PIL import Image
 
 # keep track of log strings.
 log_strings = []

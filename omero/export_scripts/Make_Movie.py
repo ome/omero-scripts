@@ -48,16 +48,9 @@ from omero.constants.namespaces import NSCREATED
 from omero.constants.metadata import NSMOVIE
 
 from io import BytesIO
-try:
-    from types import StringTypes
-except ImportError:
-    StringTypes = str
+from types import StringTypes
 
-try:
-    from PIL import Image, ImageDraw  # see ticket:2597
-except ImportError:
-    import Image
-    import ImageDraw  # see ticket:2597
+from PIL import Image, ImageDraw
 
 COLOURS = script_utils.COLOURS
 COLOURS.update(script_utils.EXTRA_COLOURS)    # name:(rgba) map
