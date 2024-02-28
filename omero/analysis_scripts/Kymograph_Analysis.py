@@ -86,7 +86,7 @@ def process_images(conn, script_params):
             for s in roi.copyShapes():
                 if s is None:
                     continue    # seems possible in some situations
-                if type(s) == omero.model.LineI:
+                if isinstance(s, omero.model.LineI):
                     table_data += "\nLine ID: %s" % s.getId().getValue()
                     x1 = s.getX1().getValue()
                     x2 = s.getX2().getValue()
@@ -103,7 +103,7 @@ def process_images(conn, script_params):
                         [str(x) for x in (y1, x1, y2, x2, dy, dx, dx_per_y,
                                           speed)])
 
-                elif type(s) == omero.model.PolylineI:
+                elif isinstance(s, omero.model.PolylineI):
                     table_data += "\nPolyline ID: %s" % s.getId().getValue()
                     v = s.getPoints().getValue()
                     points = roi_utils.points_string_to_xy_list(v)

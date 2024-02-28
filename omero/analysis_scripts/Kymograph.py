@@ -175,9 +175,9 @@ def polyline_kymograph(conn, script_params, image, polylines, line_width,
                 line_data = []
                 points = shape['points']
                 the_z = shape['theZ']
-                for l in range(len(points)-1):
-                    x1, y1 = points[l]
-                    x2, y2 = points[l+1]
+                for point in range(len(points)-1):
+                    x1, y1 = points[point]
+                    x2, y2 = points[point+1]
                     ld = get_line_data(image, x1, y1, x2, y2,
                                        line_width, the_z, the_c, the_t)
                     line_data.append(ld)
@@ -334,7 +334,7 @@ def process_images(conn, script_params):
                     z = the_z
                 # TODO: Add some filter of shapes. E.g. text? / 'lines' only
                 # etc.
-                if type(s) == omero.model.LineI:
+                if isinstance(s, omero.model.LineI):
                     x1 = s.getX1().getValue()
                     x2 = s.getX2().getValue()
                     y1 = s.getY1().getValue()
@@ -342,7 +342,7 @@ def process_images(conn, script_params):
                     lines[t] = {'theZ': z, 'x1': x1, 'y1': y1, 'x2': x2,
                                 'y2': y2}
 
-                elif type(s) == omero.model.PolylineI:
+                elif isinstance(s, omero.model.PolylineI):
                     v = s.getPoints().getValue()
                     points = roi_utils.points_string_to_xy_list(v)
                     polylines[t] = {'theZ': z, 'points': points}

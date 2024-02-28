@@ -192,7 +192,8 @@ def createmovie_figure(conn, pixel_ids, t_indexes, z_start, z_end, width,
         col_count = min(max_col_count, len(rendered_images))
         row_count = int(math.ceil(len(rendered_images) / col_count))
         font = image_utils.get_font(width // 12)
-        font_height = font.getsize("Textq")[1]
+        box = font.getbbox("Textq")
+        font_height = box[3] - box[1]
         canvas_width = ((width + spacer) * col_count) + spacer
         canvas_height = row_count * (spacer // 2 + font_height +
                                      spacer + height)
@@ -211,7 +212,8 @@ def createmovie_figure(conn, pixel_ids, t_indexes, z_start, z_end, width,
             if t_index >= size_t:
                 continue
             time = time_labels[t]
-            text_w = font.getsize(time)[0]
+            box = font.getbbox(time)
+            text_w = box[2] - box[0]
             inset = (width - text_w) // 2
             textdraw = ImageDraw.Draw(canvas)
             textdraw.text((text_x+inset, text_y), time, font=font,
@@ -295,7 +297,8 @@ def add_left_labels(panel_canvas, image_labels, row_index, width, spacer):
     mode = "RGB"
     white = (255, 255, 255)
     font = image_utils.get_font(width/12)
-    text_height = font.getsize("Sampleq")[1]
+    box = font.getbbox("Sampleq")
+    text_height = box[3] - box[1]
     text_gap = spacer / 2
 
     # find max number of labels
@@ -311,9 +314,9 @@ def add_left_labels(panel_canvas, image_labels, row_index, width, spacer):
 
     labels = image_labels[row_index]
     py = left_text_height - text_gap  # start at bottom
-    for l, label in enumerate(labels):
+    for count, label in enumerate(labels):
         py = py - text_height    # find the top of this row
-        w = textdraw.textsize(label, font=font)[0]
+        w = textdraw.textlength(label, font=font)
         inset = int((left_text_width - w) / 2)
         textdraw.text((inset, py), label, font=font, fill=(0, 0, 0))
         py = py - text_gap    # add space between rows

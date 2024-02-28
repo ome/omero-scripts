@@ -63,7 +63,7 @@ def add_images_to_plate(conn, images, plate_id, column, row, remove_from=None):
     for image in images:
         if remove_from is not None:
             links = list(image.getParentLinks(remove_from.id))
-            link_ids = [l.id for l in links]
+            link_ids = [link.id for link in links]
             conn.deleteObjects('DatasetImageLink', link_ids)
     return True
 
