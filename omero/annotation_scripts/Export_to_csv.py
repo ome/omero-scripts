@@ -189,7 +189,7 @@ def main_loop(conn, script_params):
                 result_obj = target_obj
         print("\n------------------------------------\n")
 
-    csv_name = "{}_keyval.csv".format(get_obj_name(source_object))
+    csv_name = f"{get_obj_name(source_object)}_{target_type}-KeyValue.csv"
 
     if include_namespace and "*" in namespace_l:
         # Assign entries of * namespace
@@ -391,7 +391,7 @@ def attach_csv(conn, obj_, rows, separator, csv_name):
     # create the tmp directory
     tmp_dir = tempfile.mkdtemp(prefix='MIF_meta')
     (fd, tmp_file) = tempfile.mkstemp(dir=tmp_dir, text=True)
-    tfile = os.fdopen(fd, 'w')
+    tfile = os.fdopen(fd, 'w', encoding="utf-8")
     for row in rows:
         tfile.write(f"{separator.join(row)}\n")
     tfile.close()

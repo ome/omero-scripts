@@ -344,23 +344,25 @@ def read_csv(conn, original_file, delimiter, import_tags):
           f"{original_file.id.val}:{original_file.name.val}")
     provider = DownloadingOriginalFileProvider(conn)
     # read the csv
-    temp_file = provider.get_original_file_data(original_file)
     # Needs omero-py 5.9.1 or later
-    with open(temp_file.name, 'rt', encoding='utf-8-sig') as file_handle:
-        if delimiter is None:
-            try:  # Detecting csv delimiter from the first line
-                delimiter = csv.Sniffer().sniff(
-                    file_handle.readline(), ",;\t").delimiter
-                print(f"Using delimiter {delimiter}",
-                      "after reading one line")
-            except Exception:
-                # Send the error back to the UI
-                assert False, ("Failed to sniff CSV delimiter, " +
-                               "please specify the separator")
 
-        # reset to start and read whole file...
-        file_handle.seek(0)
-        rows = list(csv.reader(file_handle, delimiter=delimiter))
+    try:
+        temp_file = provider.get_original_file_data(original_file)
+        with open(temp_file.name, mode="rt", encoding='utf-8') as f:
+            csv_content = f.readlines()
+    except UnicodeDecodeError as e:
+        assert False, ("Error while reading the csv, convert your " +
+                       "file to utf-8 encoding" +
+                       str(e))
+
+    if delimiter is None:
+        try:
+            # Sniffing on a maximum of four lines
+            delimiter = csv.Sniffer().sniff("\n".join(csv_content[:4]),
+                                            ",;\t").delimiter
+        except Exception as e:
+            assert False, ("Failed to sniff CSV delimiter: " + str(e))
+    rows = list(csv.reader(csv_content, delimiter=delimiter))
 
     rowlen = len(rows[0])
     error_msg = (
