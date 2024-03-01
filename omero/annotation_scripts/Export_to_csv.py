@@ -375,7 +375,7 @@ def sort_concat_rows(ns_row, header_row, rows, obj_id_l,
         for j in range(len(obj_ancestry_l[i])):
             header_row.insert(j, obj_ancestry_l[i][j][0].upper())
             ns_row.insert(j, "")
-    ns_row[0] = "namespace"
+    ns_row[0] = "NAMESPACE"
 
     print(f"\tColumn names: {header_row}", "\n")
 
