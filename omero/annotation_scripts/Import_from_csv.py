@@ -586,7 +586,10 @@ def preprocess_tag_rows(conn, header, rows, tag_d, tagset_d,
                             tagset_o.setValue(tagset)
                             tagset_o.setNs(NSINSIGHTTAGSET)
                             tagset_o.save()
-                            tagid_d[tagset_o.id] = conn.getObject("TagAnnotation", tagset_o.id)
+                            tagid_d[tagset_o.id] = conn.getObject(
+                                "TagAnnotation",
+                                tagset_o.id
+                            )
                             tagset_d[tagset] = tagset_o.id
                             print(f"Created new TagSet {tagset}:{tagset_o.id}")
                         # else:
