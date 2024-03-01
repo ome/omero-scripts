@@ -201,8 +201,7 @@ def run_script():
     associated to the given namespace.
     \t
     Check the guide for more information on parameters and errors:
-    TODO link to omero-guides
-    https://github.com/German-BioImaging/guide-KVpairs-scripts/blob/master/docs/gettingstarted.rst#deleting-key-value-pairs
+    https://guide-kvpairs-scripts.readthedocs.io/en/latest/index.html
     \t
     Default namespace: openmicroscopy.org/omero/client/mapAnnotation
         """,  # Tabs are needed to add line breaks in the HTML
