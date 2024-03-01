@@ -7,42 +7,37 @@ This is the central repository for community contributed scripts to [omero-web](
 These scripts, in combination with the [omero.forms](https://pypi.org/project/omero-forms),
 support the bulk annotation workflow described in [this blog post](https://mpievolbio-scicomp.pages.gwdg.de/blog/post/2020-09-03_omerobulkannotation/).
 
+For the new scripts version of 2024, you can follow this guide:
+https://guide-kvpairs-scripts.readthedocs.io/en/latest/walkthrough.html
+
 
 Content
 -------
-This repository provides five scripts:
-* `01-KeyVal_from_Description.py`: Parses a Dataset/Project/Screen description and converts
-  key:value pairs into map annotations in the same container.
-* `01-KeyVal_to_csv.py`: Converts a dataset map annotation into a table with one
-  record for every image in the dataset. Columns are named according to map
-annotation keys. The first column contains the image filename (or id???)
-* `03-KeyVal_from_csv.py`: Parses a given csv table attachment and converts each
-  record into a map annotation for the image identified via the entry in the
-first column (filename or image id).
-* `04-Remove_KeyVal.py`: Removes all map annotations from a dataset and all
-  contained images.
-* `05-KeyVal_from_Filename.py`: Creates image map annotation by tokenizing the
-  filename.
+This repository provides four scripts:
+* `Import_from_csv.py`: Read a csv file and converts each row into a map annotation
+for the identified object (image, dataset, project, run, well, plate, screen).
+* `Export_to_csv.py`: Exports the map annotations of objects into a csv file.
+* `Remove_KeyVal.py`: Removes the key-value pairs of an object associated with
+a given namespace.
+* `Convert_KeyVal_namespace.py`: Converts the namespace of map annotations.
 
 Installation
 ---------------
 The scripts must be placed in the `OMERODIR/lib/scripts/omero` directory of your
 omero installation, preferrentially in a seperatate subdirectory, e.g. `Bulk
-Annotation/`. 
+Annotation/`.
 
-`OMERODIR`
-refers to the root directory of you omero server. If you followed the
-installation procedures, you should have the `$OMERODIR` environment variable set.
-Logged in omero admins can also use the "Upload scripts" button in the *Gears*
-menu.
+Follow [these instruction](https://omero.readthedocs.io/en/stable/developers/scripts/index.html#downloading-and-installing-scripts) to install/update the scripts,
 
-After installation, the scripts will be accessible in omero web by clicking the *Gears*
-icon in the  menu bar.
+You should also configure the Export_to_csv script so that it returns the csv file as a direct download link:
+https://guide-kvpairs-scripts.readthedocs.io/en/latest/setup.html#configuring-the-export-script
 
 History
 --------
 This repository started as a fork of [evehuis/omero-user-scripts](). Ownership was transferred to @CFGrote after merging a pull request that fixed a number of bugs and
 ported the original code from python2.7 to python3.x
+
+In 2023, the scripts were reworked by Tom Boissonnet and Jens Wendt to extend the annotation to all OMERO objects, and to include a new script to convert namespaces of map annotations.
 
 
 Contributions
