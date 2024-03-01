@@ -267,7 +267,8 @@ def run_script():
 
         authors=["Tom Boissonnet"],
         institutions=["CAi HHU"],
-        contact="https://forum.image.sc/tag/omero"
+        contact="https://forum.image.sc/tag/omero",
+        version="2.0.0",
     )
 
     try:
