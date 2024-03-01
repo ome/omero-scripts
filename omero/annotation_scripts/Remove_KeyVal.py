@@ -238,6 +238,7 @@ def run_script():
         authors=["Christian Evenhuis", "MIF", "Tom Boissonnet"],
         institutions=["University of Technology Sydney", "CAi HHU"],
         contact="https://forum.image.sc/tag/omero",
+        version="2.0.0",
     )
 
     try:
