@@ -23,7 +23,6 @@
    Integration test for util scripts.
 """
 
-from __future__ import print_function
 import omero
 from omero.gateway import BlitzGateway
 import omero.scripts
