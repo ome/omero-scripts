@@ -113,8 +113,10 @@ def main_loop(conn, script_params):
     """
     For every object:
      - Find annotations in the namespace
-     - Remove annotations with old namespace
-     - Create annotations with new namespace
+     - If merge:
+        - Remove annotations with old namespace
+        - Create a merged annotation with new namespace
+     - Else change the namespace of the annotation (default)
     """
     source_type = script_params[P_DTYPE]
     target_type = script_params[P_TARG_DTYPE]
