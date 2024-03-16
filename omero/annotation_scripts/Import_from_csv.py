@@ -645,7 +645,8 @@ def run_script():
     client = scripts.client(
         'Import from CSV',
         """
-    Reads a .csv file to annotate the given objects with key-value pairs.
+    Reads a .csv file to annotate the given objects with tags and
+    key-value pairs.
     \t
     Check the guide for more information on parameters and errors:
     https://guide-kvpairs-scripts.readthedocs.io/en/latest/index.html

@@ -442,7 +442,7 @@ def run_script():
         'Export to CSV',
         """
     This script exports for the selected objects their name, IDs and associated
-    key-value pairs.
+    tags and key-value pairs.
     \t
     Check the guide for more information on parameters and errors:
     https://guide-kvpairs-scripts.readthedocs.io/en/latest/index.html
