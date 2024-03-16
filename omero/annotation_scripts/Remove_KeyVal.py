@@ -217,7 +217,7 @@ def run_script():
                         "to delete annotation from.").ofType(rlong(0)),
 
         scripts.String(
-            P_TARG_DTYPE, optional=True, grouping="1.2",
+            P_TARG_DTYPE, optional=False, grouping="1.2",
             description="Choose the object type to delete annotation from.",
             values=target_types, default="<on current>"),
 
@@ -230,7 +230,7 @@ def run_script():
                         "OMERO.web").ofType(rstring("")),
 
         scripts.Bool(
-            P_AGREEMENT, optional=False, grouping="2",
+            P_AGREEMENT, optional=True, grouping="2",
             description="Make sure that you understood the scope of " +
                         "what will be deleted."),
 

@@ -248,19 +248,16 @@ def run_script():
             values=target_types, default="<on current>"),
 
         scripts.List(
-            P_OLD_NS, optional=True,
-            grouping="1.4",
+            P_OLD_NS, optional=True, grouping="1.4",
             description="The namespace(s) of the annotations to " +
                         "group and change.").ofType(rstring("")),
 
         scripts.String(
-            P_NEW_NS, optional=True,
-            grouping="1.5",
+            P_NEW_NS, optional=True, grouping="1.5",
             description="The new namespace for the annotations."),
 
         scripts.Bool(
-            P_MERGE, optional=False,
-            grouping="1.6",
+            P_MERGE, optional=True, grouping="1.6",
             description="Check to merge selected key-value pairs" +
                         " into a single new one", default=False),
 

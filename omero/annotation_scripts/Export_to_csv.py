@@ -461,7 +461,7 @@ def run_script():
                         "to delete annotation from.").ofType(rlong(0)),
 
         scripts.String(
-            P_TARG_DTYPE, optional=True, grouping="1.2",
+            P_TARG_DTYPE, optional=False, grouping="1.2",
             description="Choose the object type to delete annotation from.",
             values=target_types, default="<on current>"),
 
@@ -483,19 +483,19 @@ def run_script():
             values=separators, default="TAB"),
 
         scripts.Bool(
-            P_INCL_PARENT, optional=False,
+            P_INCL_PARENT, optional=True,
             grouping="2.2",
             description="Check to include or not the name of the parent(s)" +
                         " objects as columns in the csv", default=False),
 
         scripts.Bool(
-            P_INCL_NS, optional=False,
+            P_INCL_NS, optional=True,
             grouping="2.3",
             description="Check to include the annotation namespaces" +
                         " in the csv file.", default=False),
 
         scripts.Bool(
-            P_INCL_TAG, optional=False,
+            P_INCL_TAG, optional=True,
             grouping="2.4",
             description="Check to include tags in the csv file.",
             default=False),

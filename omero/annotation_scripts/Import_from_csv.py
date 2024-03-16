@@ -689,13 +689,13 @@ def run_script():
                         "in the CSV."),
 
         scripts.Bool(
-            P_OWN_TAG, grouping="2.1", default=False,
+            P_OWN_TAG, optional=True, grouping="2.1", default=False,
             description="Determines if tags of other users in the group" +
             " can be used on objects.\n Using only personal tags might " +
             "lead to multiple tags with the same name in one OMERO-group."),
 
         scripts.Bool(
-            P_ALLOW_NEWTAG, grouping="2.2", default=False,
+            P_ALLOW_NEWTAG, optional=True, grouping="2.2", default=False,
             description="Creates new tags and tagsets if the ones" +
             " specified in the .csv do not exist."),
 
@@ -704,7 +704,7 @@ def run_script():
             description="Ticking or unticking this has no effect"),
 
         scripts.Bool(
-            P_EXCL_EMPTY, grouping="3.1", default=True,
+            P_EXCL_EMPTY, optional=True, grouping="3.1", default=True,
             description="Exclude a key-value if the value is empty."),
 
         scripts.String(
@@ -730,14 +730,14 @@ def run_script():
                         "to the six container types.").ofType(rstring("")),
 
         scripts.String(
-            P_TARG_COLID, optional=False, grouping="3.5",
+            P_TARG_COLID, optional=True, grouping="3.5",
             default="OBJECT_ID",
             description="The column name in the .csv containing the id" +
                         " of the objects to annotate. " +
                         "Matches <ID> in exclude parameter."),
 
         scripts.String(
-            P_TARG_COLNAME, optional=False, grouping="3.6",
+            P_TARG_COLNAME, optional=True, grouping="3.6",
             default="OBJECT_NAME",
             description="The column name in the .csv containing the name of " +
                         "the objects to annotate (used if no column " +
@@ -745,7 +745,7 @@ def run_script():
                         "<NAME> in exclude parameter."),
 
         scripts.Bool(
-            P_ATTACH, grouping="3.7", default=False,
+            P_ATTACH, optional=True, grouping="3.7", default=False,
             description="Attach the given CSV to the selected objects" +
             "when not already attached to it."),
 
