@@ -385,9 +385,11 @@ def read_csv(conn, original_file, delimiter, import_tags):
     rows = rows[1:]
 
     if not import_tags:
+        # We filter out the tag columns
         idx_l = [i for i in range(len(header)) if header[i].lower() != "tag"]
         header = [header[i] for i in idx_l]
-        namespaces = [namespaces[i] for i in idx_l]
+        if len(namespaces) > 0:
+            namespaces = [namespaces[i] for i in idx_l]
         for j in range(len(rows)):
             rows[j] = [rows[j][i] for i in idx_l]
 
