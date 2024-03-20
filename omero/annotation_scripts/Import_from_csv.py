@@ -831,11 +831,6 @@ def parameters_parsing(client):
 
     params[P_EXCL_COL] = to_exclude
 
-    assert (params[P_CSVSEP] is None
-            or params[P_CSVSEP] not in params[P_SPLIT_CELL]), (
-                "Cannot split cells with a character used as CSV separator"
-        )
-
     print("Input parameters:")
     keys = [P_DTYPE, P_IDS, P_TARG_DTYPE, P_FILE_ANN,
             P_NAMESPACE, P_CSVSEP, P_EXCL_COL, P_TARG_COLID,
