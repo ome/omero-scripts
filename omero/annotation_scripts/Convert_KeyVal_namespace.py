@@ -1,13 +1,10 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# coding=utf-8
 """
- Remove_KeyVal.py"
+ Convert_KeyVal_namespace.py
 
- Remove all key-value pairs associated with a namespace from
- objects on OMERO.
-
+ Convert the namespace of objects key-value pairs.
 -----------------------------------------------------------------------------
-  Copyright (C) 2018 - 2024
+  Copyright (C) 2024
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
@@ -20,15 +17,15 @@
   with this program; if not, write to the Free Software Foundation, Inc.,
   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 ------------------------------------------------------------------------------
-Created by Christian Evenhuis
+Created by Tom Boissonnet
 
 """
 
-from omero.gateway import BlitzGateway
 import omero
-from omero.rtypes import rlong, rstring, robject
-from omero.constants.metadata import NSCLIENTMAPANNOTATION
+from omero.gateway import BlitzGateway
+from omero.rtypes import rstring, rlong, robject
 import omero.scripts as scripts
+from omero.constants.metadata import NSCLIENTMAPANNOTATION
 
 
 CHILD_OBJECTS = {
@@ -55,9 +52,9 @@ ALLOWED_PARAM = {
 P_DTYPE = "Data_Type"  # Do not change
 P_IDS = "IDs"  # Do not change
 P_TARG_DTYPE = "Target Data_Type"
-P_NAMESPACE = "Namespace (blank for default)"
-P_AGREEMENT = ("I understand what I am doing and that this will result " +
-               "in a batch deletion of key-value pairs from the server")
+P_OLD_NS = "Old Namespace (blank for default)"
+P_NEW_NS = "New Namespace (blank for default)"
+P_MERGE = "Create new and merge"
 
 
 def get_children_recursive(source_object, target_type):
@@ -115,66 +112,100 @@ def target_iterator(conn, source_object, target_type, is_tag):
 def main_loop(conn, script_params):
     """
     For every object:
-     - Find annotations in the namespace and remove
+     - Find annotations in the namespace
+     - If merge:
+        - Remove annotations with old namespace
+        - Create a merged annotation with new namespace
+     - Else change the namespace of the annotation (default)
     """
     source_type = script_params[P_DTYPE]
     target_type = script_params[P_TARG_DTYPE]
     source_ids = script_params[P_IDS]
-    namespace_l = script_params[P_NAMESPACE]
+    old_namespace = script_params[P_OLD_NS]
+    new_namespace = script_params[P_NEW_NS]
+    merge = script_params[P_MERGE]
 
-    nsuccess = 0
-    ntotal = 0
+    ntarget_processed = 0
+    ntarget_updated = 0
     result_obj = None
 
+    # One file output per given ID
     for source_object in conn.getObjects(source_type, source_ids):
         is_tag = source_type == "TagAnnotation"
         for target_obj in target_iterator(conn, source_object,
                                           target_type, is_tag):
-            success = remove_map_annotations(conn, target_obj, namespace_l)
-            if success:
-                nsuccess += 1
+            ntarget_processed += 1
+            keyval_l, ann_l = get_existing_map_annotations(target_obj,
+                                                           old_namespace)
+            if len(keyval_l) > 0:
+                if merge:
+                    annotate_object(conn, target_obj, keyval_l,
+                                    new_namespace)
+                    remove_map_annotations(conn, ann_l)
+                else:
+                    for ann in ann_l:
+                        try:
+                            ann.setNs(new_namespace)
+                            ann.save()
+                        except Exception:
+                            print(f"Failed to edit {ann}")
+                            continue
+                ntarget_updated += 1
                 if result_obj is None:
                     result_obj = target_obj
-
-            ntotal += 1
+            else:
+                print("\tNo MapAnnotation found with that namespace\n")
         print("\n------------------------------------\n")
-    message = f"Key value data deleted from {nsuccess} of {ntotal} objects"
+    message = f"Updated kv pairs to \
+        {ntarget_updated}/{ntarget_processed} {target_type}"
 
     return message, result_obj
 
 
-def remove_map_annotations(conn, obj, namespace_l):
-    mapann_ids = []
+def get_existing_map_annotations(obj, namespace_l):
+    keyval_l, ann_l = [], []
     forbidden_deletion = []
     for namespace in namespace_l:
         p = {} if namespace == "*" else {"ns": namespace}
         for ann in obj.listAnnotations(**p):
             if isinstance(ann, omero.gateway.MapAnnotationWrapper):
-                if ann.canDelete():  # If not, skipping it
-                    mapann_ids.append(ann.id)
+                if ann.canEdit():  # If not, skipping it
+                    keyval_l.extend([(k, v) for (k, v) in ann.getValue()])
+                    ann_l.append(ann)
                 else:
                     forbidden_deletion.append(ann.id)
+    if len(forbidden_deletion) > 0:
+        print("\tMap Annotation IDs skipped (not permitted):",
+              f"{forbidden_deletion}")
+    return keyval_l, ann_l
+
+
+def remove_map_annotations(conn, ann_l):
+    mapann_ids = [ann.id for ann in ann_l]
 
     if len(mapann_ids) == 0:
         return 0
-    print(f"\tMap Annotation IDs to delete: {mapann_ids}")
-    if len(forbidden_deletion) > 0:
-        print("\tMap Annotation IDs skipped (not permitted):",
-              f"{forbidden_deletion}\n")
+    print(f"\tMap Annotation IDs to delete: {mapann_ids}\n")
     try:
         conn.deleteObjects("Annotation", mapann_ids)
         return 1
     except Exception:
-        print("Failed to delete links")
+        print(f"Failed to delete old annotations {mapann_ids}")
         return 0
 
 
-def run_script():
-    """
-    The main entry point of the script, as called by the client via the
-    scripting service, passing the required parameters.
-    """
+def annotate_object(conn, obj, kv_list, namespace):
 
+    map_ann = omero.gateway.MapAnnotationWrapper(conn)
+    map_ann.setNs(namespace)
+    map_ann.setValue(kv_list)
+    map_ann.save()
+
+    print("\tMap Annotation created", map_ann.id)
+    obj.linkAnnotation(map_ann)
+
+
+def run_script():
     # Cannot add fancy layout if we want auto fill and selct of object ID
     source_types = [
                     rstring("Project"), rstring("Dataset"), rstring("Image"),
@@ -191,14 +222,10 @@ def run_script():
                     rstring("--- Image")
     ]
 
-    # Here we define the script name and description.
-    # Good practice to put url here to give users more guidance on how to run
-    # your script.
     client = scripts.client(
-        'Remove Key-Value pairs',
+        'Convert Key-Value pairs namespace',
         """
-    This script deletes for the selected objects the key-value pairs
-    associated to the given namespace.
+    This script converts the namespace of key-value pair annotations.
     \t
     Check the guide for more information on parameters and errors:
     https://guide-kvpairs-scripts.readthedocs.io/en/latest/index.html
@@ -214,28 +241,30 @@ def run_script():
         scripts.List(
             P_IDS, optional=False, grouping="1.1",
             description="List of parent-data IDs containing the objects " +
-                        "to delete annotation from.").ofType(rlong(0)),
+                        "to annotate.").ofType(rlong(0)),
 
         scripts.String(
             P_TARG_DTYPE, optional=False, grouping="1.2",
-            description="Choose the object type to delete annotation from.",
+            description="The data type for which key-value pair annotations " +
+                        "will be converted.",
             values=target_types, default="<on current>"),
 
         scripts.List(
-            P_NAMESPACE, optional=True,
-            grouping="1.3",
-            description="Annotation with these namespace will " +
-                        "be deleted. Default is the client" +
-                        " namespace, meaning editable in " +
-                        "OMERO.web").ofType(rstring("")),
+            P_OLD_NS, optional=True, grouping="1.4",
+            description="The namespace(s) of the annotations to " +
+                        "group and change.").ofType(rstring("")),
+
+        scripts.String(
+            P_NEW_NS, optional=True, grouping="1.5",
+            description="The new namespace for the annotations."),
 
         scripts.Bool(
-            P_AGREEMENT, optional=True, grouping="2",
-            description="Make sure that you understood the scope of " +
-                        "what will be deleted."),
+            P_MERGE, optional=True, grouping="1.6",
+            description="Check to merge selected key-value pairs" +
+                        " into a single new one", default=False),
 
-        authors=["Christian Evenhuis", "MIF", "Tom Boissonnet"],
-        institutions=["University of Technology Sydney", "CAi HHU"],
+        authors=["Tom Boissonnet"],
+        institutions=["CAi HHU"],
         contact="https://forum.image.sc/tag/omero",
         version="2.0.0",
     )
@@ -243,7 +272,7 @@ def run_script():
     try:
         params = parameters_parsing(client)
         print("Input parameters:")
-        keys = [P_DTYPE, P_IDS, P_TARG_DTYPE, P_NAMESPACE]
+        keys = [P_DTYPE, P_IDS, P_TARG_DTYPE, P_OLD_NS, P_NEW_NS]
         for k in keys:
             print(f"\t- {k}: {params[k]}")
         print("\n####################################\n")
@@ -254,10 +283,12 @@ def run_script():
         client.setOutput("Message", rstring(message))
         if robj is not None:
             client.setOutput("Result", robject(robj._obj))
+
     except AssertionError as err:
         # Display assertion errors in OMERO.web activities
         client.setOutput("ERROR", rstring(err))
         raise AssertionError(str(err))
+
     finally:
         client.closeSession()
 
@@ -265,15 +296,12 @@ def run_script():
 def parameters_parsing(client):
     params = {}
     # Param dict with defaults for optional parameters
-    params[P_NAMESPACE] = [NSCLIENTMAPANNOTATION]
+    params[P_OLD_NS] = [NSCLIENTMAPANNOTATION]
+    params[P_NEW_NS] = NSCLIENTMAPANNOTATION
 
     for key in client.getInputKeys():
         if client.getInput(key):
-            # unwrap rtypes to String, Integer etc
             params[key] = client.getInput(key, unwrap=True)
-
-    assert params[P_AGREEMENT], "Please tick the box to confirm that you " +\
-                                "understood the risks."
 
     if params[P_TARG_DTYPE] == "<on current>":
         params[P_TARG_DTYPE] = params[P_DTYPE]
@@ -292,10 +320,10 @@ def parameters_parsing(client):
         params[P_TARG_DTYPE] = "PlateAcquisition"
 
     # Remove duplicate entries from namespace list
-    tmp = params[P_NAMESPACE]
+    tmp = params[P_OLD_NS]
     if "*" in tmp:
         tmp = ["*"]
-    params[P_NAMESPACE] = list(set(tmp))
+    params[P_OLD_NS] = list(set(tmp))
 
     return params
 
