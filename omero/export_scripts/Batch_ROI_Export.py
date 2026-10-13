@@ -120,12 +120,12 @@ def get_export_data(conn, script_params, image, units=None):
             # If shape has no Z or T, we may go through all planes...
             the_z = unwrap(shape.theZ)
             z_indexes = [the_z]
-            if the_z is None and all_planes:
+            if the_z is None and all_planes and not skip_stats:
                 z_indexes = range(image.getSizeZ())
             # Same for T...
             the_t = unwrap(shape.theT)
             t_indexes = [the_t]
-            if the_t is None and all_planes:
+            if the_t is None and all_planes and not skip_stats:
                 t_indexes = range(image.getSizeT())
 
             # get pixel intensities
