@@ -23,7 +23,7 @@
 This script exports ROI intensities for selected images.
 """
 
-
+import datetime
 import omero.scripts as scripts
 from omero.gateway import BlitzGateway
 from omero.rtypes import rlong, rint, rstring, robject, unwrap, wrap
@@ -429,6 +429,8 @@ def run_script():
     )
 
     try:
+        start_time = datetime.datetime.now()
+        print("Starting script at:", start_time)
         conn = BlitzGateway(client_obj=client)
 
         script_params = client.getInputs(unwrap=True)
@@ -447,6 +449,10 @@ def run_script():
                 client.setOutput("File_Annotation", robject(file_ann._obj))
 
         client.setOutput("Message", rstring(message))
+
+        end_time = datetime.datetime.now()
+        print("Script finished at:", end_time)
+        print("Total duration:", end_time - start_time)
 
     finally:
         client.closeSession()
