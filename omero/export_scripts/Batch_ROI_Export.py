@@ -425,7 +425,7 @@ def run_script():
 
         authors=["William Moore", "OME Team"],
         institutions=["University of Dundee"],
-        contact="ome-users@lists.openmicroscopy.org.uk",
+        contact="https://forum.image.sc/tag/omero",
     )
 
     try:
