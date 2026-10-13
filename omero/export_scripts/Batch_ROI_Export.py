@@ -26,7 +26,7 @@ This script exports ROI intensities for selected images.
 
 import omero.scripts as scripts
 from omero.gateway import BlitzGateway
-from omero.rtypes import rlong, rint, rstring, robject, unwrap
+from omero.rtypes import rlong, rint, rstring, robject, unwrap, wrap
 from omero.model import RectangleI, EllipseI, LineI, PolygonI, PolylineI, \
     MaskI, LabelI, PointI
 from math import sqrt, pi
@@ -66,15 +66,22 @@ def get_export_data(conn, script_params, image, units=None):
     include_points = script_params.get("Include_Points_Coords", False)
     size_c = image.getSizeC()
     big_image = is_big_image(image)
+    stats_choice = script_params.get("Pixel_Intensity_Stats", "None")
+    skip_stats = stats_choice == "None" or big_image
     # Channels index
     channels = script_params.get("Channels", [1])
     ch_indexes = []
-    for ch in channels:
-        if ch < 1 or ch > size_c:
-            log("Channel index: %s out of range 1 - %s" % (ch, size_c))
-        else:
-            # User input is 1-based
-            ch_indexes.append(ch - 1)
+    if skip_stats:
+        ch_indexes = [0]
+    elif stats_choice == "All Channels":
+        ch_indexes = list(range(size_c))
+    else:
+        for ch in channels:
+            if ch < 1 or ch > size_c:
+                log("Channel index: %s out of range 1 - %s" % (ch, size_c))
+            else:
+                # User input is 1-based
+                ch_indexes.append(ch - 1)
 
     ch_names = image.getChannelLabels()
 
@@ -124,7 +131,7 @@ def get_export_data(conn, script_params, image, units=None):
             # get pixel intensities
             for z in z_indexes:
                 for t in t_indexes:
-                    if z is None or t is None or big_image:
+                    if z is None or t is None or skip_stats:
                         stats = None
                     else:
                         stats = roi_service.getShapeStatsRestricted(
@@ -172,15 +179,8 @@ COLUMN_NAMES = ["image_id",
                 "text",
                 "z",
                 "t",
-                "channel",
                 "area",
                 "length",
-                "points",
-                "min",
-                "max",
-                "sum",
-                "mean",
-                "std_dev",
                 "X",
                 "Y",
                 "Width",
@@ -305,6 +305,10 @@ def batch_roi_export(conn, script_params):
         COLUMN_NAMES.insert(2, "well_row")
         COLUMN_NAMES.insert(3, "well_column")
         COLUMN_NAMES.insert(4, "well_label")
+    if script_params.get("Pixel_Intensity_Stats", "None") != "None":
+        COLUMN_NAMES.extend([
+            "channel", "points", "min", "max", "sum", "mean", "std_dev"
+        ])
     if script_params.get("Include_Points_Coords", False):
         COLUMN_NAMES.append("Points")
     if export_tags:
@@ -367,8 +371,9 @@ def batch_roi_export(conn, script_params):
 
 def run_script():
     """The main entry point of the script, as called by the client."""
-    data_types = [rstring(s) for s in
-                  ['Screen', 'Plate', 'Project', 'Dataset', 'Image']]
+    data_types = wrap(['Screen', 'Plate', 'Project', 'Dataset', 'Image'])
+    stats_options = wrap(['None', 'All Channels',
+                          'Selected Channels (enter below)'])
 
     client = scripts.client(
         'Batch_ROI_Export.py',
@@ -383,9 +388,16 @@ def run_script():
             "IDs", optional=False, grouping="2",
             description="List of Dataset IDs or Image IDs").ofType(rlong(0)),
 
+        scripts.String(
+            "Pixel_Intensity_Stats", grouping="3",
+            description=("Option to measure points-count and pixel values "
+                         "(min, max, sum, mean and standard deviation) "
+                         "for each channel."),
+            values=stats_options, default="None"),
+
         scripts.List(
-            "Channels", grouping="3", default=[1],
-            description="Indices of Channels to measure intensity."
+            "Channels", grouping="3.1", default=[1, 2, 3],
+            description="Indices of Channels to measure intensity"
             ).ofType(rint(0)),
 
         scripts.Bool(
