@@ -57,8 +57,9 @@ class TestExportScripts(ScriptTest):
         c = self.new_client(user=user)
         check_file_annotation(c, ann)
 
+    @pytest.mark.parametrize("channel_stats", [True, False])
     @pytest.mark.parametrize("all_planes", [True, False])
-    def test_batch_roi_export(self, all_planes):
+    def test_batch_roi_export(self, all_planes, channel_stats):
         sid = super(TestExportScripts, self).get_script(batch_roi_export)
         assert sid > 0
 
@@ -96,13 +97,15 @@ class TestExportScripts(ScriptTest):
         file_name = "test_batch_roi_export"
         image_ids.append(rlong(image.id.val))
         channels = [rint(c) for c in range(4)]
+        stats_param = "All Channels" if channel_stats else "None"
         args = {
             "Data_Type": rstring("Image"),
             "IDs": rlist(image_ids),
             # Should ignore Channels out of range. 1-based index
             "Channels": rlist(channels),
             "Export_All_Planes": rbool(all_planes),
-            "File_Name": rstring(file_name)
+            "File_Name": rstring(file_name),
+            "Pixel_Intensity_Stats": rstring(stats_param)
         }
         ann = run_script(client, sid, args, "File_Annotation")
         c = self.new_client(user=user)
@@ -111,29 +114,42 @@ class TestExportScripts(ScriptTest):
         file_id = ann.getValue().getFile().id.val
         csv_text = get_file_contents(self.new_client(user=user), file_id)
 
-        # Check we have expected number of rows
-        polygon_planes = size_c
-        if all_planes:
-            polygon_planes = size_c * size_z * size_t
-        # Rows: Header + rect with Z/T set + polygon without Z/T
-        row_count = 1 + size_c + polygon_planes
-        assert len(csv_text.split("\n")) == row_count
+        # Check we have expected number of rows for the 2 shapes...
+        # Polygon - by default we expect a row for each channel
+        polygon_rows = size_c if channel_stats else 1
+        if all_planes and channel_stats:
+            # with "all planes" we get a row for each Z/C/T combo
+            # because Polygon has no specific Z/T set
+            polygon_rows = size_c * size_z * size_t
+        # Rectangle - has specific Z/T set, so we expect 1 row per channel
+        rectangle_rows = size_c if channel_stats else 1
+        row_count = 1 + rectangle_rows + polygon_rows
+        # csv.writer adds an extra newline at the end
+        rows = csv_text.split("\n")
+        assert len(rows) == row_count + 1
+        non_empty_rows = [row for row in rows if row.strip()]
+        assert len(non_empty_rows) == row_count
 
         # Check first 2 rows of csv (except Std dev)
         zt = ","
-        points_min_max_sum_mean = ",,,,"
+        points_min_max_sum_mean = ""
         area = "6561.0"
-        if all_planes:
+        if all_planes and channel_stats:
             zt = "1,1"
-            points_min_max_sum_mean = "6561,10.0,90.0,328050.0,50.0"
+            points_min_max_sum_mean = ",0,6561,10.0,90.0,328050.0,50.0"
         expected = ("image_id,image_name,roi_id,shape_id,type,text,"
-                    "z,t,channel,area (pixels),length (pixels),"
-                    "points,min,max,sum,mean,std_dev,"
-                    "X,Y,Width,Height,RadiusX,RadiusY,X1,Y1,X2,Y2,Points\n"
-                    "%s,\"%s\",%s,%s,polygon,\"%s\",%s,0,%s,,%s,") % (
-            image.id.val, image_name, roi.id.val,
-            polygon.id.val, label_text, zt, area, points_min_max_sum_mean)
+                    "z,t,area (pixels),length (pixels),"
+                    "X,Y,Width,Height,RadiusX,RadiusY,X1,Y1,X2,Y2")
+        if channel_stats:
+            expected += ",channel,points,min,max,sum,mean,std_dev"
+        expected_row = (f"{image.id.val},{image_name},{roi.id.val},"
+                        f"{polygon.id.val},polygon,{label_text},{zt}"
+                        f",{area},,,,,,,,,,,{points_min_max_sum_mean}")
+        print(csv_text)
+        print(expected)
+        print(expected_row)
         assert csv_text.startswith(expected)
+        assert expected_row in csv_text
 
     @pytest.mark.broken(
         reason=('https://trello.com/c/AlN5hp6g/144-make-movie-tests-failures'))
