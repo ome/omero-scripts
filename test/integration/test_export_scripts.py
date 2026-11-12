@@ -137,7 +137,7 @@ class TestExportScripts(ScriptTest):
         if all_planes and channel_stats:
             zt = "1,1"
             points_min_max_sum_mean = ",0,6561,10.0,90.0,328050.0,50.0"
-        expected = ("image_id,image_name,roi_id,shape_id,type,text,"
+        expected = ("image_id,image_name,roi_id,shape_id,type,shape_text,"
                     "z,t,area (pixels),length (pixels),"
                     "X,Y,Width,Height,RadiusX,RadiusY,X1,Y1,X2,Y2")
         if channel_stats:
