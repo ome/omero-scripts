@@ -143,7 +143,7 @@ def get_export_data(conn, script_params, image, units=None):
                             "roi_id": roi.id.val,
                             "shape_id": shape.id.val,
                             "type": shape_type,
-                            "text": label,
+                            "shape_text": label,
                             "z": z + 1 if z is not None else "",
                             "t": t + 1 if t is not None else "",
                             "channel": ch_names[ch_index],
@@ -176,7 +176,7 @@ COLUMN_NAMES = ["image_id",
                 "roi_id",
                 "shape_id",
                 "type",
-                "text",
+                "shape_text",
                 "z",
                 "t",
                 "area",
@@ -196,8 +196,6 @@ COLUMN_NAMES = ["image_id",
 def add_shape_coords(shape, row_data, pixel_size_x, pixel_size_y,
                      include_points=True):
     """Add shape coordinates and length or area to the row_data dict."""
-    if shape.getTextValue():
-        row_data['Text'] = shape.getTextValue().getValue()
     if isinstance(shape, (RectangleI, EllipseI, PointI, LabelI, MaskI)):
         row_data['X'] = shape.getX().getValue()
         row_data['Y'] = shape.getY().getValue()
