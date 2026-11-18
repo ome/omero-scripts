@@ -34,8 +34,12 @@ from omero.util.populate_roi import DownloadingOriginalFileProvider
 
 try:
     # Hopefully this will import
-    # https://github.com/ome/omero-metadata/blob/v0.3.1/src/populate_metadata.py
+    # Automatic header detection requires omero-metadata >= 0.11.0.
     from omero_metadata.populate import ParsingContext
+    try:
+        from omero_metadata.cli import MetadataControl
+    except ImportError:
+        MetadataControl = None
     OBJECT_TYPES = (
         'Plate',
         'Screen',
@@ -47,6 +51,7 @@ try:
 
 except ImportError:
     from omero.util.populate_metadata import ParsingContext
+    MetadataControl = None
     OBJECT_TYPES = (
         'Plate',
         'Screen',
@@ -107,6 +112,7 @@ def populate_metadata(client, conn, script_params):
     object_ids = script_params["IDs"]
     object_id = object_ids[0]
     data_type = script_params["Data_Type"]
+    allow_nan = script_params["Allow_NaN"]
 
     if data_type == "Image":
         try:
@@ -129,7 +135,19 @@ def populate_metadata(client, conn, script_params):
         return "Please upgrade omero-py to 5.9.1 or later"
     objecti = getattr(omero.model, data_type + 'I')
     omero_object = objecti(int(object_id), False)
-    ctx = ParsingContext(client, omero_object, "")
+    if MetadataControl is not None and \
+            hasattr(MetadataControl, "detect_headers"):
+        header_type = None
+        with open(temp_name, 'rt', encoding='utf-8-sig') as csv_file:
+            first_row = csv_file.readline()
+        if "# header" not in first_row:
+            header_type = MetadataControl.detect_headers(
+                temp_name, keep_default_na=allow_nan)
+        ctx = ParsingContext(
+            client, omero_object, "", column_types=header_type,
+            allow_nan=allow_nan)
+    else:
+        ctx = ParsingContext(client, omero_object, "")
 
     try:
         if hasattr(ctx, "parse_from_handle"):
@@ -172,6 +190,10 @@ def run_script():
             "File_Annotation", grouping="3",
             description="File Annotation ID containing metadata to populate. "
             "Note this is not the same as the File ID."),
+        scripts.Bool(
+            "Allow_NaN", grouping="3",
+            description="Allow Numeric NaN values in the table.",
+            default=True),
 
         authors=["Emil Rozbicki", "OME Team"],
         institutions=["Glencoe Software Inc."],
