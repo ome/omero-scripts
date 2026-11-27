@@ -304,3 +304,4 @@ class TestUtilScripts(ScriptTest):
         # Compare with session ID from the client
         session_id = client.sf.getAdminService().getEventContext().sessionId
         assert str(u) == session_id
+        
