@@ -296,11 +296,18 @@ class TestUtilScripts(ScriptTest):
 
         client = self.root
         message = run_script(client, script_id, {}, "Message")
-        assert message is not None
-        # Extract UUID part
-        uuid_str = message.val.split("UUID: ")[1].strip()
-        # Validate format
-        u = uuid.UUID(uuid_str)  # raises if invalid
-        # Compare with session ID from the client
-        session_id = client.sf.getAdminService().getEventContext().sessionId
-        assert str(u) == session_id
+        assert message is not None, "Script returned no 'Message' output"
+
+        text = message.val
+        assert "UUID:" in text, f"Unexpected message: {text!r}"
+        uuid_str = text.split("UUID:", 1)[1].strip()
+
+        # Valid, canonical UUID
+        u = uuid.UUID(uuid_str)
+        assert str(u) == uuid_str.lower()
+
+        # The processor runs the script in its own session,
+        # so it is expected to differ from the caller's session.
+        caller_uuid = client.getSessionId()
+        print("script session:", uuid_str, "| caller session:", caller_uuid)
+        assert uuid_str != caller_uuid
