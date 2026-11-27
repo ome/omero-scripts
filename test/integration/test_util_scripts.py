@@ -31,12 +31,14 @@ from script import ScriptTest
 from script import run_script
 from omero.cmd import Delete2
 from omero.rtypes import wrap
+import uuid
 
 channel_offsets = "/omero/util_scripts/Channel_Offsets.py"
 combine_images = "/omero/util_scripts/Combine_Images.py"
 images_from_rois = "/omero/util_scripts/Images_From_ROIs.py"
 dataset_to_plate = "/omero/util_scripts/Dataset_To_Plate.py"
 move_annotations = "/omero/util_scripts/Move_Annotations.py"
+session_uuid = "/omero/util_scripts/UUID_session_key.py"
 
 
 class TestUtilScripts(ScriptTest):
@@ -287,3 +289,18 @@ class TestUtilScripts(ScriptTest):
         # Run again - None moved since Annotations are already on Well
         message = run_script(script_runner_client, script_id, args, "Message")
         assert message.val == "No annotations moved. See info."
+
+    def test_uuid_session_key(self):
+        script_id = super(TestUtilScripts, self).get_script(session_uuid)
+        assert script_id > 0
+
+        client = self.root
+        message = run_script(client, script_id, {}, "Message")
+        assert message is not None
+        # Extract UUID part
+        uuid_str = message.val.split("UUID: ")[1].strip()
+        # Validate format
+        u = uuid.UUID(uuid_str)  # raises if invalid
+        # Compare with session ID from the client
+        session_id = client.sf.getAdminService().getEventContext().sessionId
+        assert str(u) == session_id
