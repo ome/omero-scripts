@@ -13,23 +13,26 @@
 #   You should have received a copy of the GNU General Public License along
 #   with this program; if not, write to the Free Software Foundation, Inc.,
 #   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#   
+#
 #   Created by Riccardo Massei
 # ------------------------------------------------------------------------------
 
 """
-Generate a unique session token (UUID) representing the current user session in OMERO.web.
+Generate a unique session token (UUID) representing the current
+user session in OMERO.web.
 
 This OMERO.web script retrieves and returns UUID associated with the
 currently authenticated user session.
 
-More information regarding create a connection using an existing session can be found here:
+More information regarding create a connection using an existing
+session can be found here:
 https://omero.readthedocs.io/en/v5.6.9/developers/Python.html
 
 """
 
 from omero.rtypes import rstring
 import omero.scripts as scripts
+
 
 def main():
     """Fetch the session UUID for the current user."""
@@ -45,6 +48,7 @@ def main():
         )
     finally:
         client.closeSession()
+
 
 if __name__ == '__main__':
     main()
